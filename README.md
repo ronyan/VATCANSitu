@@ -4,9 +4,11 @@ EuroScope Plugin to simulate tools from NAVCANsuite
 https://vimeo.com/443838489
 
 # Features
-Correlated radar targets with a VFR flight plan will be shown using an orange present position symbol.
-Halo tool allows rings to be drawn around specific aircraft. The built in function in ES draws around all planes and there's no way to only apply rings to specific planes.
-Mouse halo tool to aid with separation. (please see known issues)
+1. Correlated radar targets with a VFR flight plan will be shown using an orange present position symbol.
+2. Halo tool allows rings to be drawn around specific aircraft. The built in function in ES draws around all planes and there's no way to only apply rings to specific planes.
+3. Mouse halo tool to aid with separation. (please see known issues)
+
+
 Not implemented for now: There are some sham buttons just to replicate the UI (also I don't know what some of them do in the real system). The PTL and RBL default ES tools work well, unlikely will be a priority.
 
 # Installation
