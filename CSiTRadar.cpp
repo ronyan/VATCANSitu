@@ -40,6 +40,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	int pixnm = PixelsPerNM();
 
+	if (strcmp(radtype.c_str(), "CSiT")) { TopMenu::DrawButton(dc, p, 20, 20, "TEXT", 0); }
+
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
 		// Draw the mouse halo before menu, so it goes behind it
@@ -98,12 +100,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		}
 
 		// Draw the CSiT Tools Menu
-		POINT menutopleft = CPoint(radarea.left, radarea.top);
+		// this point moves to the origin of each subsequent area
+		POINT menutopleft = CPoint(radarea.left, radarea.top); 
 
 		TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
 
+		// screen range
+				
+		// altitude filters
 		menutopleft.y += 6;
 		menutopleft.x += 10;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Alt Filter", 0);
+
+		menutopleft.y += 25;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "000-600", 1);
+		menutopleft.y -= 25;
+		menutopleft.x += 65; 
+
+		// separation tools
 		string haloText = "Halo " + halooptions[haloidx];
 		RECT but = TopMenu::DrawButton(dc, menutopleft, 45, 23, haloText.c_str(), halotool);
 		ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
@@ -113,18 +127,18 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		ButtonToScreen(this, but, "PTL", BUTTON_MENU_HALO_OPTIONS);
 
 		menutopleft.y = menutopleft.y - 25;
-		menutopleft.x = menutopleft.x + 45;
+		menutopleft.x = menutopleft.x + 47;
 		TopMenu::DrawButton(dc, menutopleft, 35, 23, "RBL", 0);
 
 		menutopleft.y = menutopleft.y + 25;
 		TopMenu::DrawButton(dc, menutopleft, 35, 23, "PIV", 0);
 
 		menutopleft.y = menutopleft.y - 25;
-		menutopleft.x = menutopleft.x + 35;
-		TopMenu::DrawButton(dc, menutopleft, 45, 23, "Rings 20", 0);
+		menutopleft.x = menutopleft.x + 37;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Rings 20", 0);
 
 		menutopleft.y = menutopleft.y + 25;
-		TopMenu::DrawButton(dc, menutopleft, 45, 23, "Grid", 0);
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Grid", 0);
 
 		menutopleft.x = menutopleft.x + 100;
 		menutopleft.y -= 25;
@@ -206,5 +220,7 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 };
 
 void CSiTRadar::OnAsrContentLoaded() {
-
+	if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
+	if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
+	if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
 }

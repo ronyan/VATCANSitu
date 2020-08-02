@@ -52,6 +52,9 @@ public:
 
     inline virtual void OnAsrContentToBeClosed(void)
     {
+        SaveDataToAsr("tagfamily", "Tag Family", "CSiT");
+        SaveDataToAsr("above", "Filter Above", "600");
+        SaveDataToAsr("below", "Filter Below", "0");
         delete this;
     };
 
@@ -68,5 +71,8 @@ protected:
     map<string, bool> hashalo;
     double halorad = 3;
     string halooptions[9] = { "0.5", "3", "5", "10", "15", "20", "30", "60", "80" };
+    string radtype;
+    int above; 
+    int below;
 };
 

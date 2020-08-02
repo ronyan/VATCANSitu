@@ -37,13 +37,13 @@ public:
         LOGFONT lgfont;
 
         memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 450; 
+        lgfont.lfWeight = 700; 
         wcscpy_s(lgfont.lfFaceName, _T("Segoe UI"));
         lgfont.lfHeight = 12;
         font.CreateFontIndirectW(&lgfont);
 
         dc.SelectObject(font);
-        dc.SetTextColor(RGB(195, 195, 195));
+        dc.SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state
         COLORREF pressedcolor = RGB(66, 66, 66); 
@@ -117,14 +117,14 @@ public:
         TopMenu::DrawButton(dc, menutopleft, 45, 23, "PTL 3", 0);
 
         menutopleft.y = menutopleft.y - 25;
-        menutopleft.x = menutopleft.x + 45;
+        menutopleft.x = menutopleft.x + 55;
         TopMenu::DrawButton(dc, menutopleft, 35, 23, "RBL", 0);
 
         menutopleft.y = menutopleft.y + 25;
         TopMenu::DrawButton(dc, menutopleft, 35, 23, "PIV", 0);
 
         menutopleft.y = menutopleft.y - 25;
-        menutopleft.x = menutopleft.x + 35;
+        menutopleft.x = menutopleft.x + 45;
         TopMenu::DrawButton(dc, menutopleft, 45, 23, "Rings 20", 0);
 
         menutopleft.y = menutopleft.y + 25;
