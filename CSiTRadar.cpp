@@ -119,7 +119,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 55;
 		
 		// horizontal range calculation
-		int range = (radarea.right - radarea.left) / pixnm;
+		int range = (int)round(RadRange());
 		string rng = to_string(range);
 		TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
 		menutopleft.y += 15;

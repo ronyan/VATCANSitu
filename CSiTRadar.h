@@ -31,6 +31,20 @@ public:
         RECT Area,
         int Button);
 
+    double RadRange(void)
+    {
+        RECT radarea = GetRadarArea();
+        POINT pl = CPoint((int)radarea.left, (int)radarea.top);
+        POINT pr = CPoint((int)radarea.right, (int)radarea.top);
+
+        CPosition posL = ConvertCoordFromPixelToPosition(pl);
+        CPosition posR = ConvertCoordFromPixelToPosition(pr);
+
+        double raddist = posL.DistanceTo(posR);
+
+        return raddist;
+    }
+
     int PixelsPerNM(void)
     {
         RECT radarea = GetRadarArea();
