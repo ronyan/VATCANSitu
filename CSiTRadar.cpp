@@ -139,6 +139,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.y = menutopleft.y + 25;
 		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Grid", 0);
 
+		// get the controller position ID and display it (aesthetics :) )
+		if (GetPlugIn()->ControllerMyself().IsValid())
+		{
+			controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
+		}
+
 		menutopleft.y -= 25;
 		menutopleft.x += 60;
 		string cid = "CJS -" + controllerID;
@@ -183,7 +189,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		}
 
 /*
-		// Ground Radar Tags
+		// Ground Radar Tags WIP
 
 		for (CRadarTarget rt = GetPlugIn()->RadarTargetSelectFirst(); rt.IsValid(); rt = GetPlugIn()->RadarTargetSelectNext(rt))
 		{
@@ -251,9 +257,4 @@ void CSiTRadar::OnAsrContentLoaded() {
 	if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
 	if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
 
-	// get the controller position ID
-	if (GetPlugIn()->ControllerMyself().IsValid())
-	{
-		controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
-	}
 }
