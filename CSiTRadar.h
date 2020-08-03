@@ -71,8 +71,10 @@ public:
 
         // saving settings to the ASR file
 
+        /*
         const char* sv = radtype.c_str();
         SaveDataToAsr("tagfamily", "Tag Family", sv);
+        */
 
         delete this;
     };

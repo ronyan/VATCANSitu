@@ -279,7 +279,7 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 };
 
 void CSiTRadar::OnAsrContentLoaded() {
-	if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
+	// if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
 
 	// getting altitude filter information
 	// if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
