@@ -74,5 +74,6 @@ protected:
     string radtype;
     int above; 
     int below;
+    string controllerID;
 };
 

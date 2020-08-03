@@ -40,8 +40,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	int pixnm = PixelsPerNM();
 
-	if (strcmp(radtype.c_str(), "CSiT")) { TopMenu::DrawButton(dc, p, 20, 20, "TEXT", 0); }
-
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
 		// Draw the mouse halo before menu, so it goes behind it
@@ -140,8 +138,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.y = menutopleft.y + 25;
 		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Grid", 0);
 
-		menutopleft.x = menutopleft.x + 100;
 		menutopleft.y -= 25;
+		menutopleft.x += 60;
+		string cid = "CJS -" + controllerID;
+
+		RECT r = TopMenu::DrawButton2(dc, menutopleft, 50, 23, cid.c_str(), 0);
+
+		menutopleft.y += 25;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Qck Look", 0);
+		menutopleft.y -= 25;
+
+		menutopleft.x = menutopleft.x + 100;
 
 		// options for halo radius
 		if (halotool) {
@@ -173,7 +180,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "Mouse", mousehalo);
 			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
 		}
-
 	}
 	dc.Detach();
 }
@@ -221,6 +227,14 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 
 void CSiTRadar::OnAsrContentLoaded() {
 	if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
+
+	// getting altitude filter information
 	if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
 	if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
+
+	// get the controller position ID
+	if (GetPlugIn()->ControllerMyself().IsValid())
+	{
+		controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
+	}
 }
