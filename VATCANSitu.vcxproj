@@ -190,6 +190,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CSiTRadar.cpp" />
+    <ClCompile Include="GndRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -208,6 +209,7 @@
   <ItemGroup>
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="GndRadar.h" />
     <ClInclude Include="HaloTool.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="lib\EuroScopePlugIn.h" />

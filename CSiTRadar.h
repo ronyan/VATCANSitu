@@ -3,6 +3,9 @@
 #include <chrono>
 #include <string>
 #include <map>
+#include <iostream>
+#include <array>
+#include "pch.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;

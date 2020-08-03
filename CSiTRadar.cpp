@@ -13,6 +13,7 @@
 #include "constants.h"
 #include "TopMenu.h"
 #include "SituPlugin.h"
+#include "GndRadar.h"
 #include <chrono>
 
 CSiTRadar::CSiTRadar()
@@ -180,7 +181,25 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "Mouse", mousehalo);
 			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
 		}
+
+/*
+		// Ground Radar Tags
+
+		for (CRadarTarget rt = GetPlugIn()->RadarTargetSelectFirst(); rt.IsValid(); rt = GetPlugIn()->RadarTargetSelectNext(rt))
+		{
+			if (!rt.IsValid())
+				continue;
+
+			if (strcmp(rt.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
+
+				POINT p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+				GndRadar::DrawGndTag(dc, p, 0, rt, rt.GetCallsign());
+			}
+		}
+
+*/
 	}
+
 	dc.Detach();
 }
 
