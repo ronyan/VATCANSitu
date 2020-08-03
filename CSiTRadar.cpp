@@ -98,21 +98,49 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// if ptl tag applied, draw it
 		}
 
-		// Draw the CSiT Tools Menu
+		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
 		// this point moves to the origin of each subsequent area
 		POINT menutopleft = CPoint(radarea.left, radarea.top); 
 
 		TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
 
-		// screen range
-				
-		// altitude filters
+		// small amount of padding;
 		menutopleft.y += 6;
 		menutopleft.x += 10;
+
+		// screen range, dummy buttons, not really necessary in ES.
+		TopMenu::DrawButton(dc, menutopleft, 70, 23, "Relocate", 0);
+		menutopleft.y += 25;
+
+		TopMenu::DrawButton(dc, menutopleft, 35, 23, "Zoom", 0); 
+		menutopleft.x += 35;
+		TopMenu::DrawButton(dc, menutopleft, 35, 23, "Pan", 0);
+		menutopleft.y -= 25;
+		menutopleft.x += 55;
+		
+		// horizontal range calculation
+		int range = (radarea.right - radarea.left) / pixnm;
+		string rng = to_string(range);
+		TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
+		menutopleft.y += 15;
+
+		// 109 pix per in on my monitor
+		int nmIn = 109 / pixnm;
+		string nmtext = "1\" = " + to_string(nmIn) + "nm";
+		TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
+		menutopleft.y += 17;
+
+		TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
+
+		menutopleft.x += 80;
+		menutopleft.y -= 32;
+
+		// altitude filters
+
 		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Alt Filter", 0);
 
 		menutopleft.y += 25;
-		TopMenu::DrawButton(dc, menutopleft, 50, 23, "000-600", 1);
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "000-000", 1);
 		menutopleft.y -= 25;
 		menutopleft.x += 65; 
 
@@ -254,7 +282,7 @@ void CSiTRadar::OnAsrContentLoaded() {
 	if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
 
 	// getting altitude filter information
-	if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
-	if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
+	// if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
+	// if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
 
 }

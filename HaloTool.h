@@ -13,7 +13,7 @@ public:
     HaloTool(void);
     ~HaloTool(void);
 
-    static void drawHalo(HDC hdc, POINT p, double r, int pixpernm) 
+    static void drawHalo(HDC hdc, POINT p, double r, double pixpernm) 
     {
         CDC dc;
         dc.Attach(hdc);

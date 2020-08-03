@@ -53,11 +53,13 @@ public:
         return pixnm;
     };
 
-    inline virtual void OnAsrContentToBeClosed(void)
-    {
-        SaveDataToAsr("tagfamily", "Tag Family", "CSiT");
-        SaveDataToAsr("above", "Filter Above", "600");
-        SaveDataToAsr("below", "Filter Below", "0");
+    inline virtual void OnAsrContentToBeClosed(void) {
+
+        // saving settings to the ASR file
+
+        const char* sv = radtype.c_str();
+        SaveDataToAsr("tagfamily", "Tag Family", sv);
+
         delete this;
     };
 
@@ -74,9 +76,9 @@ protected:
     map<string, bool> hashalo;
     double halorad = 3;
     string halooptions[9] = { "0.5", "3", "5", "10", "15", "20", "30", "60", "80" };
-    string radtype;
     int above; 
     int below;
     string controllerID;
+    string radtype;
 };
 
