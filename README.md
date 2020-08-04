@@ -1,5 +1,16 @@
 # VATCANSitu
-EuroScope Plugin to simulate tools from NAVCANsuite
+Latest versaion 0.2: AUG3
+- Added the range display
+- Aaded Controller jurisdiction symbol that updates depending on the position you log in as.
+
+https://i.imgur.com/CKYPSyb.png
+
+Compatible with Euroscope beta r24 or higher (plugin was compiled using VS toolset 2019)
+https://www.euroscope.hu/wp/2020/04/12/3-2-1-24/
+
+EuroScope Plugin to simulate tools from NAVCANsuite.
+
+The author of this plugin has affiliation with Nav Canada; This tool is for simulation use only on the VATSIM network, not for real world aviation. 
 
 https://vimeo.com/443838489
 
@@ -7,7 +18,8 @@ https://vimeo.com/443838489
 1. Correlated radar targets with a VFR flight plan will be shown using an orange present position symbol.
 2. Halo tool allows rings to be drawn around specific aircraft. The built in function in ES draws around all planes and there's no way to only apply rings to specific planes.
 3. Mouse halo tool to aid with separation. (please see known issues)
-
+4. Range displays 
+5. 
 
 Not implemented for now: There are some sham buttons just to replicate the UI (also I don't know what some of them do in the real system). The PTL and RBL default ES tools work well, unlikely will be a priority.
 
