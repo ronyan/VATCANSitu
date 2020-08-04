@@ -5,7 +5,7 @@ Latest versaion 0.2.1: AUG3
 - Added the range display
 - Aaded Controller jurisdiction symbol that updates depending on the position you log in as.
 
-https://i.imgur.com/CKYPSyb.png
+![Screenshot](https://i.imgur.com/CKYPSyb.png)
 
 Compatible with Euroscope beta r24 or higher (plugin was compiled using VS toolset 2019)
 https://www.euroscope.hu/wp/2020/04/12/3-2-1-24/
