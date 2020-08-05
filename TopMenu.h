@@ -38,9 +38,9 @@ public:
 
         memset(&lgfont, 0, sizeof(LOGFONT));
         lgfont.lfWeight = 700; 
-        wcscpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
         lgfont.lfHeight = 12;
-        font.CreateFontIndirectW(&lgfont);
+        font.CreateFontIndirect(&lgfont);
 
         dc.SelectObject(font);
         dc.SetTextColor(RGB(230, 230, 230));
@@ -97,9 +97,9 @@ public:
 
         memset(&lgfont, 0, sizeof(LOGFONT));
         lgfont.lfWeight = 700;
-        wcscpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
         lgfont.lfHeight = 12;
-        font.CreateFontIndirectW(&lgfont);
+        font.CreateFontIndirect(&lgfont);
 
         dc.SelectObject(font);
         dc.SetTextColor(RGB(230, 230, 230));
@@ -175,9 +175,9 @@ public:
 
         memset(&lgfont, 0, sizeof(LOGFONT));
         lgfont.lfWeight = 700;
-        wcscpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
         lgfont.lfHeight = 12;
-        font.CreateFontIndirectW(&lgfont);
+        font.CreateFontIndirect(&lgfont);
 
         dc.SelectObject(font);
         dc.SetTextColor(RGB(230, 230, 230));
@@ -207,9 +207,9 @@ public:
 
         memset(&lgfont, 0, sizeof(LOGFONT));
         lgfont.lfWeight = 700;
-        wcscpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
         lgfont.lfHeight = 12;
-        font.CreateFontIndirectW(&lgfont);
+        font.CreateFontIndirect(&lgfont);
 
         dc.SelectObject(font);
         dc.SetTextColor(RGB(230, 230, 230));
