@@ -46,7 +46,7 @@ public:
         memset(&lgfont, 0, sizeof(LOGFONT));
         lgfont.lfHeight = 12;
         lgfont.lfWeight = 400;
-        font.CreateFontIndirectW(&lgfont);
+        font.CreateFontIndirect(&lgfont);
         dc.SelectObject(font);
         dc.SetTextColor(tagColor);
 
