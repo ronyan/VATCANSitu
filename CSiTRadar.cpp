@@ -13,6 +13,7 @@
 #include "constants.h"
 #include "TopMenu.h"
 #include "SituPlugin.h"
+#include "GndRadar.h"
 #include <chrono>
 
 CSiTRadar::CSiTRadar()
@@ -97,13 +98,53 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// if ptl tag applied, draw it
 		}
 
-		// Draw the CSiT Tools Menu
-		POINT menutopleft = CPoint(radarea.left, radarea.top);
+		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
+		// this point moves to the origin of each subsequent area
+		POINT menutopleft = CPoint(radarea.left, radarea.top); 
 
 		TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
 
+		// small amount of padding;
 		menutopleft.y += 6;
 		menutopleft.x += 10;
+
+		// screen range, dummy buttons, not really necessary in ES.
+		TopMenu::DrawButton(dc, menutopleft, 70, 23, "Relocate", 0);
+		menutopleft.y += 25;
+
+		TopMenu::DrawButton(dc, menutopleft, 35, 23, "Zoom", 0); 
+		menutopleft.x += 35;
+		TopMenu::DrawButton(dc, menutopleft, 35, 23, "Pan", 0);
+		menutopleft.y -= 25;
+		menutopleft.x += 55;
+		
+		// horizontal range calculation
+		int range = (int)round(RadRange());
+		string rng = to_string(range);
+		TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
+		menutopleft.y += 15;
+
+		// 109 pix per in on my monitor
+		int nmIn = 109 / pixnm;
+		string nmtext = "1\" = " + to_string(nmIn) + "nm";
+		TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
+		menutopleft.y += 17;
+
+		TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
+
+		menutopleft.x += 80;
+		menutopleft.y -= 32;
+
+		// altitude filters
+
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Alt Filter", 0);
+
+		menutopleft.y += 25;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "000-000", 1);
+		menutopleft.y -= 25;
+		menutopleft.x += 65; 
+
+		// separation tools
 		string haloText = "Halo " + halooptions[haloidx];
 		RECT but = TopMenu::DrawButton(dc, menutopleft, 45, 23, haloText.c_str(), halotool);
 		ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
@@ -113,21 +154,36 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		ButtonToScreen(this, but, "PTL", BUTTON_MENU_HALO_OPTIONS);
 
 		menutopleft.y = menutopleft.y - 25;
-		menutopleft.x = menutopleft.x + 45;
+		menutopleft.x = menutopleft.x + 47;
 		TopMenu::DrawButton(dc, menutopleft, 35, 23, "RBL", 0);
 
 		menutopleft.y = menutopleft.y + 25;
 		TopMenu::DrawButton(dc, menutopleft, 35, 23, "PIV", 0);
 
 		menutopleft.y = menutopleft.y - 25;
-		menutopleft.x = menutopleft.x + 35;
-		TopMenu::DrawButton(dc, menutopleft, 45, 23, "Rings 20", 0);
+		menutopleft.x = menutopleft.x + 37;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Rings 20", 0);
 
 		menutopleft.y = menutopleft.y + 25;
-		TopMenu::DrawButton(dc, menutopleft, 45, 23, "Grid", 0);
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Grid", 0);
+
+		// get the controller position ID and display it (aesthetics :) )
+		if (GetPlugIn()->ControllerMyself().IsValid())
+		{
+			controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
+		}
+
+		menutopleft.y -= 25;
+		menutopleft.x += 60;
+		string cid = "CJS -" + controllerID;
+
+		RECT r = TopMenu::DrawButton2(dc, menutopleft, 50, 23, cid.c_str(), 0);
+
+		menutopleft.y += 25;
+		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Qck Look", 0);
+		menutopleft.y -= 25;
 
 		menutopleft.x = menutopleft.x + 100;
-		menutopleft.y -= 25;
 
 		// options for halo radius
 		if (halotool) {
@@ -160,7 +216,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
 		}
 
+/*
+		// Ground Radar Tags WIP
+
+		for (CRadarTarget rt = GetPlugIn()->RadarTargetSelectFirst(); rt.IsValid(); rt = GetPlugIn()->RadarTargetSelectNext(rt))
+		{
+			if (!rt.IsValid())
+				continue;
+
+			if (strcmp(rt.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
+
+				POINT p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+				GndRadar::DrawGndTag(dc, p, 0, rt, rt.GetCallsign());
+			}
+		}
+
+*/
 	}
+
 	dc.Detach();
 }
 
@@ -206,5 +279,10 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 };
 
 void CSiTRadar::OnAsrContentLoaded() {
+	// if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
+
+	// getting altitude filter information
+	// if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
+	// if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
 
 }

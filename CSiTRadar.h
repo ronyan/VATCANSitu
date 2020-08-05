@@ -3,6 +3,9 @@
 #include <chrono>
 #include <string>
 #include <map>
+#include <iostream>
+#include <array>
+#include "pch.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -28,6 +31,20 @@ public:
         RECT Area,
         int Button);
 
+    double RadRange(void)
+    {
+        RECT radarea = GetRadarArea();
+        POINT pl = CPoint((int)radarea.left, (int)radarea.top);
+        POINT pr = CPoint((int)radarea.right, (int)radarea.top);
+
+        CPosition posL = ConvertCoordFromPixelToPosition(pl);
+        CPosition posR = ConvertCoordFromPixelToPosition(pr);
+
+        double raddist = posL.DistanceTo(posR);
+
+        return raddist;
+    }
+
     int PixelsPerNM(void)
     {
         RECT radarea = GetRadarArea();
@@ -50,8 +67,15 @@ public:
         return pixnm;
     };
 
-    inline virtual void OnAsrContentToBeClosed(void)
-    {
+    inline virtual void OnAsrContentToBeClosed(void) {
+
+        // saving settings to the ASR file
+
+        /*
+        const char* sv = radtype.c_str();
+        SaveDataToAsr("tagfamily", "Tag Family", sv);
+        */
+
         delete this;
     };
 
@@ -68,5 +92,9 @@ protected:
     map<string, bool> hashalo;
     double halorad = 3;
     string halooptions[9] = { "0.5", "3", "5", "10", "15", "20", "30", "60", "80" };
+    int above; 
+    int below;
+    string controllerID;
+    string radtype;
 };
 
