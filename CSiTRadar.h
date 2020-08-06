@@ -31,6 +31,8 @@ public:
         RECT Area,
         int Button);
 
+    void OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area);
+
     double RadRange(void)
     {
         RECT radarea = GetRadarArea();
@@ -83,17 +85,30 @@ protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
     void OnAsrContentLoaded();
-    
+
+    // helper functions
+
+    // menu states
     bool halotool = FALSE;
     bool mousehalo = FALSE;
+    bool altFilterOpts = FALSE;
+    bool altFilterOn = FALSE;
+
     bool pressed = FALSE;
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions
 
     map<string, bool> hashalo;
+
+    // menu functions
+    RECT rLLim = { 0, 0, 10, 10 };
+    RECT rHLim = { 0, 0, 10, 10 };
+
+    // menu settings
+    int altFilterLow = 0;
+    int altFilterHigh = 0; 
+
     double halorad = 3;
     string halooptions[9] = { "0.5", "3", "5", "10", "15", "20", "30", "60", "80" };
-    int above; 
-    int below;
     string controllerID;
     string radtype;
 };

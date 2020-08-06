@@ -55,6 +55,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 		{ 
+			// altitude filtering 
+			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100) {
+				continue;
+			}
+
+			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 ) {
+				continue;
+			}
+			
 			// get the target's position on the screen and add it as a screen object
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 			RECT prect;
@@ -95,7 +104,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				DeleteObject(targetBrush);
 			}			
 
-			// if ptl tag applied, draw it
+			// if ptl tag applied, draw it => not implemented
 		}
 
 		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
@@ -103,6 +112,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		POINT menutopleft = CPoint(radarea.left, radarea.top); 
 
 		TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
+		RECT but;
 
 		// small amount of padding;
 		menutopleft.y += 6;
@@ -137,16 +147,25 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		// altitude filters
 
-		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Alt Filter", 0);
-
+		but = TopMenu::DrawButton(dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
+		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
+		
 		menutopleft.y += 25;
-		TopMenu::DrawButton(dc, menutopleft, 50, 23, "000-000", 1);
+
+		string altFilterLowFL = to_string(altFilterLow);
+		altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+		string altFilterHighFL = to_string(altFilterHigh);
+		altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+
+		string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
+		but = TopMenu::DrawButton(dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
+		ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
 		menutopleft.y -= 25;
 		menutopleft.x += 65; 
 
 		// separation tools
 		string haloText = "Halo " + halooptions[haloidx];
-		RECT but = TopMenu::DrawButton(dc, menutopleft, 45, 23, haloText.c_str(), halotool);
+		but = TopMenu::DrawButton(dc, menutopleft, 45, 23, haloText.c_str(), halotool);
 		ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
 
 		menutopleft.y = menutopleft.y + 25;
@@ -216,6 +235,28 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
 		}
 
+		// options for the altitude filter sub menu
+		
+		if (altFilterOpts) {
+			
+			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "End", FALSE);
+			ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
+			menutopleft.x += 45;
+			menutopleft.y += 5;
+			
+			r = TopMenu::MakeText(dc, menutopleft, 55, 15, "High Lim");
+			menutopleft.x += 55;
+			rHLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterHighFL.c_str());
+			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
+
+			menutopleft.x -= 55; menutopleft.y += 20;
+			
+			TopMenu::MakeText(dc, menutopleft, 55, 15, "Low Lim");
+			menutopleft.x += 55;
+			rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
+			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
+
+		}
 /*
 		// Ground Radar Tags WIP
 
@@ -272,11 +313,48 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "Halo")) { halotool = !halotool; }
 	}
 
+	if (ObjectType == BUTTON_MENU_ALT_FILT_OPT) {
+		if (!strcmp(sObjectId, "Alt Filt Opts")) { altFilterOpts = !altFilterOpts; }
+		if (!strcmp(sObjectId, "End")) { altFilterOpts = 0; }
+		if (!strcmp(sObjectId, "LLim")) {
+			string altFilterLowFL = to_string(altFilterLow);
+			altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+			GetPlugIn()->OpenPopupEdit(rLLim, FUNCTION_ALT_FILT_LOW, altFilterLowFL.c_str());
+		}
+		if (!strcmp(sObjectId, "HLim")) {
+			string altFilterHighFL = to_string(altFilterHigh);
+			altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+			GetPlugIn()->OpenPopupEdit(rHLim, FUNCTION_ALT_FILT_HIGH, altFilterHighFL.c_str());
+		}
+	}
+
+	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
+		altFilterOn = !altFilterOn;
+	}
+
+}
+
+void CSiTRadar::OnFunctionCall(int FunctionId,
+	const char* sItemString,
+	POINT Pt,
+	RECT Area) {
+	if (FunctionId == FUNCTION_ALT_FILT_LOW) {
+		try {
+			altFilterLow = stoi(sItemString);
+		}
+		catch (...) {}
+	}
+	if (FunctionId == FUNCTION_ALT_FILT_HIGH) {
+		try {
+			altFilterHigh = stoi(sItemString);
+		}
+		catch (...) {}
+	}
 }
 
 void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype) {
 	AddScreenObject(itemtype, btext.c_str(), rect, 0, "");
-};
+}
 
 void CSiTRadar::OnAsrContentLoaded() {
 	// if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
