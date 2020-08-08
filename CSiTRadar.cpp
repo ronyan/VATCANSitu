@@ -194,7 +194,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		menutopleft.y -= 25;
 		menutopleft.x += 60;
-		string cid = "CJS -" + controllerID;
+		string cid = "CJS - " + controllerID;
 
 		RECT r = TopMenu::DrawButton2(dc, menutopleft, 50, 23, cid.c_str(), 0);
 
