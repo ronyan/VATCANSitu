@@ -19,6 +19,9 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
+    virtual void OnAsrContentLoaded(bool Loaded);
+    void OnAsrContentToBeSaved();
+
     static void RegisterButton(RECT rect) {
 
     };
@@ -83,8 +86,6 @@ public:
 
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
-
-    void OnAsrContentLoaded();
 
     // helper functions
 

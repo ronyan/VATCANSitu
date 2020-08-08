@@ -256,6 +256,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
 			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
 
+			menutopleft.x += 75;
+			menutopleft.y -= 25;
+			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "Save", FALSE);
+			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
+
 		}
 /*
 		// Ground Radar Tags WIP
@@ -326,6 +331,13 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
 			GetPlugIn()->OpenPopupEdit(rHLim, FUNCTION_ALT_FILT_HIGH, altFilterHighFL.c_str());
 		}
+		if (!strcmp(sObjectId, "Save")) {
+			string s = to_string(altFilterHigh);
+			SaveDataToAsr("altFilterHigh", "Alt Filter High Limit", s.c_str());
+			s = to_string(altFilterLow);
+			SaveDataToAsr("altFilterLow", "Alt Filter Low Limit", s.c_str());
+			altFilterOpts = 0;
+		}
 	}
 
 	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
@@ -356,11 +368,20 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 	AddScreenObject(itemtype, btext.c_str(), rect, 0, "");
 }
 
-void CSiTRadar::OnAsrContentLoaded() {
+void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
+	const char* filt = nullptr;
+
 	// if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
 
 	// getting altitude filter information
-	// if (GetDataFromAsr("below")) { radtype = GetDataFromAsr("below"); }
-	// if (GetDataFromAsr("above")) { radtype = GetDataFromAsr("above"); }
+	if ((filt = GetDataFromAsr("altFilterHigh")) != NULL) {
+		altFilterHigh = atoi(filt);
+	}
+	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
+		altFilterLow = atoi(filt);
+	}
+}
+
+void CSiTRadar::OnAsrContentToBeSaved() {
 
 }
