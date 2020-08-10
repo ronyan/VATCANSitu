@@ -3094,7 +3094,7 @@ public:
     //
     //  Description :
     //      When a command is not interpreted by EuroScope it calls the
-    //      plugins. Firt this functions are called from the radar
+    //      plugins. First this functions are called from the radar
     //      screen handlers. If all refuses then the plug-in level
     //      functions are called too. If one function return true, no
     //      more functions are called.
