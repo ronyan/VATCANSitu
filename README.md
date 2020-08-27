@@ -1,5 +1,8 @@
 # VATCANSitu
-Latest versaion 0.2.1: AUG3
+Latest version 0.2.3
+- Added altitude filter settings, and altitude filter toggle. Only works for tags draw for by the plugin (i.e. the VFR tags) since there is no way to hook directly into the ES default filters. Saves settings to sector files. 
+
+version 0.2.1: AUG3
 - hotfix for 0.2 retargetted character encoding for better compatibility
 
 - Added the range display
@@ -33,4 +36,5 @@ If you opt not to compile yourself, binaries are under releases. Load the .dll u
 # Known Issues
 EuroScope runs at a very low framerate unless a function asks for more screen draws. Essentially runs at 1FPS most of the time! The RBL is an example of this; when it is called, the screen refreshes much quicker to make it follow your mouse and give you a smooth experience. This is quite taxing on CPU usage; try drawing a RBL line and spinning it around it a circle (CPU use will rise dramatically). To get smooth mouse tracking of the mouse halo, the plugin does the same thing. CPU use will be quite high when it is on, so I recommend turning it on only when needed. When the mouse halo is on, it may interfere with your ability to open up other ES windows (RWY selection, ATIS), so turn it off before opening these other windows.
 
+(partially resolved with altitude filters v0.2.3)
 If you use NARDS tags for ground operations, the VFR PPS symbol will show on top of the plane logo. Can potentially be resolved by adding an additional variable to the .asr fil (not yet implemented) VFR PPS symbols ignore altitude filters (I've emailed the developer of ES, unfortunately the PlugIn enviroment does not allow access to these built-in data). Fixing this would involve making another altitude filter function within the plugin, but this seems redudant...
