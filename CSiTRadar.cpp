@@ -54,16 +54,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
-		{ 
+		{
 			// altitude filtering 
 			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100) {
 				continue;
 			}
 
-			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 ) {
+			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100) {
 				continue;
 			}
-			
+
 			// get the target's position on the screen and add it as a screen object
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 			RECT prect;
@@ -79,11 +79,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// if VFR
-			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(),"V") == 0
+			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
 				&& radarTarget.GetPosition().GetTransponderC() == TRUE
 				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
-				
-				COLORREF targetPenColor; 
+
+				COLORREF targetPenColor;
 				targetPenColor = RGB(242, 120, 57); // PPS orange color
 				HPEN targetPen;
 				HBRUSH targetBrush;
@@ -93,7 +93,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				dc.SelectObject(targetBrush);
 
 				// draw the shape
-				dc.Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6); 
+				dc.Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
 
 				dc.SelectObject(targetPen);
 				dc.MoveTo(p.x - 3, p.y - 2);
@@ -102,9 +102,68 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				DeleteObject(targetPen);
 				DeleteObject(targetBrush);
-			}			
+			}
 
 			// if ptl tag applied, draw it => not implemented
+
+			// if in the process of handing off, flash the PPS (to be added), CJS and display the frequency 
+			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0
+				&& radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()
+				) {
+				string handOffFreq = "-" + to_string(GetPlugIn()->ControllerSelectByPositionId(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId()).GetPrimaryFrequency()).substr(0,6);
+				string handOffCJS = radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId();
+
+				string handOffText = handOffCJS + handOffFreq;
+
+				CFont font;
+				LOGFONT lgfont;
+
+				memset(&lgfont, 0, sizeof(LOGFONT));
+				lgfont.lfWeight = 500;
+				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+				lgfont.lfHeight = 12;
+				font.CreateFontIndirect(&lgfont);
+
+				dc.SelectObject(font);
+				dc.SetTextColor(RGB(255, 255, 255));
+
+				RECT rectCJS;
+				rectCJS.left = p.x - 6;
+				rectCJS.right = p.x + 75;
+				rectCJS.top = p.y - 18;
+				rectCJS.bottom = p.y;
+
+				dc.DrawText(handOffText.c_str(), &rectCJS, DT_LEFT);
+
+				DeleteObject(font);
+			}
+			else {
+
+				// show CJS for controller tracking aircraft
+				string CJS = radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId();
+
+				CFont font;
+				LOGFONT lgfont;
+
+				memset(&lgfont, 0, sizeof(LOGFONT));
+				lgfont.lfWeight = 500;
+				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+				lgfont.lfHeight = 12;
+				font.CreateFontIndirect(&lgfont);
+
+				dc.SelectObject(font);
+				dc.SetTextColor(RGB(202, 205, 169));
+
+				RECT rectCJS;
+				rectCJS.left = p.x - 6 ;
+				rectCJS.right = p.x + 75;
+				rectCJS.top = p.y - 18;
+				rectCJS.bottom = p.y;
+
+				dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
+
+				DeleteObject(font);
+			}
 		}
 
 		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
