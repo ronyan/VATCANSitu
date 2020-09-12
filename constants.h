@@ -9,6 +9,7 @@ using namespace EuroScopePlugIn;
 // Tag Items
 const int TAG_ITEM_PLANE_HALO = 1;
 const int AIRCRAFT_SYMBOL = 200;
+const int AIRCRAFT_CJS = 400;
 
 const int BUTTON_MENU = 201;
 const int BUTTON_MENU_HALO_OPTIONS = 202;

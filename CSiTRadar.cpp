@@ -18,6 +18,7 @@
 
 CSiTRadar::CSiTRadar()
 {
+	halfSec = clock();
 }
 
 CSiTRadar::~CSiTRadar()
@@ -35,6 +36,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	RECT radarea = GetRadarArea();
 	
+	// time based functions
+	double time = ((double)clock() - (double)halfSec) / ((double)CLOCKS_PER_SEC);
+	if (time >= 0.5) {
+		halfSec = clock();
+		halfSecTick = !halfSecTick;
+	}
+
 	// set up the drawing renderer
 	CDC dc;
 	dc.Attach(hdc);
@@ -105,6 +113,26 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// if ptl tag applied, draw it => not implemented
+
+			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
+
+			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2) {
+					// blink the CJS
+					string callsign = radarTarget.GetCallsign();
+					isBlinking[callsign] = TRUE;
+
+					if (isBlinking.find(radarTarget.GetCallsign()) != isBlinking.end()
+						&& halfSecTick) {
+						continue; // skips CJS symbol drawing when blinked out
+					}
+				}
+			}
+			else {
+				string callsign = radarTarget.GetCallsign();
+
+				isBlinking.erase(callsign);
+			}
 
 			// if in the process of handing off, flash the PPS (to be added), CJS and display the frequency 
 			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0

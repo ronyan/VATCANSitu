@@ -98,7 +98,12 @@ protected:
     bool pressed = FALSE;
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions
 
+    clock_t halfSec;
+    bool halfSecTick; // toggles on and off every half second
+
     map<string, bool> hashalo;
+    map<string, bool> isBlinking;
+    map<string, bool> isHandOffHold;
 
     // menu functions
     RECT rLLim = { 0, 0, 10, 10 };
