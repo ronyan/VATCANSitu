@@ -86,6 +86,36 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				HaloTool::drawHalo(dc, p, halorad, pixnm);
 			}
 
+			// if squawking ident, PPS blinks white
+			if (radarTarget.GetPosition().GetTransponderI()
+				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+				COLORREF targetPenColor;
+				targetPenColor = RGB(255, 255, 255); // white when squawking ident
+				HPEN targetPen;
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape; blinks (only drawn on half second ticks)
+				if (halfSecTick) {
+					dc.SelectObject(targetPen);
+					dc.MoveTo(p.x - 3, p.y - 2);
+					dc.LineTo(p.x - 3, p.y + 1);
+					dc.LineTo(p.x, p.y + 4);
+					dc.LineTo(p.x + 3, p.y + 2);
+					dc.LineTo(p.x + 3, p.y - 2);
+					dc.LineTo(p.x , p.y - 4);
+					dc.LineTo(p.x - 3, p.y - 2);
+					dc.MoveTo(p.x - 3, p.y + 2);
+					dc.LineTo(p.x, p.y - 4);
+					dc.LineTo(p.x + 3, p.y + 2);
+					dc.LineTo(p.x - 3, p.y + 2);
+				}
+
+				// cleanup
+				DeleteObject(targetPen);
+			}
+
 			// if VFR
 			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
 				&& radarTarget.GetPosition().GetTransponderC() == TRUE
@@ -117,7 +147,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2) {
+				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2 
+					&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0) {
 					// blink the CJS
 					string callsign = radarTarget.GetCallsign();
 					isBlinking[callsign] = TRUE;
