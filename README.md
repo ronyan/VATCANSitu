@@ -4,11 +4,11 @@ OCT27 - Alt-filter branch, no binary
 
 Latest updates:
 
--RVSM aircraft will show with the diamond PPS symbology. 
--Primary targets will show in magenta.
--Squawk 7600 and 7700 will show a red triangle.
--Aircrafts identing will have their PPS flash instead of the unusual ES target.
--CJS will flash if aircraft are nearing your airspace border to remind you to hand-off (I believe an option on the real thing)
+- RVSM aircraft will show with the diamond PPS symbology. 
+- Primary targets will show in magenta.
+- Squawk 7600 and 7700 will show a red triangle.
+- Aircrafts identing will have their PPS flash instead of the unusual ES target.
+- CJS will flash if aircraft are nearing your airspace border to remind you to hand-off (I believe an option on the real thing)
 
 Altitude filter will be on by default.
 
