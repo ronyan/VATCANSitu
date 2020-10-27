@@ -116,6 +116,29 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				DeleteObject(targetPen);
 			}
 
+			// if primary target draw the symbol in magenta
+
+			if (radarTarget.GetPosition().GetRadarFlags() == 1) {
+				COLORREF targetPenColor;
+				targetPenColor = RGB(197, 38, 212); // magenta colour
+				HPEN targetPen;
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc.MoveTo(p.x, p.y + 4);
+				dc.LineTo(p.x, p.y);
+				dc.LineTo(p.x - 4, p.y - 4);
+				dc.MoveTo(p.x, p.y);
+				dc.LineTo(p.x + 4, p.y - 4);
+
+				// cleanup
+				DeleteObject(targetPen);
+
+			}
+
+
 			// if VFR
 			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
 				&& radarTarget.GetPosition().GetTransponderC() == TRUE

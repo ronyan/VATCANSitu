@@ -93,7 +93,7 @@ protected:
     bool halotool = FALSE;
     bool mousehalo = FALSE;
     bool altFilterOpts = FALSE;
-    bool altFilterOn = FALSE;
+    bool altFilterOn = TRUE;
 
     bool pressed = FALSE;
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions
