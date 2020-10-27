@@ -81,93 +81,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			prect.bottom = p.y + 5;
 			AddScreenObject(AIRCRAFT_SYMBOL, radarTarget.GetCallsign(), prect, FALSE, "");
 
-			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
-			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
-				HaloTool::drawHalo(dc, p, halorad, pixnm);
-			}
-
-			// if squawking ident, PPS blinks white
-			if (radarTarget.GetPosition().GetTransponderI()
-				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
-				COLORREF targetPenColor;
-				targetPenColor = RGB(255, 255, 255); // white when squawking ident
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape; blinks (only drawn on half second ticks)
-				if (halfSecTick) {
-					dc.SelectObject(targetPen);
-					dc.MoveTo(p.x - 3, p.y - 2);
-					dc.LineTo(p.x - 3, p.y + 1);
-					dc.LineTo(p.x, p.y + 4);
-					dc.LineTo(p.x + 3, p.y + 2);
-					dc.LineTo(p.x + 3, p.y - 2);
-					dc.LineTo(p.x , p.y - 4);
-					dc.LineTo(p.x - 3, p.y - 2);
-					dc.MoveTo(p.x - 3, p.y + 2);
-					dc.LineTo(p.x, p.y - 4);
-					dc.LineTo(p.x + 3, p.y + 2);
-					dc.LineTo(p.x - 3, p.y + 2);
-				}
-
-				// cleanup
-				DeleteObject(targetPen);
-			}
-
-			// if primary target draw the symbol in magenta
-
-			if (radarTarget.GetPosition().GetRadarFlags() == 1) {
-				COLORREF targetPenColor;
-				targetPenColor = RGB(197, 38, 212); // magenta colour
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape
-				dc.MoveTo(p.x, p.y + 4);
-				dc.LineTo(p.x, p.y);
-				dc.LineTo(p.x - 4, p.y - 4);
-				dc.MoveTo(p.x, p.y);
-				dc.LineTo(p.x + 4, p.y - 4);
-
-				// cleanup
-				DeleteObject(targetPen);
-
-			}
-
-
-			// if VFR
-			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
-				&& radarTarget.GetPosition().GetTransponderC() == TRUE
-				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
-
-				COLORREF targetPenColor;
-				targetPenColor = RGB(242, 120, 57); // PPS orange color
-				HPEN targetPen;
-				HBRUSH targetBrush;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				targetBrush = CreateSolidBrush(RGB(0, 0, 0));
-				dc.SelectObject(targetPen);
-				dc.SelectObject(targetBrush);
-
-				// draw the shape
-				dc.Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
-
-				dc.SelectObject(targetPen);
-				dc.MoveTo(p.x - 3, p.y - 2);
-				dc.LineTo(p.x + 1, p.y + 4);
-				dc.LineTo(p.x + 4, p.y - 2);
-
-				DeleteObject(targetPen);
-				DeleteObject(targetBrush);
-			}
-
-			// if ptl tag applied, draw it => not implemented
-
-			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
+						// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2 
@@ -246,6 +160,139 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				DeleteObject(font);
 			}
+
+			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
+			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
+				HaloTool::drawHalo(dc, p, halorad, pixnm);
+			}
+
+			// if squawking ident, PPS blinks -- skips drawing symbol every 0.5 seconds
+			if (radarTarget.GetPosition().GetTransponderI()
+				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+				
+				if (halfSecTick) {
+					continue;
+				}
+			}
+
+			// if primary target draw the symbol in magenta
+
+			if (radarTarget.GetPosition().GetRadarFlags() == 1) {
+				COLORREF targetPenColor;
+				targetPenColor = RGB(197, 38, 212); // magenta colour
+				HPEN targetPen;
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc.MoveTo(p.x, p.y + 4);
+				dc.LineTo(p.x, p.y);
+				dc.LineTo(p.x - 4, p.y - 4);
+				dc.MoveTo(p.x, p.y);
+				dc.LineTo(p.x + 4, p.y - 4);
+
+				// cleanup
+				DeleteObject(targetPen);
+
+			}
+
+			// if RVSM draw the RVSM diamond
+
+			string icaoACData = radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
+			regex isRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+			bool icaoRVSM = regex_search(icaoACData,isRVSM); 
+
+			if ((radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'L' || 
+				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'W' ||
+				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'Z' || // FAA RVSM
+				icaoRVSM) // ICAO equpmnet code indicates RVSM -- contains 'W'
+
+				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+
+				COLORREF targetPenColor;
+				targetPenColor = RGB(202, 205, 169); // amber colour
+				HPEN targetPen;
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc.MoveTo(p.x, p.y - 5);
+				dc.LineTo(p.x + 5, p.y);
+				dc.LineTo(p.x, p.y + 5);
+				dc.LineTo(p.x - 5, p.y);
+				dc.LineTo(p.x, p.y - 5);
+
+				// if primary and secondary target, draw the middle line
+				if (radarTarget.GetPosition().GetRadarFlags() == 3) {
+					dc.MoveTo(p.x, p.y - 5);
+					dc.LineTo(p.x, p.y + 5);
+				}
+
+				DeleteObject(targetPen);
+			}
+			else {
+
+				if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "I") == 0 
+					&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+					COLORREF targetPenColor;
+					targetPenColor = RGB(202, 205, 169); // white when squawking ident
+					HPEN targetPen;
+					targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+					dc.SelectObject(targetPen);
+					dc.SelectStockObject(NULL_BRUSH);
+
+					dc.SelectObject(targetPen);
+
+					// Hexagon for secondary
+					dc.MoveTo(p.x - 4, p.y - 2);
+					dc.LineTo(p.x - 4, p.y + 2);
+					dc.LineTo(p.x, p.y + 5);
+					dc.LineTo(p.x + 4, p.y + 2);
+					dc.LineTo(p.x + 4, p.y - 2);
+					dc.LineTo(p.x, p.y - 5);
+					dc.LineTo(p.x - 4, p.y - 2);
+
+					// Triangle for primary
+					if (radarTarget.GetPosition().GetRadarFlags() == 3) {
+						dc.MoveTo(p.x - 4, p.y + 2);
+						dc.LineTo(p.x, p.y - 4);
+						dc.LineTo(p.x + 4, p.y + 2);
+						dc.LineTo(p.x - 4, p.y + 2);
+					}
+
+					// cleanup
+					DeleteObject(targetPen);
+				}
+			}
+
+			
+			// if VFR
+			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
+				&& radarTarget.GetPosition().GetTransponderC() == TRUE
+				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+
+				COLORREF targetPenColor;
+				targetPenColor = RGB(242, 120, 57); // PPS orange color
+				HPEN targetPen;
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc.Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
+
+				dc.SelectObject(targetPen);
+				dc.MoveTo(p.x - 3, p.y - 2);
+				dc.LineTo(p.x + 1, p.y + 4);
+				dc.LineTo(p.x + 4, p.y - 2);
+
+				DeleteObject(targetPen);
+			}
+			
+			// if ptl tag applied, draw it => not implemented
+
 		}
 
 		// Draw the CSiT Tools Menu; starts at rad area top left then moves right

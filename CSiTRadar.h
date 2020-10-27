@@ -5,6 +5,7 @@
 #include <map>
 #include <iostream>
 #include <array>
+#include <regex>
 #include "pch.h"
 
 using namespace EuroScopePlugIn;
