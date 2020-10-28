@@ -199,6 +199,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SituPlugin.cpp" />
+    <ClCompile Include="tagRender.cpp" />
     <ClCompile Include="TopMenu.cpp" />
     <ClCompile Include="VATCANSitu.cpp" />
   </ItemGroup>
@@ -216,6 +217,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SituPlugin.h" />
+    <ClInclude Include="tagRender.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TopMenu.h" />
     <ClInclude Include="VATCANSitu.h" />

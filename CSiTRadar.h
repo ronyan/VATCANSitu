@@ -5,6 +5,7 @@
 #include <map>
 #include <iostream>
 #include <array>
+#include <regex>
 #include "pch.h"
 
 using namespace EuroScopePlugIn;
@@ -19,6 +20,9 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
+    virtual void OnAsrContentLoaded(bool Loaded);
+    void OnAsrContentToBeSaved();
+
     static void RegisterButton(RECT rect) {
 
     };
@@ -30,6 +34,8 @@ public:
         POINT Pt,
         RECT Area,
         int Button);
+
+    void OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area);
 
     double RadRange(void)
     {
@@ -82,18 +88,34 @@ public:
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
-    void OnAsrContentLoaded();
-    
+    // helper functions
+
+    // menu states
     bool halotool = FALSE;
     bool mousehalo = FALSE;
+    bool altFilterOpts = FALSE;
+    bool altFilterOn = TRUE;
+
     bool pressed = FALSE;
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions
 
+    clock_t halfSec;
+    bool halfSecTick; // toggles on and off every half second
+
     map<string, bool> hashalo;
+    map<string, bool> isBlinking;
+    map<string, bool> isHandOffHold;
+
+    // menu functions
+    RECT rLLim = { 0, 0, 10, 10 };
+    RECT rHLim = { 0, 0, 10, 10 };
+
+    // menu settings
+    int altFilterLow = 0;
+    int altFilterHigh = 0; 
+
     double halorad = 3;
     string halooptions[9] = { "0.5", "3", "5", "10", "15", "20", "30", "60", "80" };
-    int above; 
-    int below;
     string controllerID;
     string radtype;
 };
