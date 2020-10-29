@@ -28,6 +28,14 @@ const int FUNCTION_ALT_FILT_LOW = 301;
 const int FUNCTION_ALT_FILT_HIGH = 302;
 const int FUNCTION_ALT_FILT_SAVE = 303;
 
+// Radar Background
+const int SCREEN_BACKGROUND = 501;
+
+const int ADD_FREE_TEXT = 1101;
+const int DELETE_FREE_TEXT = 1102;
+const int DELETE_ALL_FREE_TEXT = 1103;
+
+
 // Module 2 : distances relative to module origin
 const int HALO_TOOL_X = 0;
 const int HALO_TOOL_Y = 0;

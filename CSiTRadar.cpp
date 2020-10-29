@@ -72,6 +72,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				continue;
 			}
 
+			// aircraft equipment parsing
+			string icaoACData = radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
+			regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+			bool isRVSM = regex_search(icaoACData, icaoRVSM);
+			regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
+			bool isADSB = regex_search(icaoACData, icaoADSB);
+
 			// get the target's position on the screen and add it as a screen object
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 			RECT prect;
@@ -81,7 +88,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			prect.bottom = p.y + 5;
 			AddScreenObject(AIRCRAFT_SYMBOL, radarTarget.GetCallsign(), prect, FALSE, "");
 
-						// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
+			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2 
@@ -89,11 +96,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					// blink the CJS
 					string callsign = radarTarget.GetCallsign();
 					isBlinking[callsign] = TRUE;
-
-					if (isBlinking.find(radarTarget.GetCallsign()) != isBlinking.end()
-						&& halfSecTick) {
-						continue; // skips CJS symbol drawing when blinked out
-					}
 				}
 			}
 			else {
@@ -120,8 +122,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				lgfont.lfHeight = 12;
 				font.CreateFontIndirect(&lgfont);
 
-				dc.SelectObject(font);
 				dc.SetTextColor(RGB(255, 255, 255));
+
+				dc.SelectObject(font);
+				if (isBlinking.find(radarTarget.GetCallsign()) != isBlinking.end()
+					&& halfSecTick) {
+					handOffText=""; // blank CJS symbol drawing when blinked out
+				}
 
 				RECT rectCJS;
 				rectCJS.left = p.x - 6;
@@ -175,6 +182,34 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 
+			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
+
+			if (radarTarget.GetPosition().GetRadarFlags() == 0) { // need to add ADSB equipment logic
+
+				COLORREF targetPenColor;
+				targetPenColor = RGB(202, 205, 169); // amber colour
+				HPEN targetPen;
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc.MoveTo(p.x - 5, p.y - 5);
+				dc.LineTo(p.x + 5, p.y -5);
+				dc.LineTo(p.x + 5, p.y + 5);
+				dc.LineTo(p.x - 5, p.y + 5);
+				dc.LineTo(p.x - 5, p.y - 5);
+
+				// if primary and secondary target, draw the middle line
+				if (isRVSM) {
+					dc.MoveTo(p.x, p.y - 5);
+					dc.LineTo(p.x, p.y + 5);
+				}
+
+				// cleanup
+				DeleteObject(targetPen);
+			}
+
 			// if primary target draw the symbol in magenta
 
 			if (radarTarget.GetPosition().GetRadarFlags() == 1) {
@@ -199,16 +234,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// if RVSM draw the RVSM diamond
 
-			string icaoACData = radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
-			regex isRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-			bool icaoRVSM = regex_search(icaoACData,isRVSM); 
-
 			if ((radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'L' || 
 				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'W' ||
 				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'Z' || // FAA RVSM
-				icaoRVSM) // ICAO equpmnet code indicates RVSM -- contains 'W'
+				isRVSM) // ICAO equpmnet code indicates RVSM -- contains 'W'
 
-				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+				&& radarTarget.GetPosition().GetRadarFlags() != 0 && 
+				radarTarget.GetPosition().GetRadarFlags() != 1) {
 
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
@@ -235,7 +267,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			else {
 
 				if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "I") == 0 
-					&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+					&& radarTarget.GetPosition().GetRadarFlags() != 0
+					&& radarTarget.GetPosition().GetRadarFlags() != 1) {
 					COLORREF targetPenColor;
 					targetPenColor = RGB(202, 205, 169); // white when squawking ident
 					HPEN targetPen;
@@ -271,7 +304,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// if VFR
 			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
 				&& radarTarget.GetPosition().GetTransponderC() == TRUE
-				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
+				&& radarTarget.GetPosition().GetRadarFlags() != 0
+				&& radarTarget.GetPosition().GetRadarFlags() != 1) {
 
 				COLORREF targetPenColor;
 				targetPenColor = RGB(242, 120, 57); // PPS orange color
@@ -531,6 +565,26 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
 		altFilterOn = !altFilterOn;
 	}
+
+	
+	
+	if (Button == BUTTON_MIDDLE) {
+		// open Free Text menu
+
+		RECT freeTextPopUp;
+		freeTextPopUp.left = Pt.x;
+		freeTextPopUp.top = Pt.y;
+		freeTextPopUp.right = Pt.x + 20;
+		freeTextPopUp.bottom = Pt.y + 10;
+
+		GetPlugIn()->OpenPopupList(freeTextPopUp, "Free Text", 1);
+
+		GetPlugIn()->AddPopupListElement("ADD FREE TEXT", "", ADD_FREE_TEXT);
+		GetPlugIn()->AddPopupListElement("DELETE", "", DELETE_FREE_TEXT, FALSE, POPUP_ELEMENT_NO_CHECKBOX, true, false);
+		GetPlugIn()->AddPopupListElement("DELETE ALL", "", DELETE_ALL_FREE_TEXT);
+
+	}
+
 
 }
 
