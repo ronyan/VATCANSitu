@@ -35,7 +35,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	RECT radarea = GetRadarArea();
-	AddScreenObject(SCREEN_BACKGROUND, "", radarea, false, "");
 	
 	// time based functions
 	double time = ((double)clock() - (double)halfSec) / ((double)CLOCKS_PER_SEC);
@@ -567,13 +566,25 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		altFilterOn = !altFilterOn;
 	}
 
-	if (ObjectType == SCREEN_BACKGROUND) {
-		if (Button == BUTTON_MIDDLE) {
-			// open Free Text menu
+	
+	
+	if (Button == BUTTON_MIDDLE) {
+		// open Free Text menu
 
+		RECT freeTextPopUp;
+		freeTextPopUp.left = Pt.x;
+		freeTextPopUp.top = Pt.y;
+		freeTextPopUp.right = Pt.x + 20;
+		freeTextPopUp.bottom = Pt.y + 10;
 
-		}
+		GetPlugIn()->OpenPopupList(freeTextPopUp, "Free Text", 1);
+
+		GetPlugIn()->AddPopupListElement("ADD FREE TEXT", "", ADD_FREE_TEXT);
+		GetPlugIn()->AddPopupListElement("DELETE", "", DELETE_FREE_TEXT, FALSE, POPUP_ELEMENT_NO_CHECKBOX, true, false);
+		GetPlugIn()->AddPopupListElement("DELETE ALL", "", DELETE_ALL_FREE_TEXT);
+
 	}
+
 
 }
 
