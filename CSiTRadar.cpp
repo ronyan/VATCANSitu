@@ -188,10 +188,36 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 
+			// Draw red triangle for emergency aircraft
+
+			if (strcmp(radarTarget.GetPosition().GetSquawk(), "7600") ||
+				strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) {
+
+				COLORREF targetPenColor;
+				targetPenColor = RGB(209, 39, 27); // Red
+				HPEN targetPen;
+				HBRUSH targetBrush;
+				targetBrush = CreateSolidBrush(RGB(209, 39, 27));
+				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+
+				dc.SelectObject(targetPen);
+				dc.SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+
+				POINT vertices[] = { { p.x - 2, p.y + 2 } , { p.x, p.y - 2 } , { p.x + 2,p.y + 2 } };
+				dc.Polygon(vertices, 3);
+
+				DeleteObject(targetBrush);
+				DeleteObject(targetPen);
+
+				continue;
+			}
+
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 
 			if (radarTarget.GetPosition().GetRadarFlags() == 0
-				&& isADSB) { // need to add ADSB equipment logic
+				&& isADSB) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
 
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
@@ -331,9 +357,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				DeleteObject(targetPen);
 			}
-			
-			// if ptl tag applied, draw it => not implemented
 
+			// if ptl tag applied, draw it => not implemented
 
 		}
 
