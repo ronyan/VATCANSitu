@@ -16,6 +16,9 @@
 #include "GndRadar.h"
 #include <chrono>
 
+using namespace Gdiplus;
+
+
 CSiTRadar::CSiTRadar()
 {
 	halfSec = clock();
@@ -27,6 +30,7 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+
 	// get cursor position and screen info
 	POINT p;
 
@@ -46,6 +50,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	// set up the drawing renderer
 	CDC dc;
 	dc.Attach(hdc);
+
+	Graphics g(hdc);
 
 	int pixnm = PixelsPerNM();
 
@@ -184,7 +190,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 
-			if (radarTarget.GetPosition().GetRadarFlags() == 0) { // need to add ADSB equipment logic
+			if (radarTarget.GetPosition().GetRadarFlags() == 0
+				&& isADSB) { // need to add ADSB equipment logic
 
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
@@ -327,7 +334,67 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			
 			// if ptl tag applied, draw it => not implemented
 
+
 		}
+
+		// Flight plan loop. Goes through flight plans, and if not correlated will display
+		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
+			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
+			
+			// if the flightplan does not have a correlated radar target
+			if (!flightPlan.GetCorrelatedRadarTarget().IsValid()
+				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
+
+				// convert the predicted position to a point on the screen
+				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
+
+				// draw the orange airplane symbol (credits andrewogden1678)
+				GraphicsContainer gCont;
+				gCont =  g.BeginContainer();
+
+				// Airplane icon 
+
+				Point points[19] = {
+					Point(0,-6),
+					Point(-1,-5),
+					Point(-1,-2),
+					Point(-8,3),
+					Point(-8,4),
+					Point(-1,2),
+					Point(-1,6),
+					Point(-4,8),
+					Point(-4,9),
+					Point(0,8),
+					Point(4,9),
+					Point(4,8),
+					Point(1,6),
+					Point(1,2),
+					Point(8,4),
+					Point(8,3),
+					Point(1,-2),
+					Point(1,-5),
+					Point(0,-6)
+				};
+
+				g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
+				g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
+
+				// Fill the shape
+
+				SolidBrush orangeBrush(Color(255, 242, 120, 57));
+				COLORREF targetPenColor;
+				targetPenColor = RGB(242, 120, 57); // PPS orange color
+
+				g.FillPolygon(&orangeBrush, points, 19);
+				g.EndContainer(gCont);
+
+				DeleteObject(&orangeBrush);
+
+				
+			}
+
+		}
+
 
 		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
 		// this point moves to the origin of each subsequent area
@@ -501,7 +568,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 */
 	}
-
+	g.ReleaseHDC(hdc);
 	dc.Detach();
 }
 

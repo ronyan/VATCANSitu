@@ -6,6 +6,12 @@
 #include "VATCANSitu.h"
 #include "SituPlugin.h"
 #include "EuroScopePlugIn.h"
+#include <gdiplus.h>
+
+using namespace Gdiplus;
+
+// GDI+ initialization
+ULONG_PTR m_gdiplusToken = 0;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -42,6 +48,11 @@ SituPlugin* gpMyPlugIn = NULL;
 
 void __declspec (dllexport) EuroScopePlugInInit(EuroScopePlugIn::CPlugIn** ppPlugInInstance)
 {
+	
+	// Initialize GDI+
+	GdiplusStartupInput gdiplusStartupInput;
+	GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, nullptr);
+	
 	*ppPlugInInstance = gpMyPlugIn = new SituPlugin();
 }
 

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <array>
 #include <regex>
+#include <gdiplus.h>
 #include "pch.h"
 
 using namespace EuroScopePlugIn;
