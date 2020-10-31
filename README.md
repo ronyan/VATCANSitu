@@ -1,21 +1,18 @@
 # VATCANSitu
 
-OCT27 - Alt-filter branch, no binary
-
-Latest updates:
+Latest Version 0.2.4.5a
 
 - RVSM aircraft will show with the diamond PPS symbology. 
 - Primary targets will show in magenta.
 - Squawk 7600 and 7700 will show a red triangle.
 - Aircrafts identing will have their PPS flash instead of the unusual ES target.
 - CJS will flash if aircraft are nearing your airspace border to remind you to hand-off (I believe an option on the real thing)
+- FP predicted tracks show with the appropriate orange airplane symbol.
+- Altitude filter will be on by default.
 
-Altitude filter will be on by default.
+Disable the default ES symbology for correlated targets in the symbology settings by replacing with the line "MOVETO 0 0"
 
-Disable the default ES symbology in the symbology settings by replacing with the line "MOVETO 0 0"
-
-
-Latest version 0.2.3
+version 0.2.3
 - Added altitude filter settings, and altitude filter toggle. Only works for tags draw for by the plugin (i.e. the VFR tags) since there is no way to hook directly into the ES default filters. Saves settings to sector files. 
 
 version 0.2.1: AUG3
@@ -41,6 +38,12 @@ https://vimeo.com/443838489
 3. Mouse halo tool to aid with separation. (please see known issues)
 4. Range displayed in menu per the real scope
 5. CJS button shows your logged in position
+6. RVSM aircraft will show with the diamond PPS symbology. 
+7. Primary targets will show in magenta.
+8. Squawk 7600 and 7700 will show a red triangle.
+9. Aircrafts identing will have their PPS flash instead of the unusual ES target.
+10. CJS will flash if aircraft are nearing your airspace border to remind you to hand-off (I believe an option on the real thing)
+11. FP predicted tracks show with the appropriate orange airplane symbol.
 
 Not implemented for now: There are some sham buttons just to replicate the UI (also I don't know what some of them do in the real system). The PTL and RBL default ES tools work well, unlikely will be a priority.
 
