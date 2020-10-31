@@ -190,8 +190,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// Draw red triangle for emergency aircraft
 
-			if (strcmp(radarTarget.GetPosition().GetSquawk(), "7600") ||
-				strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) {
+			if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") ||
+				!strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) {
 
 				COLORREF targetPenColor;
 				targetPenColor = RGB(209, 39, 27); // Red
@@ -201,11 +201,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
 
 				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
+				dc.SelectObject(targetBrush);
 
 				// draw the shape
 
-				POINT vertices[] = { { p.x - 2, p.y + 2 } , { p.x, p.y - 2 } , { p.x + 2,p.y + 2 } };
+				POINT vertices[] = { { p.x - 3, p.y + 3 } , { p.x, p.y - 3 } , { p.x + 3,p.y + 3 } };
 				dc.Polygon(vertices, 3);
 
 				DeleteObject(targetBrush);
