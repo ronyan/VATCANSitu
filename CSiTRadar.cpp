@@ -14,7 +14,9 @@
 #include "TopMenu.h"
 #include "SituPlugin.h"
 #include "GndRadar.h"
+#include "ACTag.h"
 #include <chrono>
+
 
 using namespace Gdiplus;
 
@@ -79,11 +81,20 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// aircraft equipment parsing
-			string icaoACData = radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
+			string icaoACData = GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetAircraftInfo(); // logic to 
 			regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-			bool isRVSM = regex_search(icaoACData, icaoRVSM);
+			bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FA
+			if (GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetCapibilities() == 'L' ||
+				GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetCapibilities() == 'W' ||
+				GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetCapibilities() == 'Z')
+			{
+				isRVSM = TRUE;
+			}
 			regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
 			bool isADSB = regex_search(icaoACData, icaoADSB);
+
+			// is the target correlated?
+			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
 
 			// get the target's position on the screen and add it as a screen object
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
@@ -216,9 +227,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 
-			if (radarTarget.GetPosition().GetRadarFlags() == 0
-				&& isADSB) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
+			if (radarTarget.GetPosition().GetRadarFlags() == 0) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
 
+				CACTag::DrawACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan());
+				
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
 				HPEN targetPen;
@@ -267,13 +279,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// if RVSM draw the RVSM diamond
 
-			if ((radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'L' || 
-				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'W' ||
-				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'Z' || // FAA RVSM
-				isRVSM) // ICAO equpmnet code indicates RVSM -- contains 'W'
-
-				&& radarTarget.GetPosition().GetRadarFlags() != 0 && 
-				radarTarget.GetPosition().GetRadarFlags() != 1) {
+			if (isRVSM
+				&& radarTarget.GetPosition().GetRadarFlags() != 0 
+				&& radarTarget.GetPosition().GetRadarFlags() != 1
+				&& isCorrelated) {
 
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
@@ -369,6 +378,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// if the flightplan does not have a correlated radar target
 			if (!flightPlan.GetCorrelatedRadarTarget().IsValid()
 				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
+
+				CACTag::DrawACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan);
 
 				// convert the predicted position to a point on the screen
 				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());

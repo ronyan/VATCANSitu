@@ -189,6 +189,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ACTag.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
     <ClCompile Include="GndRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
@@ -208,6 +209,7 @@
     <None Include="VATCANSitu.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ACTag.h" />
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GndRadar.h" />
