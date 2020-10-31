@@ -6,6 +6,9 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
+// Math
+const double PI = 3.14159;
+
 // Tag Items
 const int TAG_ITEM_PLANE_HALO = 1;
 const int AIRCRAFT_SYMBOL = 200;

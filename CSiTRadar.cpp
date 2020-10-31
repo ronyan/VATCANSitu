@@ -230,6 +230,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (radarTarget.GetPosition().GetRadarFlags() == 0) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
 
 				CACTag::DrawACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan());
+				CACTag::DrawConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan());
 				
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
@@ -380,6 +381,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
 
 				CACTag::DrawACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan);
+				CACTag::DrawConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan);
 
 				// convert the predicted position to a point on the screen
 				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());

@@ -21,7 +21,7 @@ protected:
 public:
 
     static void DrawACTag(CDC* hdc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp);
-    static void DrawConnector(HDC hdc);
+    static void DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp);
 
 };
 

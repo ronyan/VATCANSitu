@@ -5,7 +5,7 @@ using namespace EuroScopePlugIn;
 
 void CACTag::DrawACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp) {
 
-	POINT p;
+	POINT p{0,0};
 	// Get aircraft information
 
 	string icaoACData = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
@@ -37,21 +37,15 @@ void CACTag::DrawACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan
 	// Tag formatting
 	RECT tagCallsign;
 	tagCallsign.left = p.x + 20;
-	tagCallsign.right = p.x + 90;
-	tagCallsign.top = p.y - 20;
-	tagCallsign.bottom = p.y;
+	tagCallsign.top = p.y -20;
 
 	RECT tagAltitude;
 	tagAltitude.left = p.x + 20;
-	tagAltitude.right = p.x + 90;
 	tagAltitude.top = p.y - 9;
-	tagAltitude.bottom = p.y + 20;
 	
 	RECT tagGS;
 	tagGS.left = p.x + 50;
-	tagGS.right = p.x + 90;
 	tagGS.top = p.y - 9;
-	tagGS.bottom = p.y + 20;
 	
 
 	if (rt->IsValid()) {
@@ -61,9 +55,11 @@ void CACTag::DrawACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan
 		// Handle tag drawing for ADSB aircraft
 
 		if (rt->GetPosition().GetRadarFlags() == 0) { // If no radar returns and has ADSB equipment
+			dc->DrawText(rt->GetCallsign(), &tagCallsign, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(rt->GetCallsign(), &tagCallsign, DT_LEFT);
 			string altThreeDigit = to_string(rt->GetPosition().GetFlightLevel() / 100);
 			altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0');
+			dc->DrawText(altThreeDigit.c_str(), &tagAltitude, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(altThreeDigit.c_str(), &tagAltitude, DT_LEFT);
 			dc->DrawText(to_string(rt->GetPosition().GetReportedGS()/10).c_str(), &tagGS, DT_LEFT);
 		}
@@ -83,8 +79,10 @@ void CACTag::DrawACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan
 
 			// Draw the text for the tag
 			
+			dc->DrawText(fp->GetCallsign(), &tagCallsign, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(fp->GetCallsign(), &tagCallsign, DT_LEFT);
-			dc->DrawText(to_string(fp->GetFinalAltitude()/100).c_str(), &tagAltitude, DT_LEFT);
+			dc->DrawText(to_string(fp->GetFinalAltitude()/100).c_str(), &tagAltitude, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(to_string(fp->GetFinalAltitude() / 100).c_str(), &tagAltitude, DT_LEFT);
 		}
 	}
 
@@ -96,6 +94,46 @@ void CACTag::DrawACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan
 	DeleteObject(font);
 }
 
-static void DrawConnector(HDC hdc) {
+void CACTag::DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp)
+{
+	
+	// save context
+	int sDC = dc->SaveDC();
 
+	POINT p{ 0,0 };
+
+	if (rt->IsValid()) {
+		p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
+	}
+	else {
+		if (fp->IsValid()) {
+			p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
+		}
+	}
+
+	double theta = 60 * PI / 180; // default will add variable angle logic
+
+	int doglegX = 0;
+	int doglegY = 0;
+	doglegY = p.y - 15; // will equal the tag offset value once that is implemented
+
+	// Calculate the x position of the intersection point
+	doglegX = (int)(p.x + ((double)(p.y) - (p.y - 15)) / tan(theta));
+
+	// Draw the angled line and draw the horizontal line
+	COLORREF targetPenColor;
+	targetPenColor = RGB(242, 120, 57); // amber colour
+	HPEN targetPen;
+	targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+	dc->SelectObject(targetPen);
+	dc->SelectStockObject(NULL_BRUSH);
+
+	dc->MoveTo(p.x, p.y);
+	dc->LineTo((int)doglegX, (int)doglegY);
+	dc->LineTo((int)p.x + 18, (int)p.y - 15);
+
+	DeleteObject(targetPen);
+
+	// restore
+	dc->RestoreDC(sDC);
 }
