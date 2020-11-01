@@ -732,6 +732,10 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
 		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
 
+		// nudge tag if necessary (near horizontal, or if directly above target)
+		if (q.x > -((TAG_WIDTH) / 2) && q.x < 0) { q.x = 3; };
+		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
+
 		tagOffset[sObjectId] = q;
 		
 		if (!Released) {

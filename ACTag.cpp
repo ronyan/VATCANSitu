@@ -123,6 +123,7 @@ void CACTag::DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlight
 	int sDC = dc->SaveDC();
 
 	POINT p{ 0,0 };
+	POINT connector{ 0,0 };
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
@@ -132,14 +133,19 @@ void CACTag::DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlight
 	tagOffsetX = pTag.x;
 	tagOffsetY = pTag.y;
 
-	if (rt->IsValid()) {
-		p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
+	if (fp->IsValid()) {
+		p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
 	}
 	else {
-		if (fp->IsValid()) {
-			p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
+		if (rt->IsValid()) {
+			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 		}
 	}
+
+	// determine if the tag is to the left or the right of the PPS
+
+	if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
+	if (pTag.x < 0) { connector.x = (int)p.x + tagOffsetX - 3 + TAG_WIDTH; }
 
 	double theta = 60 * PI / 180; // default will add variable angle logic
 
@@ -157,8 +163,8 @@ void CACTag::DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlight
 	dc->SelectStockObject(NULL_BRUSH);
 
 	dc->MoveTo(p.x, p.y);
-	dc->LineTo((int)doglegX, (int)doglegY);
-	dc->LineTo((int)p.x + tagOffsetX - 3, (int)p.y + tagOffsetY + 7);
+	dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
+	dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
 
 	DeleteObject(targetPen);
 
