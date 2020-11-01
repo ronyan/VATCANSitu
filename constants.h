@@ -17,7 +17,7 @@ const COLORREF C_PPS_RED = RGB(209, 39, 27);
 const double PI = 3.14159;
 
 // Tag Settings
-const int TAG_MAX_X_OFFSET = 30;
+const int TAG_MAX_X_OFFSET = 45;
 const int TAG_MAX_Y_OFFSET = 30;
 const int TAG_WIDTH = 50;
 const int TAG_HEIGHT = 25;

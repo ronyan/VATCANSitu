@@ -227,7 +227,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 
-			if (radarTarget.GetPosition().GetRadarFlags() == 0) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
+			if (radarTarget.GetPosition().GetRadarFlags() == 0 
+				&& isADSB) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
 
 				CACTag::DrawACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
 				CACTag::DrawConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);

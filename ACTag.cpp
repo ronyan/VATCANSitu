@@ -146,15 +146,45 @@ void CACTag::DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlight
 
 	if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
 	if (pTag.x < 0) { connector.x = (int)p.x + tagOffsetX - 3 + TAG_WIDTH; }
+	connector.y = p.y + tagOffsetY + 7;
 
-	double theta = 60 * PI / 180; // default will add variable angle logic
+	// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
+	// get the angle between the line between the PPS and connector and horizontal
+
+	// if vertical (don't divide by 0!)
+	double theta = 30;
+	double phi = 0;
 
 	int doglegX = 0;
 	int doglegY = 0;
-	doglegY = p.y + tagOffsetY + 7; // will equal the tag offset value once that is implemented
 
-	// Calculate the x position of the intersection point
-	doglegX = (int)(p.x + ((double)(p.y) - ((double)p.y - 15)) / tan(theta));
+	if (connector.x - p.x != 0) {
+		
+		double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
+		double y = abs(p.y - connector.y); // also cast as double for atan
+
+		phi = atan(y/x); 
+	
+		// logic for if phi is a certain value; unit circle! (with fudge factor)
+		if (phi >= 0 && phi < PI/6 ) { theta = 30; }
+		else if(phi >= PI / 6 && phi < PI / 4) { theta = 45; }
+		else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
+
+		theta = theta * PI / 180; // to radians
+		doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
+
+		// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
+		doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
+
+		if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
+		if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } 
+		if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
+		if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
+	}
+	else {
+		doglegX = p.x; // if direction on top or below
+		doglegY = p.y + tagOffsetY + 7;
+	}
 
 	// Draw the angled line and draw the horizontal line
 	HPEN targetPen;
@@ -171,3 +201,32 @@ void CACTag::DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlight
 	// restore
 	dc->RestoreDC(sDC);
 }
+
+/* DEBUG CODE
+
+	//debug
+
+	CFont font;
+	LOGFONT lgfont;
+	memset(&lgfont, 0, sizeof(LOGFONT));
+	lgfont.lfHeight = 14;
+	lgfont.lfWeight = 500;
+	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+	font.CreateFontIndirect(&lgfont);
+	dc->SelectObject(font);
+
+	RECT debug;
+	debug.top = 250;
+	debug.left = 250;
+	dc->DrawText(to_string(connector.y).c_str(), &debug, DT_LEFT);
+	debug.top += 10;
+	dc->DrawText(to_string(p.y).c_str(), &debug, DT_LEFT);
+	debug.top += 10;
+	dc->DrawText(to_string(connector.x).c_str(), &debug, DT_LEFT);
+	debug.top += 10;
+	dc->DrawText(to_string(phi).c_str(), &debug, DT_LEFT);
+	DeleteObject(font);
+
+	//debug
+
+*/
