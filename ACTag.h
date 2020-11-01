@@ -4,6 +4,7 @@
 #include "CSiTRadar.h"
 #include "SituPlugin.h"
 
+using namespace std;
 
 class CACTag :
 
@@ -11,17 +12,12 @@ class CACTag :
 {
 protected:
 
-    // Generate grid
-	int gridX;
-	int gridY;
-	int gridSpacing;
     POINT p;
-
 
 public:
 
-    static void DrawACTag(CDC* hdc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp);
-    static void DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp);
+    static void DrawACTag(CDC* hdc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, map<string, POINT>* tOffset);
+    static void DrawConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, map<string, POINT>* tOffset);
 
 };
 

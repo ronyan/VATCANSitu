@@ -38,6 +38,12 @@ public:
         RECT Area,
         int Button);
 
+    void CSiTRadar::OnMoveScreenObject(int ObjectType, 
+        const char* sObjectId, 
+        POINT Pt, 
+        RECT Area, 
+        bool Released);
+
     void OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area);
 
     double RadRange(void)
@@ -108,6 +114,10 @@ protected:
     map<string, bool> hashalo;
     map<string, bool> isBlinking;
     map<string, bool> isHandOffHold;
+
+    // Tag Properties
+    map<string, POINT> tagOffset; // the centre of the aircraft tag
+    map<string, POINT> connectorOrigin; // the Tag end of the connector, this flips from right side to left side
 
     // menu functions
     RECT rLLim = { 0, 0, 10, 10 };
