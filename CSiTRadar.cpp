@@ -232,8 +232,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				// needs to be refactored
 
-				CACTag::DrawFPACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
-				CACTag::DrawFPConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
 				
 				COLORREF targetPenColor;
 				targetPenColor = RGB(202, 205, 169); // amber colour
@@ -712,17 +712,45 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 	POINT p{ 0,0 };
 
-	if (fp.IsValid()) {
-		p = ConvertCoordFromPositionToPixel(fp.GetFPTrackPosition().GetPosition());
-	}
-	else {
-		if (rt.IsValid()) {
-			p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+	if (ObjectType == TAG_ITEM_FP_CS) {
+		
+		if (fp.IsValid()) {
+			p = ConvertCoordFromPositionToPixel(fp.GetFPTrackPosition().GetPosition());
+		}
+
+		RECT temp = Area;
+
+		POINT q;
+		q.x = ((temp.right + temp.left) / 2) - p.x - 17; // Get centre of box 
+		q.y = ((temp.top + temp.bottom) / 2) - p.y - 7;	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
+
+		// check maximal offset
+		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
+		if (q.x < -TAG_MAX_X_OFFSET - TAG_WIDTH) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
+		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
+		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
+
+		// nudge tag if necessary (near horizontal, or if directly above target)
+		if (q.x > -((TAG_WIDTH) / 2) && q.x < 0) { q.x = 3; };
+		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
+		if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
+
+		tagOffset[sObjectId] = q;
+		
+		if (!Released) {
+
+		}
+		else {
+			// once released, check that the tag does not exceed the limits, and then save it to the map
 		}
 	}
 
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN) {
-		
+
+		if (rt.IsValid()) {
+			p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+		}
+
 		RECT temp = Area;
 
 		POINT q;
@@ -740,14 +768,12 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
 
 		tagOffset[sObjectId] = q;
-		
+
 		if (!Released) {
 
 		}
 		else {
 			// once released, check that the tag does not exceed the limits, and then save it to the map
-
-
 		}
 	}
 
