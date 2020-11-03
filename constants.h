@@ -28,7 +28,8 @@ const int AIRCRAFT_SYMBOL = 200;
 const int AIRCRAFT_CJS = 400;
 
 const int TAG_ITEM_FP_CS = 401;
-const int TAG_ALT = 402;
+const int TAG_ITEM_FP_FINAL_ALTITUDE = 402;
+const int TAG_ALT = 403;
 
 const int BUTTON_MENU = 201;
 const int BUTTON_MENU_HALO_OPTIONS = 202;

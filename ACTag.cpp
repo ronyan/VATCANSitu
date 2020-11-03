@@ -72,18 +72,26 @@ void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->SetTextColor(C_PPS_ORANGE); // FP Track in orange colour
 
 		POINT p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
+		
+		// Parse the CS and Wt Symbol
+		string cs = fp->GetCallsign();
+		string wtSymbol = "";
+		if (fp->GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
+		if (fp->GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
+		cs = cs + wtSymbol;
 
-		fp->GetCallsign();
 		fp->GetClearedAltitude();
 
 		// Draw the text for the tag
 			
-		dc->DrawText(fp->GetCallsign(), &tagCallsign, DT_LEFT | DT_CALCRECT);
-		dc->DrawText(fp->GetCallsign(), &tagCallsign, DT_LEFT);
+		dc->DrawText(cs.c_str(), &tagCallsign, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(cs.c_str(), &tagCallsign, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_FP_CS, fp->GetCallsign(), tagCallsign, TRUE, fp->GetCallsign());
+
+
 		dc->DrawText(to_string(fp->GetFinalAltitude()/100).c_str(), &tagAltitude, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(to_string(fp->GetFinalAltitude() / 100).c_str(), &tagAltitude, DT_LEFT);
-		rad->AddScreenObject(TAG_ITEM_TYPE_FINAL_ALTITUDE, fp->GetCallsign(), tagAltitude, TRUE, "ALT");
+		rad->AddScreenObject(TAG_ITEM_FP_FINAL_ALTITUDE, fp->GetCallsign(), tagAltitude, TRUE, "ALT");
 	}
 
 	// restore context

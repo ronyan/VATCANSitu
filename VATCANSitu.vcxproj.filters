@@ -36,9 +36,6 @@
     <ClCompile Include="GndRadar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tagRender.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ACTag.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -86,9 +83,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GndRadar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tagRender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ACTag.h">

@@ -13,6 +13,9 @@ class CACTag :
 protected:
 
     POINT p;
+    COLORREF tagColour;
+    int tagWidth;
+    BOOL alphaTag; // CSIT calls tags Alpha (detailed) and Bravo (not detailed)
 
 public:
 
