@@ -108,12 +108,15 @@ protected:
     bool pressed = FALSE;
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions
 
-    clock_t halfSec;
-    bool halfSecTick; // toggles on and off every half second
+    clock_t halfSec = 0;
+    bool halfSecTick = FALSE; // toggles on and off every half second
 
     map<string, bool> hashalo;
     map<string, bool> isBlinking;
     map<string, bool> isHandOffHold;
+
+    // ADSB Radar Site
+    CPosition adsbSite; 
 
     // Tag Properties
     map<string, POINT> tagOffset; // the centre of the aircraft tag

@@ -24,6 +24,7 @@ using namespace Gdiplus;
 CSiTRadar::CSiTRadar()
 {
 	halfSec = clock();
+	halfSecTick = FALSE;
 }
 
 CSiTRadar::~CSiTRadar()
@@ -56,6 +57,40 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	Graphics g(hdc);
 
 	int pixnm = PixelsPerNM();
+
+
+	// DEBUG
+
+	POINT q;
+	q = ConvertCoordFromPositionToPixel(adsbSite);
+	HPEN targetPen;
+	targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+	dc.SelectObject(targetPen);
+
+	dc.MoveTo(q.x, q.y);
+	dc.LineTo(q.x + 20, q.y + 20);
+
+	CFont font;
+	LOGFONT lgfont;
+	memset(&lgfont, 0, sizeof(LOGFONT));
+	lgfont.lfHeight = 14;
+	lgfont.lfWeight = 500;
+	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+	font.CreateFontIndirect(&lgfont);
+	dc.SelectObject(font);
+
+	RECT debug;
+	debug.top = 250;
+	debug.left = 250;
+	dc.DrawText(to_string(adsbSite.m_Latitude).c_str(), &debug, DT_LEFT);
+	debug.top += 10;
+
+	DeleteObject(font);
+
+	DeleteObject(targetPen);
+
+	// DEBUG
+
 
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
@@ -379,9 +414,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
 			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
 			
+			// aircraft equipment parsing
+			string icaoACData = flightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
+			regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
+			bool isADSB = regex_search(icaoACData, icaoADSB);
+
 			// if the flightplan does not have a correlated radar target
 			if (!flightPlan.GetCorrelatedRadarTarget().IsValid()
-				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
+				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
+				&& !isADSB) {
 
 				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &tagOffset);
 				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &tagOffset);
@@ -815,6 +856,15 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	}
 	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
 		altFilterLow = atoi(filt);
+	}
+
+	// Find the position of ADSB radars
+	GetPlugIn()->SelectActiveSectorfile();
+	for (CSectorElement sectorElement = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RADARS); sectorElement.IsValid();
+		sectorElement = GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_RADARS))	{
+		if (!strcmp(sectorElement.GetName(), "QER")) {
+			sectorElement.GetPosition(&adsbSite, 0);
+		}
 	}
 }
 

@@ -8,9 +8,10 @@ using namespace EuroScopePlugIn;
 
 
 // Colours for the plugin
-
+const COLORREF C_WHITE = RGB(255, 255, 255);
 const COLORREF C_PPS_ORANGE = RGB(242, 120, 57);
 const COLORREF C_PPS_YELLOW = RGB(202, 205, 169);
+const COLORREF C_PPS_MAGENTA = RGB(197, 38, 212);
 const COLORREF C_PPS_RED = RGB(209, 39, 27);
 
 // Math
