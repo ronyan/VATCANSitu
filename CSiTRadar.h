@@ -25,6 +25,8 @@ public:
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
+    inline virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
+    inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
 
     static void RegisterButton(RECT rect) {
 
@@ -98,6 +100,8 @@ protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
     // helper functions
+    clock_t loopTime = clock();
+    clock_t nextLoop = clock();
 
     // menu states
     bool halotool = FALSE;
@@ -111,9 +115,16 @@ protected:
     clock_t halfSec = 0;
     bool halfSecTick = FALSE; // toggles on and off every half second
 
+    // PPS and airplane states
+
+    map<string, bool> hasADSB;
+    map<string, bool> hasVFRFP;
+    map<string, bool> hasRVSM;
+
     map<string, bool> hashalo;
     map<string, bool> isBlinking;
     map<string, bool> isHandOffHold;
+    map<string, string> ppsCJS;
 
     // ADSB Radar Site
     CPosition adsbSite; 

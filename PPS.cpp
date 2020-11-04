@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "PPS.h"
 
-void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF ppsColor, POINT p)
+void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isRVSM, int radFlag, COLORREF ppsColor, string squawk, POINT p)
 {
 	
 	int sDC = dc->SaveDC();
@@ -12,21 +12,9 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 	prect.top = p.y - 5;
 	prect.right = p.x + 5;
 	prect.bottom = p.y + 5;
-	radScr->AddScreenObject(AIRCRAFT_SYMBOL, radTar->GetCallsign(), prect, FALSE, "");
 
 	HPEN targetPen;
 
-	// Get information about the Aircraft/Flightplan
-	bool isCorrelated = radTar->GetCorrelatedFlightPlan().IsValid();
-	bool isVFR = !strcmp(radTar->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V");
-	string icaoACData = radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetAircraftInfo(); // logic to 
-	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
-	if (radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetCapibilities() == 'L' ||
-		radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetCapibilities() == 'W' ||
-		radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetCapibilities() == 'Z') {
-		isRVSM = TRUE;
-	}
 	/// DRAWING SYMBOLS ///
 
 	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
@@ -34,13 +22,13 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 	dc->SelectStockObject(NULL_BRUSH);
 
 	// else if no radar returns -> is it ADSB?
-	if (radTar->GetPosition().GetRadarFlags() == 0) {
+	if (radFlag == 0) {
 		// Draw ADSB PPS symbology
 	}
 
 	else {
 		// Special Codes
-		if (!strcmp(radTar->GetPosition().GetSquawk(), "7600") || !strcmp(radTar->GetPosition().GetSquawk(), "7700")) {
+		if (!strcmp(squawk.c_str(), "7600") || !strcmp(squawk.c_str(), "7700")) {
 			HBRUSH targetBrush = CreateSolidBrush(ppsColor);
 			dc->SelectObject(targetBrush);
 
@@ -48,7 +36,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 			dc->Polygon(vertices, 3);
 			DeleteObject(targetBrush);
 		}
-		else if (radTar->GetPosition().GetRadarFlags() == 1) {
+		else if (radFlag == 1) {
 			
 			dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
 			dc->LineTo(p.x, p.y);
@@ -57,7 +45,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 			dc->LineTo(p.x + 4, p.y - 4);
 		}
 		// IFR correlated
-		else if (radTar->GetPosition().GetRadarFlags() == 2) {
+		else if (radFlag == 2) {
 			if (isCorrelated && !isVFR && !isRVSM) {
 				dc->MoveTo(p.x - 4, p.y - 2);
 				dc->LineTo(p.x - 4, p.y + 2);
@@ -87,7 +75,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 			}
 
 		}
-		else if (radTar->GetPosition().GetRadarFlags() >= 3 && radTar->GetPosition().GetRadarFlags() <= 7) {
+		else if (radFlag >= 3 && radFlag <= 7) {
 			if (isCorrelated && !isVFR && !isRVSM) {
 				dc->MoveTo(p.x - 4, p.y - 2);
 				dc->LineTo(p.x - 4, p.y + 2);

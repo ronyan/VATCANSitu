@@ -67,7 +67,12 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
-
+	if (phase != REFRESH_PHASE_AFTER_TAGS && phase != REFRESH_PHASE_BEFORE_TAGS) {
+		return;
+	}
+	
+	loopTime = clock() - nextLoop;
+	nextLoop = clock();
 	// get cursor position and screen info
 	POINT p;
 
@@ -94,6 +99,25 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
+		//debug
+		CFont font;
+		LOGFONT lgfont;
+		memset(&lgfont, 0, sizeof(LOGFONT));
+		lgfont.lfHeight = 14;
+		lgfont.lfWeight = 500;
+		strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+		font.CreateFontIndirect(&lgfont);
+		dc.SelectObject(font);
+
+		RECT debug;
+		debug.top = 250;
+		debug.left = 250;
+		dc.DrawText(to_string((float)loopTime / CLOCKS_PER_SEC).c_str(), &debug, DT_LEFT);
+		debug.top += 10;
+
+		DeleteObject(font);
+		// debug
+
 		// Draw the mouse halo before menu, so it goes behind it
 		if (mousehalo == TRUE) {
 			HaloTool::drawHalo(dc, p, halorad, pixnm);
@@ -116,37 +140,33 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
+			string callSign = radarTarget.GetCallsign();
+
+			RECT prect;
+			prect.left = p.x - 5;
+			prect.top = p.y - 5;
+			prect.right = p.x + 5;
+			prect.bottom = p.y + 5;
+			AddScreenObject(AIRCRAFT_SYMBOL, radarTarget.GetCallsign(), prect, FALSE, "");
 
 			// Get information about the Aircraft/Flightplan
 			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
-			bool isVFR = !strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V");
-			bool isIFR = !strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "I");
+			bool isVFR = hasVFRFP[callSign];
+			bool isRVSM = hasRVSM[callSign];
+			bool isADSB = hasADSB[callSign];
 
 			COLORREF ppsColor;
 
 			// logic for the color of the PPS
 			if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_WHITE; }
-			else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !radarTarget.GetCorrelatedFlightPlan().IsValid()) { ppsColor = C_PPS_MAGENTA; }
+			else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
 			else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
 			else if (isVFR) { ppsColor = C_PPS_ORANGE; }
 			else { ppsColor = C_PPS_YELLOW; }
 
 			if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
 
-			// aircraft equipment parsing
-			string icaoACData = GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetAircraftInfo(); // logic to 
-			regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-			bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FA
-			if (GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetCapibilities() == 'L' ||
-				GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetCapibilities() == 'W' ||
-				GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetCapibilities() == 'Z')
-			{
-				isRVSM = TRUE;
-			}
-			regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-			bool isADSB = regex_search(icaoACData, icaoADSB);
-
-			CPPS::DrawPPS(&dc, this, &radarTarget, ppsColor, p);
+			CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
@@ -492,22 +512,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
 
 		}
-/*
-		// Ground Radar Tags WIP
-
-		for (CRadarTarget rt = GetPlugIn()->RadarTargetSelectFirst(); rt.IsValid(); rt = GetPlugIn()->RadarTargetSelectNext(rt))
-		{
-			if (!rt.IsValid())
-				continue;
-
-			if (strcmp(rt.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
-
-				POINT p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
-				GndRadar::DrawGndTag(dc, p, 0, rt, rt.GetCallsign());
-			}
-		}
-
-*/
 	}
 	g.ReleaseHDC(hdc);
 	dc.Detach();
@@ -725,6 +729,42 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 			sectorElement.GetPosition(&adsbSite, 0);
 		}
 	}
+} 
+
+void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
+{
+	// These items don't need to be updated each loop, save loop type by storing data in a map
+	string callSign = FlightPlan.GetCallsign();
+	bool isVFR = !strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V");
+
+	// Get information about the Aircraft/Flightplan
+	string icaoACData = FlightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
+	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
+	if (FlightPlan.GetFlightPlanData().GetCapibilities() == 'L' ||
+		FlightPlan.GetFlightPlanData().GetCapibilities() == 'W' ||
+		FlightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
+		isRVSM = TRUE;
+	}
+	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
+	bool isADSB = regex_search(icaoACData, icaoADSB);
+
+	string CJS = FlightPlan.GetTrackingControllerId();
+
+	hasADSB[callSign] = isADSB;
+	hasVFRFP[callSign] = isVFR;
+	hasRVSM[callSign] = isRVSM;
+	ppsCJS[callSign] = CJS;
+
+}
+
+void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
+	string callSign = FlightPlan.GetCallsign();
+
+	hasADSB.erase(callSign);
+	hasVFRFP.erase(callSign);
+	hasRVSM.erase(callSign);
+	ppsCJS.erase(callSign);
 }
 
 void CSiTRadar::OnAsrContentToBeSaved() {
