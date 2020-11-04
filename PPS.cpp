@@ -1,59 +1,136 @@
 #include "pch.h"
 #include "PPS.h"
 
-void CPPS::DrawPPS(CDC* dc, CRadarScreen& radScr, CRadarTarget& radTar)
+void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF ppsColor, POINT p)
 {
-	bool halfSecTick = FALSE; 
-	clock_t tic = clock();
-	double time = ((double)clock() - (double)tic) / ((double)CLOCKS_PER_SEC);
-	if (time >= 0.5) {
-		tic = clock();
-		halfSecTick = !halfSecTick;
-	}
 	
 	int sDC = dc->SaveDC();
 
-	POINT p = ConvertCoordFromPositionToPixel(radTar.GetPosition().GetPosition());
+	// Add the screenobject
+	RECT prect;
+	prect.left = p.x - 5;
+	prect.top = p.y - 5;
+	prect.right = p.x + 5;
+	prect.bottom = p.y + 5;
+	radScr->AddScreenObject(AIRCRAFT_SYMBOL, radTar->GetCallsign(), prect, FALSE, "");
 
-	COLORREF targetPenColor;
 	HPEN targetPen;
 
-	// logic for the color of the PPS
-	if (radTar.GetPosition().GetRadarFlags() == 0) { targetPenColor = C_WHITE; }
-	else if (radTar.GetPosition().GetRadarFlags() == 1 && !radTar.GetCorrelatedFlightPlan().IsValid()) { targetPenColor = C_PPS_MAGENTA; }
-	else if (radTar.GetPosition().GetSquawk() == "7500" || radTar.GetPosition().GetSquawk() == "7600") { targetPenColor = C_PPS_RED; }
-	else { targetPenColor = C_PPS_YELLOW; }
-
-	// if squawking ident, the colour alternates to white
-	if (radTar.GetPosition().GetTransponderI()) { 
-		if (halfSecTick) { targetPenColor = C_WHITE; }
+	// Get information about the Aircraft/Flightplan
+	bool isCorrelated = radTar->GetCorrelatedFlightPlan().IsValid();
+	bool isVFR = !strcmp(radTar->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V");
+	bool isIFR = !strcmp(radTar->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "I");
+	string icaoACData = radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetAircraftInfo(); // logic to 
+	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
+	if (radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetCapibilities() == 'L' ||
+		radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetCapibilities() == 'W' ||
+		radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetCapibilities() == 'Z') {
+		isRVSM = TRUE;
 	}
+	/// DRAWING SYMBOLS ///
 
-	// create the pen
-	targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
 	dc->SelectObject(targetPen);
 	dc->SelectStockObject(NULL_BRUSH);
 
-	// Special Codes
-	
-
 	// else if no radar returns -> is it ADSB?
+	if (radTar->GetPosition().GetRadarFlags() == 0) {
+		// Draw ADSB PPS symbology
+	}
 
+	else {
+		// Special Codes
+		if (!strcmp(radTar->GetPosition().GetSquawk(), "7600") || !strcmp(radTar->GetPosition().GetSquawk(), "7700")) {
+			HBRUSH targetBrush = CreateSolidBrush(ppsColor);
+			dc->SelectObject(targetBrush);
 
-	// else handle the other radar flags (
+			POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Red triangle
+			dc->Polygon(vertices, 3);
+			DeleteObject(targetBrush);
+		}
+		else if (radTar->GetPosition().GetRadarFlags() == 1) {
+			
+			dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
+			dc->LineTo(p.x, p.y);
+			dc->LineTo(p.x - 4, p.y - 4);
+			dc->MoveTo(p.x, p.y);
+			dc->LineTo(p.x + 4, p.y - 4);
+		}
+		// IFR correlated
+		else if (radTar->GetPosition().GetRadarFlags() == 2) {
+			if (isCorrelated && isIFR && !isRVSM) {
+				dc->MoveTo(p.x - 4, p.y - 2);
+				dc->LineTo(p.x - 4, p.y + 2);
+				dc->LineTo(p.x, p.y + 5);
+				dc->LineTo(p.x + 4, p.y + 2);
+				dc->LineTo(p.x + 4, p.y - 2);
+				dc->LineTo(p.x, p.y - 5);
+				dc->LineTo(p.x - 4, p.y - 2);
+			}
+			if (isCorrelated && isIFR && isRVSM) {
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x + 5, p.y);
+				dc->LineTo(p.x, p.y + 5);
+				dc->LineTo(p.x - 5, p.y);
+				dc->LineTo(p.x, p.y - 5);
+			}
+			if (isCorrelated && isVFR) {
+				dc->SelectStockObject(NULL_BRUSH);
 
-	/*
-	Symbol for uncorrelated primary only
+				// draw the shape
+				dc->Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
 
-	dc->MoveTo(p.x, p.y + 4);
-	dc->LineTo(p.x, p.y);
-	dc->LineTo(p.x - 4, p.y - 4);
-	dc->MoveTo(p.x, p.y);
-	dc->LineTo(p.x + 4, p.y - 4);
+				dc->SelectObject(targetPen);
+				dc->MoveTo(p.x - 3, p.y - 2);
+				dc->LineTo(p.x + 1, p.y + 4);
+				dc->LineTo(p.x + 4, p.y - 2);
+			}
 
-	*/
+		}
+		else if (radTar->GetPosition().GetRadarFlags() >= 3 && radTar->GetPosition().GetRadarFlags() <= 7) {
+			if (isCorrelated && isIFR && !isRVSM) {
+				dc->MoveTo(p.x - 4, p.y - 2);
+				dc->LineTo(p.x - 4, p.y + 2);
+				dc->LineTo(p.x, p.y + 5);
+				dc->LineTo(p.x + 4, p.y + 2);
+				dc->LineTo(p.x + 4, p.y - 2);
+				dc->LineTo(p.x, p.y - 5);
+				dc->LineTo(p.x - 4, p.y - 2);
 
-	// Add the screenobject
+				dc->MoveTo(p.x - 4, p.y + 2);
+				dc->LineTo(p.x, p.y - 4);
+				dc->LineTo(p.x + 4, p.y + 2);
+				dc->LineTo(p.x - 4, p.y + 2);
+			}
+			
+			if (isCorrelated && isIFR && isRVSM) {
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x + 5, p.y);
+				dc->LineTo(p.x, p.y + 5);
+				dc->LineTo(p.x - 5, p.y);
+				dc->LineTo(p.x, p.y - 5);
+
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x, p.y + 5);
+			}
+			if (isCorrelated && isVFR) {
+				dc->SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc->Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
+
+				dc->MoveTo(p.x - 3, p.y - 2);
+				dc->LineTo(p.x + 1, p.y + 4);
+				dc->LineTo(p.x + 4, p.y - 2);
+			}
+		}
+	}
+	
+	DeleteObject(targetPen);
+
+	/// END DRAWING SYMBOLS ///
+
 
 	// Draw halo
 

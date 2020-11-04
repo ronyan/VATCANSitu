@@ -15,6 +15,7 @@ class CPPS :
 
     CPPS();
 
-    void DrawPPS(CDC* dc, CRadarScreen& , CRadarTarget& );
+public:
+    static void DrawPPS(CDC* dc, CRadarScreen* , CRadarTarget* , COLORREF ppsColor, POINT p);
 };
 
