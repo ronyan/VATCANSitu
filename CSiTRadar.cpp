@@ -173,15 +173,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2 
 					&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0) {
-					// blink the CJS
-					string callsign = radarTarget.GetCallsign();
-					isBlinking[callsign] = TRUE;
+					isBlinking[callSign] = TRUE;
 				}
 			}
 			else {
-				string callsign = radarTarget.GetCallsign();
-
-				isBlinking.erase(callsign);
+				isBlinking.erase(callSign);
 			}
 
 			// if in the process of handing off, flash the PPS (to be added), CJS and display the frequency 
@@ -350,8 +346,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				g.EndContainer(gCont);
 
 				DeleteObject(&orangeBrush);
-
-				
+								
 			}
 
 		}
@@ -754,7 +749,6 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
 	hasADSB[callSign] = isADSB;
 	hasVFRFP[callSign] = isVFR;
 	hasRVSM[callSign] = isRVSM;
-	ppsCJS[callSign] = CJS;
 
 }
 
@@ -764,7 +758,6 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	hasADSB.erase(callSign);
 	hasVFRFP.erase(callSign);
 	hasRVSM.erase(callSign);
-	ppsCJS.erase(callSign);
 }
 
 void CSiTRadar::OnAsrContentToBeSaved() {
