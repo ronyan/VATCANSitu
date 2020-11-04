@@ -115,6 +115,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				continue;
 			}
 
+			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
+
 			// Get information about the Aircraft/Flightplan
 			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
 			bool isVFR = !strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V");
@@ -130,8 +132,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			else { ppsColor = C_PPS_YELLOW; }
 
 			if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
-
-			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 
 			// aircraft equipment parsing
 			string icaoACData = GetPlugIn()->FlightPlanSelect(radarTarget.GetCallsign()).GetFlightPlanData().GetAircraftInfo(); // logic to 

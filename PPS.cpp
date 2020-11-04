@@ -19,7 +19,6 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 	// Get information about the Aircraft/Flightplan
 	bool isCorrelated = radTar->GetCorrelatedFlightPlan().IsValid();
 	bool isVFR = !strcmp(radTar->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V");
-	bool isIFR = !strcmp(radTar->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "I");
 	string icaoACData = radScr->GetPlugIn()->FlightPlanSelect(radTar->GetCallsign()).GetFlightPlanData().GetAircraftInfo(); // logic to 
 	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
 	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
@@ -59,7 +58,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 		}
 		// IFR correlated
 		else if (radTar->GetPosition().GetRadarFlags() == 2) {
-			if (isCorrelated && isIFR && !isRVSM) {
+			if (isCorrelated && !isVFR && !isRVSM) {
 				dc->MoveTo(p.x - 4, p.y - 2);
 				dc->LineTo(p.x - 4, p.y + 2);
 				dc->LineTo(p.x, p.y + 5);
@@ -68,7 +67,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 				dc->LineTo(p.x, p.y - 5);
 				dc->LineTo(p.x - 4, p.y - 2);
 			}
-			if (isCorrelated && isIFR && isRVSM) {
+			if (isCorrelated && !isVFR && isRVSM) {
 				dc->MoveTo(p.x, p.y - 5);
 				dc->LineTo(p.x + 5, p.y);
 				dc->LineTo(p.x, p.y + 5);
@@ -89,7 +88,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 
 		}
 		else if (radTar->GetPosition().GetRadarFlags() >= 3 && radTar->GetPosition().GetRadarFlags() <= 7) {
-			if (isCorrelated && isIFR && !isRVSM) {
+			if (isCorrelated && !isVFR && !isRVSM) {
 				dc->MoveTo(p.x - 4, p.y - 2);
 				dc->LineTo(p.x - 4, p.y + 2);
 				dc->LineTo(p.x, p.y + 5);
@@ -104,7 +103,7 @@ void CPPS::DrawPPS(CDC* dc, CRadarScreen* radScr, CRadarTarget* radTar, COLORREF
 				dc->LineTo(p.x - 4, p.y + 2);
 			}
 			
-			if (isCorrelated && isIFR && isRVSM) {
+			if (isCorrelated && !isVFR && isRVSM) {
 				dc->MoveTo(p.x, p.y - 5);
 				dc->LineTo(p.x + 5, p.y);
 				dc->LineTo(p.x, p.y + 5);
