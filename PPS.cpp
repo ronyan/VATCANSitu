@@ -24,6 +24,19 @@ void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isR
 	// else if no radar returns -> is it ADSB?
 	if (radFlag == 0) {
 		// Draw ADSB PPS symbology
+		if (isADSB) {
+			dc->MoveTo(p.x - 5, p.y - 5);
+			dc->LineTo(p.x + 5, p.y - 5);
+			dc->LineTo(p.x + 5, p.y + 5);
+			dc->LineTo(p.x - 5, p.y + 5);
+			dc->LineTo(p.x - 5, p.y - 5);
+
+			// if primary and secondary target, draw the middle line
+			if (isRVSM) {
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x, p.y + 5);
+			}
+		}
 	}
 
 	else {

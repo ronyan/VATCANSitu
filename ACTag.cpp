@@ -9,12 +9,6 @@ void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
-	// Get aircraft information
-
-	string icaoACData = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
-	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-	bool isADSB = regex_search(icaoACData, icaoADSB);
-
 	// Initiate the default tag location, if no location is set already or find it in the map
 
 	if (tOffset->find(fp->GetCallsign()) == tOffset->end()) {

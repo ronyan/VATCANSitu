@@ -70,9 +70,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	if (phase != REFRESH_PHASE_AFTER_TAGS && phase != REFRESH_PHASE_BEFORE_TAGS) {
 		return;
 	}
-	
-	loopTime = clock() - nextLoop;
-	nextLoop = clock();
+
 	// get cursor position and screen info
 	POINT p;
 
@@ -99,33 +97,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
-		//debug
-		CFont font;
-		LOGFONT lgfont;
-		memset(&lgfont, 0, sizeof(LOGFONT));
-		lgfont.lfHeight = 14;
-		lgfont.lfWeight = 500;
-		strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-		font.CreateFontIndirect(&lgfont);
-		dc.SelectObject(font);
-
-		RECT debug;
-		debug.top = 250;
-		debug.left = 250;
-		dc.DrawText(to_string((float)loopTime / CLOCKS_PER_SEC).c_str(), &debug, DT_LEFT);
-		debug.top += 10;
-
-		DeleteObject(font);
-		// debug
-
 		// Draw the mouse halo before menu, so it goes behind it
 		if (mousehalo == TRUE) {
 			HaloTool::drawHalo(dc, p, halorad, pixnm);
 			RequestRefresh();
 		}
-
-		// add orange PPS to aircrafts with VFR Flight Plans that have correlated targets
-		// iterate over radar targets
 
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
@@ -142,11 +118,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 			string callSign = radarTarget.GetCallsign();
 
-			RECT prect;
-			prect.left = p.x - 5;
-			prect.top = p.y - 5;
-			prect.right = p.x + 5;
-			prect.bottom = p.y + 5;
+			RECT prect;	prect.left = p.x - 5; prect.top = p.y - 5; prect.right = p.x + 5; prect.bottom = p.y + 5;
 			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
 			// Get information about the Aircraft/Flightplan
@@ -158,7 +130,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			COLORREF ppsColor;
 
 			// logic for the color of the PPS
-			if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_WHITE; }
+			if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
 			else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
 			else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
 			else if (isVFR) { ppsColor = C_PPS_ORANGE; }
@@ -167,6 +139,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
 
 			CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
+
+			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
+			if (radarTarget.GetPosition().GetRadarFlags() == 0
+				&& isADSB) {
+
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+
+			}
 
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
@@ -249,40 +230,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				HaloTool::drawHalo(dc, p, halorad, pixnm);
 			}
 
-			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
-
-			if (radarTarget.GetPosition().GetRadarFlags() == 0 
-				&& isADSB) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
-
-				// needs to be refactored
-
-				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
-				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
-				
-				COLORREF targetPenColor;
-				targetPenColor = RGB(202, 205, 169); // amber colour
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape
-				dc.MoveTo(p.x - 5, p.y - 5);
-				dc.LineTo(p.x + 5, p.y -5);
-				dc.LineTo(p.x + 5, p.y + 5);
-				dc.LineTo(p.x - 5, p.y + 5);
-				dc.LineTo(p.x - 5, p.y - 5);
-
-				// if primary and secondary target, draw the middle line
-				if (isRVSM) {
-					dc.MoveTo(p.x, p.y - 5);
-					dc.LineTo(p.x, p.y + 5);
-				}
-
-				// cleanup
-				DeleteObject(targetPen);
-			}
-
 		}
 
 		// Flight plan loop. Goes through flight plans, and if not correlated will display
@@ -290,19 +237,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
 			
 			if (flightPlan.GetCorrelatedRadarTarget().IsValid()) { continue; } 
-			// aircraft equipment parsing
-			
-			bool isADSB = hasADSB[flightPlan.GetCallsign()];
 
 			// if the flightplan does not have a correlated radar target
-			if (!flightPlan.GetCorrelatedRadarTarget().IsValid()
-				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
-				&& !isADSB) {
+			if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
+				&& !hasADSB[flightPlan.GetCallsign()]) {
 
 				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &tagOffset);
 				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &tagOffset);
 
-				// convert the predicted position to a point on the screen
 				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
 
 				// draw the orange airplane symbol (credits andrewogden1678)
@@ -335,8 +277,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
 				g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
-
-				// Fill the shape
 
 				SolidBrush orangeBrush(Color(255, 242, 120, 57));
 				COLORREF targetPenColor;
