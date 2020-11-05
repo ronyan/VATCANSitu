@@ -279,8 +279,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
 
 				SolidBrush orangeBrush(Color(255, 242, 120, 57));
-				COLORREF targetPenColor;
-				targetPenColor = RGB(242, 120, 57); // PPS orange color
 
 				g.FillPolygon(&orangeBrush, points, 19);
 				g.EndContainer(gCont);

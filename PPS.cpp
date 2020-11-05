@@ -21,7 +21,6 @@ void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isR
 	dc->SelectObject(targetPen);
 	dc->SelectStockObject(NULL_BRUSH);
 
-	// else if no radar returns -> is it ADSB?
 	if (radFlag == 0) {
 		// Draw ADSB PPS symbology
 		if (isADSB) {
@@ -31,7 +30,7 @@ void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isR
 			dc->LineTo(p.x - 5, p.y + 5);
 			dc->LineTo(p.x - 5, p.y - 5);
 
-			// if primary and secondary target, draw the middle line
+			// RVSM ADSB symbol
 			if (isRVSM) {
 				dc->MoveTo(p.x, p.y - 5);
 				dc->LineTo(p.x, p.y + 5);
@@ -140,3 +139,6 @@ void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isR
 	dc->RestoreDC(sDC);
 }
 
+void CPPS::DrawCJS(CDC* dc, string cjsText, COLORREF cjsColor)
+{
+}

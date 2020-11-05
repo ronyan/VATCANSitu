@@ -16,6 +16,7 @@ class CPPS :
     CPPS();
 
 public:
-    static void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isRVSM, int radFlag, COLORREF ppsColor, string squawk, POINT p);
+    static void DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isRVSM, int radFlag, COLORREF ppsColor, string squawk, POINT p);
+    static void DrawCJS(CDC* dc, string cjsText, COLORREF cjsColor);
 };
 
