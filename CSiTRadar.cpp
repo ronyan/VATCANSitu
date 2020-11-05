@@ -147,7 +147,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			prect.top = p.y - 5;
 			prect.right = p.x + 5;
 			prect.bottom = p.y + 5;
-			AddScreenObject(AIRCRAFT_SYMBOL, radarTarget.GetCallsign(), prect, FALSE, "");
+			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
 			// Get information about the Aircraft/Flightplan
 			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
@@ -289,10 +289,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
 			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
 			
+			if (flightPlan.GetCorrelatedRadarTarget().IsValid()) { continue; } 
 			// aircraft equipment parsing
-			string icaoACData = flightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
-			regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-			bool isADSB = regex_search(icaoACData, icaoADSB);
+			
+			bool isADSB = hasADSB[flightPlan.GetCallsign()];
 
 			// if the flightplan does not have a correlated radar target
 			if (!flightPlan.GetCorrelatedRadarTarget().IsValid()
@@ -622,8 +622,8 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		RECT temp = Area;
 
 		POINT q;
-		q.x = ((temp.right + temp.left) / 2) - p.x - 17; // Get centre of box 
-		q.y = ((temp.top + temp.bottom) / 2) - p.y - 7;	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
+		q.x = ((temp.right + temp.left) / 2) - p.x - (TAG_WIDTH/2); // Get centre of box 
+		q.y = ((temp.top + temp.bottom) / 2) - p.y - (TAG_HEIGHT/2);	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
 
 		// check maximal offset
 		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
@@ -638,38 +638,6 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 		tagOffset[sObjectId] = q;
 		
-		if (!Released) {
-
-		}
-		else {
-			// once released, check that the tag does not exceed the limits, and then save it to the map
-		}
-	}
-
-	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN) {
-
-		if (rt.IsValid()) {
-			p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
-		}
-
-		RECT temp = Area;
-
-		POINT q;
-		q.x = ((temp.right + temp.left) / 2) - p.x - 17; // Get centre of box 
-		q.y = ((temp.top + temp.bottom) / 2) - p.y - 7;	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
-
-		// check maximal offset
-		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
-		if (q.x < -TAG_MAX_X_OFFSET - TAG_WIDTH) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
-		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
-		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
-
-		// nudge tag if necessary (near horizontal, or if directly above target)
-		if (q.x > -((TAG_WIDTH) / 2) && q.x < 0) { q.x = 3; };
-		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
-
-		tagOffset[sObjectId] = q;
-
 		if (!Released) {
 
 		}
