@@ -30,12 +30,6 @@
     <ClCompile Include="CSiTRadar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TopMenu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GndRadar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ACTag.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -83,9 +77,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GndRadar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ACTag.h">

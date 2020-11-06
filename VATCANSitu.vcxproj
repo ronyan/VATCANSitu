@@ -191,7 +191,6 @@
   <ItemGroup>
     <ClCompile Include="ACTag.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
-    <ClCompile Include="GndRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -201,7 +200,6 @@
     </ClCompile>
     <ClCompile Include="PPS.cpp" />
     <ClCompile Include="SituPlugin.cpp" />
-    <ClCompile Include="TopMenu.cpp" />
     <ClCompile Include="VATCANSitu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -212,7 +210,6 @@
     <ClInclude Include="ACTag.h" />
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="GndRadar.h" />
     <ClInclude Include="HaloTool.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="lib\EuroScopePlugIn.h" />
