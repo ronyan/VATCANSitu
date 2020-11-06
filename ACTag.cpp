@@ -57,7 +57,7 @@ void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	tagAltitude.top = p.y + tagOffsetY +10;
 	
 	RECT tagGS;
-	tagGS.left = p.x + tagOffsetX + 30;
+	tagGS.left = p.x + tagOffsetX + 40;
 	tagGS.top = p.y + tagOffsetY + 10;
 	
 
@@ -127,7 +127,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	CFont font;
 	LOGFONT lgfont;
 	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
+	lgfont.lfHeight = 15;
 	lgfont.lfWeight = 500;
 	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
 	font.CreateFontIndirect(&lgfont);
@@ -137,6 +137,12 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rt->IsValid()) {
 		p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 	}
+
+	string cs = rt->GetCallsign();
+	string wtSymbol = "";
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
+	cs = cs + wtSymbol;
 
 	// Tag formatting
 	RECT tagCallsign;
@@ -148,7 +154,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	tagAltitude.top = p.y + tagOffsetY + 10;
 
 	RECT tagGS;
-	tagGS.left = p.x + tagOffsetX + 30;
+	tagGS.left = p.x + tagOffsetX + 40;
 	tagGS.top = p.y + tagOffsetY + 10;
 
 

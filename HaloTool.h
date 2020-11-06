@@ -10,13 +10,11 @@ class HaloTool :
     public CRadarScreen
 {
 public:
-    HaloTool(void);
-    ~HaloTool(void);
 
-    static void drawHalo(HDC hdc, POINT p, double r, double pixpernm) 
+    static void drawHalo(CDC* dc, POINT p, double r, double pixpernm) 
     {
-        CDC dc;
-        dc.Attach(hdc);
+        int sDC = dc->SaveDC();
+
         //calculate pixels per nautical mile
 
         int pixoffset = (int)round(pixpernm * r);
@@ -24,12 +22,18 @@ public:
        // draw the halo around point p with radius r in NM
         COLORREF targetPenColor = RGB(202, 205, 169);
         HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-        dc.SelectObject(targetPen);
-        dc.SelectStockObject(HOLLOW_BRUSH);
-        dc.Ellipse(p.x - pixoffset, p.y - pixoffset, p.x + pixoffset, p.y + pixoffset); 
+        dc->SelectObject(targetPen);
+        dc->SelectStockObject(HOLLOW_BRUSH);
+        dc->Ellipse(p.x - pixoffset, p.y - pixoffset, p.x + pixoffset, p.y + pixoffset); 
 
         DeleteObject(targetPen);
-        dc.Detach();
+        
+        dc->RestoreDC(sDC);
+    };
+
+    static void drawPTL(CDC* dc, POINT p, double ptlTime)
+    {
+
     };
 };
 

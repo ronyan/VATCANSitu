@@ -139,6 +139,6 @@ void CPPS::DrawPPS(CDC* dc, BOOL isCorrelated, BOOL isVFR, BOOL isADSB, BOOL isR
 	dc->RestoreDC(sDC);
 }
 
-void CPPS::DrawCJS(CDC* dc, string cjsText, COLORREF cjsColor)
+void CPPS::DrawCJS(CDC* dc, POINT p, string cjsText, COLORREF cjsColor)
 {
 }

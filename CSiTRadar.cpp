@@ -99,7 +99,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		// Draw the mouse halo before menu, so it goes behind it
 		if (mousehalo == TRUE) {
-			HaloTool::drawHalo(dc, p, halorad, pixnm);
+			HaloTool::drawHalo(&dc, p, halorad, pixnm);
 			RequestRefresh();
 		}
 
@@ -227,7 +227,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
 			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
-				HaloTool::drawHalo(dc, p, halorad, pixnm);
+				HaloTool::drawHalo(&dc, p, halorad, pixnm);
 			}
 
 		}
@@ -630,6 +630,33 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 			sectorElement.GetPosition(&adsbSite, 0);
 		}
 	}
+
+	// Initialize locally stored plane data (for when you switch views)
+	for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
+		flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
+
+		string callSign = flightPlan.GetCallsign();
+		bool isVFR = !strcmp(flightPlan.GetFlightPlanData().GetPlanType(), "V");
+
+		// Get information about the Aircraft/Flightplan
+		string icaoACData = flightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
+		regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+		bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
+		if (flightPlan.GetFlightPlanData().GetCapibilities() == 'L' ||
+			flightPlan.GetFlightPlanData().GetCapibilities() == 'W' ||
+			flightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
+			isRVSM = TRUE;
+		}
+		regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
+		bool isADSB = regex_search(icaoACData, icaoADSB);
+
+		string CJS = flightPlan.GetTrackingControllerId();
+
+		hasADSB[callSign] = isADSB;
+		hasVFRFP[callSign] = isVFR;
+		hasRVSM[callSign] = isRVSM;
+	}
+
 } 
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
