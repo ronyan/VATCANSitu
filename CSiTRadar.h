@@ -1,5 +1,6 @@
 #pragma once
 #include "EuroScopePlugIn.h"
+#include "SituPlugin.h"
 #include <chrono>
 #include <string>
 #include <map>
@@ -22,6 +23,8 @@ public:
 
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
+
+    map<string, string> pilotCID;
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();

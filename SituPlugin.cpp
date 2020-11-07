@@ -2,11 +2,12 @@
 #include "SituPlugin.h"
 #include "CSiTRadar.h"
 #include "constants.h"
+#include "ACTag.h"
 
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"NAVCANSitu",
-		"0.3.0.0",
+		"0.3.0.0-CTP-special",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

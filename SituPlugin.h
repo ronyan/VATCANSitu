@@ -5,6 +5,7 @@ class SituPlugin :
     public EuroScopePlugIn::CPlugIn
 {
 public:
+
     SituPlugin();
     virtual ~SituPlugin();
     EuroScopePlugIn::CRadarScreen* OnRadarScreenCreated(const char* sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);

@@ -6,19 +6,11 @@
 
 using namespace std;
 
-class CACTag :
-
-    public EuroScopePlugIn::CRadarScreen
+class CACTag
 {
 protected:
 
-    POINT p;
-    COLORREF tagColour;
-    int tagWidth;
-    BOOL alphaTag; // CSIT calls tags Alpha (detailed) and Bravo (not detailed)
-
 public:
-
     // Tags for FP predictions
     static void DrawFPACTag(CDC* hdc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, map<string, POINT>* tOffset);
     static void DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, map<string, POINT>* tOffset);

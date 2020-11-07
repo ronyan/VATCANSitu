@@ -48,6 +48,7 @@
 #include "SituPlugin.h"
 #include "ACTag.h"
 #include "PPS.h"
+#include "vatsimAPI.h"
 #include <chrono>
 
 
@@ -105,6 +106,29 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 		{
+			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
+			string callSign = radarTarget.GetCallsign();
+			
+			CFont font;
+			LOGFONT lgfont;
+
+			memset(&lgfont, 0, sizeof(LOGFONT));
+			lgfont.lfWeight = 500;
+			strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+			lgfont.lfHeight = 12;
+			font.CreateFontIndirect(&lgfont);
+
+			dc.SetTextColor(RGB(255, 255, 255));
+
+			RECT rectPAM;
+			rectPAM.left = p.x - 6;
+			rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y+30;
+			string CID = pilotCID[radarTarget.GetCallsign()];
+
+			dc.DrawText(CID.c_str(), &rectPAM, DT_LEFT);
+
+			DeleteObject(font);
+
 			// altitude filtering 
 			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100) {
 				continue;
@@ -113,9 +137,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100) {
 				continue;
 			}
-
-			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
-			string callSign = radarTarget.GetCallsign();
 
 			// Get information about the Aircraft/Flightplan
 			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
@@ -299,7 +320,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 10;
 
 		// screen range, dummy buttons, not really necessary in ES.
-		TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", 0);
+		but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", 0);
+		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
 		menutopleft.y += 25;
 
 		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0); 
@@ -506,6 +528,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
 		altFilterOn = !altFilterOn;
+	}
+
+	if (ObjectType == BUTTON_MENU_RELOCATE) {
+		CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
 	}
 
 	

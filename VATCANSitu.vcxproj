@@ -91,15 +91,15 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURL_STATICLIB;WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>D:\Documents\EuroScope Development\VATCANSitu\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Documents\VATCANSitu\curl;D:\Documents\EuroScope Development\VATCANSitu\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>.\VATCANSitu.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>D:\Documents\VATCANSitu\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Normaliz.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;advapi32.lib;EuroScopePlugInDll.lib;libcurl_a_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -200,6 +200,7 @@
     </ClCompile>
     <ClCompile Include="PPS.cpp" />
     <ClCompile Include="SituPlugin.cpp" />
+    <ClCompile Include="VatsimAPI.cpp" />
     <ClCompile Include="VATCANSitu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -212,6 +213,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="HaloTool.h" />
     <ClInclude Include="constants.h" />
+    <ClInclude Include="json.hpp" />
     <ClInclude Include="lib\EuroScopePlugIn.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PPS.h" />
@@ -220,6 +222,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TopMenu.h" />
     <ClInclude Include="VATCANSitu.h" />
+    <ClInclude Include="vatsimAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VATCANSitu.rc" />
