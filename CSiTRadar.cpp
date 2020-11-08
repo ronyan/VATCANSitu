@@ -56,7 +56,6 @@ using namespace Gdiplus;
 
 map<string, string> CSiTRadar::pilotCID;
 map<string, ACData> CSiTRadar::mAcData;
-map<string, bool> CSiTRadar::isCTP;
 
 CSiTRadar::CSiTRadar()
 {
@@ -152,26 +151,27 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// CTP VERSION
+			if (mAcData[callSign].hasCTP) {
+				CFont font;
+				LOGFONT lgfont;
 
-			CFont font;
-			LOGFONT lgfont;
+				memset(&lgfont, 0, sizeof(LOGFONT));
+				lgfont.lfWeight = 500;
+				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+				lgfont.lfHeight = 12;
+				font.CreateFontIndirect(&lgfont);
 
-			memset(&lgfont, 0, sizeof(LOGFONT));
-			lgfont.lfWeight = 500;
-			strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-			lgfont.lfHeight = 12;
-			font.CreateFontIndirect(&lgfont);
+				dc.SetTextColor(C_PPS_ORANGE);
 
-			dc.SetTextColor(C_PPS_ORANGE);
+				RECT rectPAM;
+				rectPAM.left = p.x - 9;
+				rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y + 30;
+				string CID = pilotCID[radarTarget.GetCallsign()];
 
-			RECT rectPAM;
-			rectPAM.left = p.x - 9;
-			rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y + 30;
-			string CID = pilotCID[radarTarget.GetCallsign()];
+				dc.DrawText("CTP", &rectPAM, DT_LEFT);
 
-			dc.DrawText("CTP", &rectPAM, DT_LEFT);
-
-			DeleteObject(font);
+				DeleteObject(font);
+			}
 
 			// END CTP
 

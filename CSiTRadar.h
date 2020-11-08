@@ -19,6 +19,7 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
+    bool hasCTP;
 };
 
 class CSiTRadar :

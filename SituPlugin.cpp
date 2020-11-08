@@ -35,7 +35,7 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
     double* pFontSize) {
 
     if (ItemCode == TAG_ITEM_CTP_SLOT) {
-        if (CSiTRadar::mAcData[FlightPlan.GetCallsign()].isRVSM) {
+        if (CSiTRadar::mAcData[FlightPlan.GetCallsign()].hasCTP) {
             strcpy_s(sItemString, 16,"C");
         }
     }

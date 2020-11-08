@@ -18,19 +18,49 @@ static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 
 int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 
+	// Parse list of CTP CIDs
+
+	string cidString;
+	json cidJson;
+
+	CURL* curl = curl_easy_init();
+	CURL* curl1 = curl_easy_init();
+	if (curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_URL, "https://dl.dropboxusercontent.com/s/x2ooh65i0to5n4d/ctpCID.json");
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cidString);
+		CURLcode res;
+		res = curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
+	}
+
+	try {
+
+		// Now we parse the json
+		cidJson = json::parse(cidString);
+
+		// Everything succeeded, show to user
+		plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("CTP CIDs Updated").c_str(), true, false, false, false, false);
+
+	}
+	catch (exception& e) {
+		plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+
+	}
+
 	// Parse CID data from the VATSIM API
 
 	string responseString;
 
-	CURL* curl = curl_easy_init();
-	if (curl)
+	if (curl1)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, "http://cluster.data.vatsim.net/vatsim-data.json");
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
+		curl_easy_setopt(curl1, CURLOPT_URL, "http://cluster.data.vatsim.net/vatsim-data.json");
+		curl_easy_setopt(curl1, CURLOPT_WRITEFUNCTION, write_data);
+		curl_easy_setopt(curl1, CURLOPT_WRITEDATA, &responseString);
 		CURLcode res;
-		res = curl_easy_perform(curl);
-		curl_easy_cleanup(curl);
+		res = curl_easy_perform(curl1);
+		curl_easy_cleanup(curl1);
 	}
 
 	try {
@@ -43,7 +73,9 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 				string apiCallsign = array["callsign"];
 				string apiCID = array["cid"];
 
-				radscr->pilotCID[apiCallsign] = apiCID;
+				if (std::find(cidJson["cid"].begin(), cidJson["cid"].end(), apiCID) != cidJson["cid"].end()) {
+					CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
+				}
 			}
 		}
 
@@ -57,6 +89,4 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 		plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 		return 1;
 	}
-
-	// Parse the list from CZQO of CIDs with CTP slots
 }
