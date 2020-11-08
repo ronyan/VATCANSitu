@@ -54,6 +54,9 @@
 
 using namespace Gdiplus;
 
+map<string, string> CSiTRadar::pilotCID;
+map<string, ACData> CSiTRadar::mAcData;
+map<string, bool> CSiTRadar::isCTP;
 
 CSiTRadar::CSiTRadar()
 {
@@ -106,29 +109,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 		{
-			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
-			string callSign = radarTarget.GetCallsign();
-			
-			CFont font;
-			LOGFONT lgfont;
-
-			memset(&lgfont, 0, sizeof(LOGFONT));
-			lgfont.lfWeight = 500;
-			strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-			lgfont.lfHeight = 12;
-			font.CreateFontIndirect(&lgfont);
-
-			dc.SetTextColor(RGB(255, 255, 255));
-
-			RECT rectPAM;
-			rectPAM.left = p.x - 6;
-			rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y+30;
-			string CID = pilotCID[radarTarget.GetCallsign()];
-
-			dc.DrawText(CID.c_str(), &rectPAM, DT_LEFT);
-
-			DeleteObject(font);
-
+		
 			// altitude filtering 
 			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100) {
 				continue;
@@ -138,11 +119,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				continue;
 			}
 
+			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
+			string callSign = radarTarget.GetCallsign();
+
 			// Get information about the Aircraft/Flightplan
 			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
-			bool isVFR = hasVFRFP[callSign];
-			bool isRVSM = hasRVSM[callSign];
-			bool isADSB = hasADSB[callSign];
+			bool isVFR = mAcData[callSign].hasVFRFP;
+			bool isRVSM = mAcData[callSign].isRVSM;
+			bool isADSB = mAcData[callSign].isADSB;
 
 			COLORREF ppsColor;
 
@@ -166,6 +150,31 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
 
 			}
+
+			// CTP VERSION
+
+			CFont font;
+			LOGFONT lgfont;
+
+			memset(&lgfont, 0, sizeof(LOGFONT));
+			lgfont.lfWeight = 500;
+			strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+			lgfont.lfHeight = 12;
+			font.CreateFontIndirect(&lgfont);
+
+			dc.SetTextColor(C_PPS_ORANGE);
+
+			RECT rectPAM;
+			rectPAM.left = p.x - 9;
+			rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y + 30;
+			string CID = pilotCID[radarTarget.GetCallsign()];
+
+			dc.DrawText("CTP", &rectPAM, DT_LEFT);
+
+			DeleteObject(font);
+
+			// END CTP
+
 
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
@@ -258,7 +267,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// if the flightplan does not have a correlated radar target
 			if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
-				&& !hasADSB[flightPlan.GetCallsign()]) {
+				&& !mAcData[flightPlan.GetCallsign()].isADSB) {
 
 				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &tagOffset);
 				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &tagOffset);
@@ -653,33 +662,6 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 			sectorElement.GetPosition(&adsbSite, 0);
 		}
 	}
-
-	// Initialize locally stored plane data (for when you switch views)
-	for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
-		flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
-
-		string callSign = flightPlan.GetCallsign();
-		bool isVFR = !strcmp(flightPlan.GetFlightPlanData().GetPlanType(), "V");
-
-		// Get information about the Aircraft/Flightplan
-		string icaoACData = flightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
-		regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-		bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
-		if (flightPlan.GetFlightPlanData().GetCapibilities() == 'L' ||
-			flightPlan.GetFlightPlanData().GetCapibilities() == 'W' ||
-			flightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
-			isRVSM = TRUE;
-		}
-		regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-		bool isADSB = regex_search(icaoACData, icaoADSB);
-
-		string CJS = flightPlan.GetTrackingControllerId();
-
-		hasADSB[callSign] = isADSB;
-		hasVFRFP[callSign] = isVFR;
-		hasRVSM[callSign] = isRVSM;
-	}
-
 } 
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
@@ -702,18 +684,16 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
 
 	string CJS = FlightPlan.GetTrackingControllerId();
 
-	hasADSB[callSign] = isADSB;
-	hasVFRFP[callSign] = isVFR;
-	hasRVSM[callSign] = isRVSM;
+	ACData acdata = { isVFR, isADSB, isRVSM };
+	mAcData[callSign] = acdata;
 
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	string callSign = FlightPlan.GetCallsign();
 
-	hasADSB.erase(callSign);
-	hasVFRFP.erase(callSign);
-	hasRVSM.erase(callSign);
+	mAcData.erase(callSign);
+
 }
 
 void CSiTRadar::OnAsrContentToBeSaved() {

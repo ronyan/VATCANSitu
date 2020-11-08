@@ -15,6 +15,12 @@
 using namespace EuroScopePlugIn;
 using namespace std;
 
+struct ACData {
+    bool hasVFRFP;
+    bool isADSB;
+    bool isRVSM;
+};
+
 class CSiTRadar :
     public EuroScopePlugIn::CRadarScreen
 
@@ -24,7 +30,9 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
-    map<string, string> pilotCID;
+    static map<string, string> pilotCID;
+    static map<string, bool> isCTP;
+    static map<string, ACData> mAcData; 
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
@@ -118,12 +126,6 @@ protected:
     clock_t halfSec = 0;
     bool halfSecTick = FALSE; // toggles on and off every half second
 
-    // PPS and airplane states
-
-    map<string, bool> hasADSB;
-    map<string, bool> hasVFRFP;
-    map<string, bool> hasRVSM;
-
     map<string, bool> hashalo;
     map<string, bool> isBlinking;
     map<string, bool> isHandOffHold;
@@ -149,4 +151,3 @@ protected:
     string controllerID;
     string radtype;
 };
-

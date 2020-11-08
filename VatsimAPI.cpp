@@ -18,6 +18,8 @@ static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 
 int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 
+	// Parse CID data from the VATSIM API
+
 	string responseString;
 
 	CURL* curl = curl_easy_init();
@@ -55,4 +57,6 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 		plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 		return 1;
 	}
+
+	// Parse the list from CZQO of CIDs with CTP slots
 }

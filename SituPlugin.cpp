@@ -4,6 +4,8 @@
 #include "constants.h"
 #include "ACTag.h"
 
+const int TAG_ITEM_CTP_SLOT = 5000;
+
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"NAVCANSitu",
@@ -11,6 +13,7 @@ SituPlugin::SituPlugin()
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
+    RegisterTagItemType("CTP Slot", TAG_ITEM_CTP_SLOT);
 }
 
 SituPlugin::~SituPlugin()
@@ -30,4 +33,10 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
     int* pColorCode,
     COLORREF* pRGB,
     double* pFontSize) {
+
+    if (ItemCode == TAG_ITEM_CTP_SLOT) {
+        if (CSiTRadar::mAcData[FlightPlan.GetCallsign()].isRVSM) {
+            strcpy_s(sItemString, 16,"C");
+        }
+    }
 }
