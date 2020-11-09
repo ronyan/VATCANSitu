@@ -95,7 +95,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	Graphics g(hdc);
 
-	int pixnm = PixelsPerNM();
+	double pixnm = PixelsPerNM();
 
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
@@ -346,7 +346,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.y += 15;
 
 		// 109 pix per in on my monitor
-		int nmIn = 109 / pixnm;
+		int nmIn = (int)round(109 / pixnm);
 		string nmtext = "1\" = " + to_string(nmIn) + "nm";
 		TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
 		menutopleft.y += 17;

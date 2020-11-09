@@ -74,7 +74,7 @@ public:
         return raddist;
     }
 
-    int PixelsPerNM(void)
+    double PixelsPerNM(void)
     {
         RECT radarea = GetRadarArea();
         POINT pl = CPoint((int)radarea.left, (int)radarea.top);
@@ -91,9 +91,7 @@ public:
 
         double pixpernm = radwidth / raddist;
 
-        int pixnm = (int)round(pixpernm);
-
-        return pixnm;
+        return pixpernm;
     };
 
     inline virtual void OnAsrContentToBeClosed(void) {
