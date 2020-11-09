@@ -1,9 +1,6 @@
 #include "pch.h"
 #include "vatsimAPI.h"
 #include "SituPlugin.h"
-#include <iostream>
-#include <fstream>
-#include "ACTag.h"
 #include "json.hpp"
 #include "curl/curl.h"
 

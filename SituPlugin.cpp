@@ -1,15 +1,13 @@
 #include "pch.h"
 #include "SituPlugin.h"
 #include "CSiTRadar.h"
-#include "constants.h"
-#include "ACTag.h"
 
 const int TAG_ITEM_CTP_SLOT = 5000;
 
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.3.0.0-CTP-special",
+		"0.3.0.0-CTP-minimal",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

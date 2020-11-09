@@ -24,16 +24,7 @@
     <ClCompile Include="SituPlugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HaloTool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CSiTRadar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ACTag.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PPS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VatsimAPI.cpp">
@@ -67,31 +58,19 @@
     <ClInclude Include="SituPlugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HaloTool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="lib\EuroScopePlugIn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CSiTRadar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TopMenu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ACTag.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PPS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vatsimAPI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TopMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
