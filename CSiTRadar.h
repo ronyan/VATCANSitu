@@ -20,6 +20,7 @@ struct ACData {
     bool isADSB;
     bool isRVSM;
     bool hasCTP;
+    string slotTime;
 };
 
 class CSiTRadar :

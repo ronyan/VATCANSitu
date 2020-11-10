@@ -73,8 +73,11 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 				string apiCallsign = array["callsign"];
 				string apiCID = array["cid"];
 
-				if (std::find(cidJson["cid"].begin(), cidJson["cid"].end(), apiCID) != cidJson["cid"].end()) {
-					CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
+				for (auto& pilots : cidJson["pilots"]) {
+					if (pilots["cid"] == apiCID) {
+						CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
+						CSiTRadar::mAcData[array["callsign"]].slotTime = pilots["slot"];
+					}
 				}
 			}
 		}
