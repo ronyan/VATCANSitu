@@ -99,7 +99,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 				if (oldRemarks.find("CTP SLOT") == string::npos) {
 
-					newRemarks = oldRemarks + "CTP SLOT";
+					newRemarks = oldRemarks + " CTP SLOT";
 					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 				}
 			}
