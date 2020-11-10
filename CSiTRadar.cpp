@@ -103,6 +103,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 				}
 			}
+			// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
+			else {
+				if (oldRemarks.find("CTP SLOT") == string::npos) {
+					newRemarks = oldRemarks + " CTP MISMATCH";
+
+					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+				}
+			}
 		}
 
 	}
