@@ -24,7 +24,7 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 	CURL* curl1 = curl_easy_init();
 	if (curl)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, "https://dl.dropboxusercontent.com/s/x2ooh65i0to5n4d/ctpCID.json");
+		curl_easy_setopt(curl, CURLOPT_URL, "https://dl.dropboxusercontent.com/s/za8uqmarubnz6qt/ctpCID1.json");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cidString);
 		CURLcode res;
@@ -70,8 +70,11 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 				string apiCallsign = array["callsign"];
 				string apiCID = array["cid"];
 
-				if (std::find(cidJson["cid"].begin(), cidJson["cid"].end(), apiCID) != cidJson["cid"].end()) {
-					CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
+				for (auto& pilots : cidJson["pilots"]) {
+					if (pilots["cid"] == apiCID) {
+						CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
+						CSiTRadar::mAcData[array["callsign"]].slotTime = pilots["slot"];
+					}
 				}
 			}
 		}

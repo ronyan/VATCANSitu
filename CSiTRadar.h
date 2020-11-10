@@ -13,6 +13,7 @@ using namespace std;
 
 struct ACData {
     bool hasCTP;
+    string slotTime;
 };
 
 class CSiTRadar :

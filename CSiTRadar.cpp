@@ -87,32 +87,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 {
 	if (ObjectType == BUTTON_MENU_RELOCATE) {
 		CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
-
-		string oldRemarks; 
-		string newRemarks;
-
-		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
-			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
-			oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
-			if (mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
-				oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
-
-				if (oldRemarks.find("CTP SLOT") == string::npos) {
-
-					newRemarks = oldRemarks + " CTP SLOT";
-					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
-				}
-			}
-			// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
-			else {
-				if (oldRemarks.find("CTP SLOT") == string::npos) {
-					newRemarks = oldRemarks + " CTP MISMATCH";
-
-					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
-				}
-			}
-		}
-
 	}
 }
 

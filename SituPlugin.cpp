@@ -3,6 +3,7 @@
 #include "CSiTRadar.h"
 
 const int TAG_ITEM_CTP_SLOT = 5000;
+const int TAG_ITEM_CTP_CTOT = 5001;
 
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
@@ -12,6 +13,7 @@ SituPlugin::SituPlugin()
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
     RegisterTagItemType("CTP Slot", TAG_ITEM_CTP_SLOT);
+    RegisterTagItemType("CTP CTOT", TAG_ITEM_CTP_CTOT);
 }
 
 SituPlugin::~SituPlugin()
@@ -36,5 +38,8 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
         if (CSiTRadar::mAcData[FlightPlan.GetCallsign()].hasCTP) {
             strcpy_s(sItemString, 16,"C");
         }
+    }
+    if (ItemCode == TAG_ITEM_CTP_CTOT) {
+        strcpy_s(sItemString, 16, CSiTRadar::mAcData[FlightPlan.GetCallsign()].slotTime.c_str());
     }
 }
