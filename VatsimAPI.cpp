@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "vatsimAPI.h"
 #include "SituPlugin.h"
+#include "CSiTRadar.h"
 #include "json.hpp"
 #include "curl/curl.h"
 
@@ -13,9 +14,9 @@ static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 }
 
 
-int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
+void CDataHandler::GetVatsimAPIData(void* args) {
 
-	// Parse list of CTP CIDs
+	CAsync* data = (CAsync*) args;
 
 	string cidString;
 	json cidJson;
@@ -38,11 +39,12 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 		cidJson = json::parse(cidString);
 
 		// Everything succeeded, show to user
-		plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("CTP CIDs Updated").c_str(), true, false, false, false, false);
+
+		data->Plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("CTP slot times parsed").c_str(), true, false, false, false, false);
 
 	}
 	catch (exception& e) {
-		plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 
 	}
 
@@ -64,17 +66,28 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 
 		// Now we parse the json
 		auto jsonArray = json::parse(responseString);
+		if (!cidJson["pilots"].empty()) {
+			for (auto& pilots : cidJson["pilots"]) {
+				string cid = to_string(pilots["cid"]);
+				string slot = pilots["slot"];
+
+				CSiTRadar::slotTime[cid] = slot;
+			}
+		}
 
 		if (!jsonArray["clients"].empty()) {
 			for (auto& array : jsonArray["clients"]) {
 				string apiCallsign = array["callsign"];
 				string apiCID = array["cid"];
 
-				for (auto& pilots : cidJson["pilots"]) {
-					if (strcmp(to_string(pilots["cid"]).c_str(), apiCID.c_str()) == 0) {
-						CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
-						CSiTRadar::mAcData[array["callsign"]].slotTime = pilots["slot"];
-					}
+				CSiTRadar::mAcData[apiCallsign].CID = apiCID;
+				if (CSiTRadar::slotTime.find(apiCID) != CSiTRadar::slotTime.end()) {
+					CSiTRadar::mAcData[apiCallsign].slotTime = CSiTRadar::slotTime[apiCID];
+					CSiTRadar::mAcData[apiCallsign].hasCTP = TRUE;
+				}
+				else {
+					CSiTRadar::mAcData[apiCallsign].slotTime = "";
+					CSiTRadar::mAcData[apiCallsign].hasCTP = FALSE;
 				}
 			}
 		}
@@ -82,11 +95,11 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 		string timeStamp = jsonArray["general"]["update_timestamp"];
 
 		// Everything succeeded, show to user
-		plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("VATSIM Data Successfully Loaded at " + timeStamp).c_str(), true, false, false, false, false);
-		return 0;
+		data->Plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("Slot times validated at " + timeStamp).c_str(), true, false, false, false, false);
+
 	}
 	catch (exception& e) {
-		plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
-		return 1;
+		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+
 	}
 }

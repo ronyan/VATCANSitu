@@ -14,6 +14,7 @@ using namespace std;
 struct ACData {
     bool hasCTP;
     string slotTime;
+    string CID;
 };
 
 class CSiTRadar :
@@ -26,6 +27,7 @@ public:
     virtual ~CSiTRadar(void);
 
     static map<string, ACData> mAcData; 
+    static map<string, string> slotTime;
 
     inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
     static void RegisterButton(RECT rect) {};

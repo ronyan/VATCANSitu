@@ -9,15 +9,12 @@
 #include "vatsimAPI.h"
 
 map<string, ACData> CSiTRadar::mAcData;
+map<string, string> CSiTRadar::slotTime;
 
 CSiTRadar::CSiTRadar()
 {
 	time = clock();
 	oldTime = clock();
-}
-
-CSiTRadar::~CSiTRadar()
-{
 }
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
@@ -79,7 +76,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	if (autoRefresh) {
 		time = clock();
 		if ((time - oldTime) / CLOCKS_PER_SEC > 300) {
-			CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
+			CAsync* data = new CAsync();
+			data->Plugin = GetPlugIn();
+			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*)&data);
 			oldTime = clock();
 		}
 	}
@@ -94,7 +93,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	int Button)
 {
 	if (ObjectType == BUTTON_MENU_RELOCATE) {
-		if (Button == BUTTON_LEFT) { CDataHandler::GetVatsimAPIData(GetPlugIn(), this); oldTime = clock(); }
+		if (Button == BUTTON_LEFT) { 
+			
+			CAsync* data = new CAsync();
+			data->Plugin = GetPlugIn();
+			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*)&data);
+			
+			
+			oldTime = clock(); }
 		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
 	}
 }
@@ -108,4 +114,8 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 
 	mAcData.erase(callSign);
 
+}
+
+CSiTRadar::~CSiTRadar()
+{
 }
