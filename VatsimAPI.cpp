@@ -27,7 +27,7 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 	CURL* curl1 = curl_easy_init();
 	if (curl)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, "https://dl.dropboxusercontent.com/s/x2ooh65i0to5n4d/ctpCID.json");
+		curl_easy_setopt(curl, CURLOPT_URL, "https://ganderoceanicoca.ams3.cdn.digitaloceanspaces.com/resources/data/ctpCID.json");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cidString);
 		CURLcode res;
