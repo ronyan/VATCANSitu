@@ -21,6 +21,7 @@ struct ACData {
     bool isRVSM;
     bool hasCTP;
     string slotTime;
+    string CID;
 };
 
 class CSiTRadar :
@@ -32,9 +33,9 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
-    static map<string, string> pilotCID;
     static map<string, bool> isCTP;
     static map<string, ACData> mAcData; 
+    static map<string, string> CSiTRadar::slotTime;
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
@@ -111,14 +112,15 @@ protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
     // helper functions
-    clock_t loopTime = clock();
-    clock_t nextLoop = clock();
+    clock_t time = clock();
+    clock_t oldTime = clock();
 
     // menu states
     bool halotool = FALSE;
     bool mousehalo = FALSE;
     bool altFilterOpts = FALSE;
     bool altFilterOn = TRUE;
+    bool autoRefresh = FALSE;
 
     bool pressed = FALSE;
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions

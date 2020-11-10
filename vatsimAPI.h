@@ -3,9 +3,13 @@
 #include "EuroScopePlugIn.h"
 #include "CSiTRadar.h"
 
+struct CAsync {
+	CPlugIn* Plugin;
+};
+
 class CDataHandler
 
 {
 public:
-	static int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr);
+	static void CDataHandler::GetVatsimAPIData(void* args);
 };

@@ -54,13 +54,16 @@
 
 using namespace Gdiplus;
 
-map<string, string> CSiTRadar::pilotCID;
+map<string, string> CSiTRadar::slotTime;
 map<string, ACData> CSiTRadar::mAcData;
 
 CSiTRadar::CSiTRadar()
 {
 	halfSec = clock();
 	halfSecTick = FALSE;
+
+	time = clock();
+	oldTime = clock();
 }
 
 CSiTRadar::~CSiTRadar()
@@ -166,11 +169,20 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				RECT rectPAM;
 				rectPAM.left = p.x - 9;
 				rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y + 30;
-				string CID = pilotCID[radarTarget.GetCallsign()];
 
 				dc.DrawText("CTP", &rectPAM, DT_LEFT);
 
 				DeleteObject(font);
+			}
+
+			if (autoRefresh) {
+				time = clock();
+				if ((time - oldTime) / CLOCKS_PER_SEC > 300) {
+					CAsync* data = new CAsync();
+					data->Plugin = GetPlugIn();
+					_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*)&data);
+					oldTime = clock();
+				}
 			}
 
 			// END CTP
@@ -329,7 +341,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 10;
 
 		// screen range, dummy buttons, not really necessary in ES.
-		but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", 0);
+		but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
 		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
 		menutopleft.y += 25;
 
@@ -540,10 +552,17 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_RELOCATE) {
-		CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
+		if (Button == BUTTON_LEFT) {
+			CAsync* data = new CAsync();
+			data->Plugin = GetPlugIn();
+			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*)&data);
+
+			oldTime = clock();
+		}
+
+		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
 	}
 
-	
 	
 	if (Button == BUTTON_MIDDLE) {
 		// open Free Text menu
