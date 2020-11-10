@@ -47,4 +47,7 @@ protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
     const int BUTTON_MENU_RELOCATE = 1200;
+    BOOL autoRefresh = FALSE;
+    clock_t time; 
+    clock_t oldTime;
 };

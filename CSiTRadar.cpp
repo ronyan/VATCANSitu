@@ -12,6 +12,8 @@ map<string, ACData> CSiTRadar::mAcData;
 
 CSiTRadar::CSiTRadar()
 {
+	time = clock();
+	oldTime = clock();
 }
 
 CSiTRadar::~CSiTRadar()
@@ -64,18 +66,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// END CTP
 		}
 
-		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
-		// this point moves to the origin of each subsequent area
 		POINT menu;
 		RECT but;
 
 		menu.y = 40;
 		menu.x = 10;
 
-		// screen range, dummy buttons, not really necessary in ES.
-		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Refresh", 0);
+		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Refresh", autoRefresh);
 		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
 	}
+
+	if (autoRefresh) {
+		time = clock();
+		if ((time - oldTime) / CLOCKS_PER_SEC > 300) {
+			CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
+			oldTime = clock();
+		}
+	}
+
 	dc.Detach();
 }
 
@@ -86,7 +94,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	int Button)
 {
 	if (ObjectType == BUTTON_MENU_RELOCATE) {
-		CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
+		if (Button == BUTTON_LEFT) { CDataHandler::GetVatsimAPIData(GetPlugIn(), this); oldTime = clock(); }
+		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
 	}
 }
 

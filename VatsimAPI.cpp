@@ -71,7 +71,7 @@ int CDataHandler::GetVatsimAPIData(CPlugIn* plugin, CSiTRadar* radscr) {
 				string apiCID = array["cid"];
 
 				for (auto& pilots : cidJson["pilots"]) {
-					if (pilots["cid"] == apiCID) {
+					if (strcmp(to_string(pilots["cid"]).c_str(), apiCID.c_str()) == 0) {
 						CSiTRadar::mAcData[array["callsign"]].hasCTP = TRUE;
 						CSiTRadar::mAcData[array["callsign"]].slotTime = pilots["slot"];
 					}
