@@ -87,6 +87,24 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 {
 	if (ObjectType == BUTTON_MENU_RELOCATE) {
 		CDataHandler::GetVatsimAPIData(GetPlugIn(), this);
+
+		string oldRemarks; 
+		string newRemarks;
+
+		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
+			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
+			oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+			if (mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
+				oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+
+				if (oldRemarks.find("CTP SLOT") == string::npos) {
+
+					newRemarks = oldRemarks + "CTP SLOT";
+					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+				}
+			}
+		}
+
 	}
 }
 
