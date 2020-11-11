@@ -102,4 +102,5 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 
 	}
+	delete args;
 }
