@@ -97,7 +97,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			
 			CAsync* data = new CAsync();
 			data->Plugin = GetPlugIn();
-			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*)&data);
+			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
 			
 			
 			oldTime = clock(); }
