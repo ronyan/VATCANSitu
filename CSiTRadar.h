@@ -5,7 +5,6 @@
 #include <string>
 #include <map>
 #include <iostream>
-#include <math.h>
 #include "pch.h"
 
 using namespace EuroScopePlugIn;

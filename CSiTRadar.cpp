@@ -63,31 +63,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// END CTP
 		}
 
-		string oldRemarks;
-		string newRemarks;
-
-		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
-			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
-			oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
-			if (mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
-				oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
-
-				if (oldRemarks.find("CTP SLOT") == string::npos) {
-
-					newRemarks = oldRemarks + " CTP SLOT";
-					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
-				}
-			}
-			// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
-			else {
-				if (oldRemarks.find("CTP SLOT") == string::npos || oldRemarks.find("CTP MISMATCH") == string::npos) {
-					newRemarks = oldRemarks + " CTP MISMATCH";
-
-					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
-				}
-			}
-		}
-
 		POINT menu;
 		RECT but;
 
@@ -122,7 +97,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			
 			CAsync* data = new CAsync();
 			data->Plugin = GetPlugIn();
-			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*)&data);
+			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
 				
 			oldTime = clock(); }
 		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }

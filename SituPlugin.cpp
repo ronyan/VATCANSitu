@@ -8,7 +8,7 @@ const int TAG_ITEM_CTP_CTOT = 5001;
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.3.0.1-CTP-minimal",
+		"0.3.0.3RC-CTP-minimal-VATUSA",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

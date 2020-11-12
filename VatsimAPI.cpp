@@ -25,7 +25,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 	CURL* curl1 = curl_easy_init();
 	if (curl)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, "https://dl.dropboxusercontent.com/s/za8uqmarubnz6qt/ctpCID1.json");
+		curl_easy_setopt(curl, CURLOPT_URL, "https://cdn.ganderoceanic.com/resources/data/ctpCID.json");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cidString);
 		CURLcode res;
@@ -102,5 +102,31 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 
 	}
+
+	string oldRemarks;
+	string newRemarks;
+
+	for (CFlightPlan flightPlan = data->Plugin->FlightPlanSelectFirst(); flightPlan.IsValid();
+		flightPlan = data->Plugin->FlightPlanSelectNext(flightPlan)) {
+		oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+		if (CSiTRadar::mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
+			oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+
+			if (oldRemarks.find("CTP SLOT") == string::npos) {
+
+				newRemarks = oldRemarks + " CTP SLOT";
+				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+			}
+		}
+		// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
+		else {
+			if (oldRemarks.find("CTP SLOT") == string::npos || oldRemarks.find("CTP MISMATCH") == string::npos) {
+				newRemarks = oldRemarks + " CTP MISMATCH";
+
+				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+			}
+		}
+	}
+
 	delete args;
 }
