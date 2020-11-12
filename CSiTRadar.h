@@ -2,6 +2,7 @@
 #include "EuroScopePlugIn.h"
 #include "SituPlugin.h"
 #include <chrono>
+#include <time.h>
 #include <string>
 #include <map>
 #include <iostream>

@@ -106,22 +106,37 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 	string oldRemarks;
 	string newRemarks;
 
+	struct tm gmt;
+	time_t t;
+	t = time(NULL);
+	gmtime_s(&gmt, &t);
+	
+	char timeStr[50];
+	strftime(timeStr, 50, "%H%MZ", &gmt);
+
 	for (CFlightPlan flightPlan = data->Plugin->FlightPlanSelectFirst(); flightPlan.IsValid();
 		flightPlan = data->Plugin->FlightPlanSelectNext(flightPlan)) {
 		oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+
 		if (CSiTRadar::mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
 			oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
 
 			if (oldRemarks.find("CTP SLOT") == string::npos) {
 
-				newRemarks = oldRemarks + " CTP SLOT";
+				newRemarks = oldRemarks + " CTP SLOT / " + timeStr;
 				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 			}
 		}
 		// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
 		else {
-			if (oldRemarks.find("CTP SLOT") == string::npos || oldRemarks.find("CTP MISMATCH") == string::npos) {
-				newRemarks = oldRemarks + " CTP MISMATCH";
+			if (oldRemarks.find("CTP SLOT") != string::npos && oldRemarks.find("CTP MISMATCH") == string::npos) {
+				newRemarks = oldRemarks + " CTP MISMATCH NON EVENT TRAFFIC / " + timeStr;
+
+				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+			}
+
+			else if (oldRemarks.find("NON EVENT TRAFFIC") == string::npos) {
+				newRemarks = oldRemarks + " NON EVENT TRAFFIC / " + timeStr;
 
 				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 			}
