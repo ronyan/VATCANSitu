@@ -130,13 +130,13 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
 		else {
 			if (oldRemarks.find("CTP SLOT") != string::npos && oldRemarks.find("CTP MISMATCH") == string::npos) {
-				newRemarks = oldRemarks + " CTP MISMATCH NON EVENT TRAFFIC / " + timeStr;
+				newRemarks = oldRemarks + " CTP MISMATCH / NON EVENT / " + timeStr;
 
 				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 			}
 
-			else if (oldRemarks.find("NON EVENT TRAFFIC") == string::npos) {
-				newRemarks = oldRemarks + " NON EVENT TRAFFIC / " + timeStr;
+			else if (oldRemarks.find("NON EVENT") == string::npos) {
+				newRemarks = oldRemarks + " NON EVENT / " + timeStr;
 
 				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 			}
