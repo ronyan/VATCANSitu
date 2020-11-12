@@ -25,7 +25,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 	CURL* curl1 = curl_easy_init();
 	if (curl)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, "https://dl.dropboxusercontent.com/s/za8uqmarubnz6qt/ctpCID1.json");
+		curl_easy_setopt(curl, CURLOPT_URL, "https://cdn.ganderoceanic.com/resources/data/ctpCID.json");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cidString);
 		CURLcode res;
