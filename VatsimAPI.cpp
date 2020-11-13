@@ -141,6 +141,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 			}
 		}
+		flightPlan.GetFlightPlanData().AmendFlightPlan();
 	}
 
 	delete args;
