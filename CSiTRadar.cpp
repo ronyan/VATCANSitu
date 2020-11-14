@@ -35,7 +35,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 			string callSign = radarTarget.GetCallsign();
 
-			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 			if (radarTarget.GetPosition().GetRadarFlags() != 0) {
 				// CTP VERSION
 				if (mAcData[callSign].hasCTP) {
