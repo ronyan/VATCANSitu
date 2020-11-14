@@ -142,7 +142,10 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 			}
 		}
 		flightPlan.GetFlightPlanData().AmendFlightPlan();
+		Sleep(25);
 	}
+
+
 
 	delete args;
 }

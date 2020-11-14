@@ -75,7 +75,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (autoRefresh) {
 		time = clock();
-		if ((time - oldTime) / CLOCKS_PER_SEC > 60) {
+		if ((time - oldTime) / CLOCKS_PER_SEC > 120) {
 			CAsync* data = new CAsync();
 			data->Plugin = GetPlugIn();
 			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
