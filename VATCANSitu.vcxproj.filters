@@ -36,9 +36,6 @@
     <ClCompile Include="PPS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VatsimAPI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VATCANSitu.def">
@@ -86,9 +83,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PPS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vatsimAPI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="json.hpp">

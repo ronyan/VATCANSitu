@@ -200,7 +200,6 @@
     </ClCompile>
     <ClCompile Include="PPS.cpp" />
     <ClCompile Include="SituPlugin.cpp" />
-    <ClCompile Include="VatsimAPI.cpp" />
     <ClCompile Include="VATCANSitu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -222,7 +221,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TopMenu.h" />
     <ClInclude Include="VATCANSitu.h" />
-    <ClInclude Include="vatsimAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VATCANSitu.rc" />

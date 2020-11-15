@@ -11,11 +11,22 @@
 
 using namespace std;
 
+struct menuButton {
+    POINT location;
+    int width;
+    int height;
+    COLORREF pressedColor;
+    COLORREF unpressedColor;
+    bool pressed;
+};
+
 class TopMenu :
     public EuroScopePlugIn::CRadarScreen
 {
 
 public:
+
+    static map<string, menuButton> menuButtons;
 
     static RECT DrawButton(CDC* dc, POINT p, int width, int height, const char* btext, bool pressed) 
     {        
@@ -342,4 +353,3 @@ public:
     }
 
 };
-

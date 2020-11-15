@@ -48,7 +48,6 @@
 #include "SituPlugin.h"
 #include "ACTag.h"
 #include "PPS.h"
-#include "vatsimAPI.h"
 #include <chrono>
 
 
@@ -56,6 +55,7 @@ using namespace Gdiplus;
 
 map<string, string> CSiTRadar::slotTime;
 map<string, ACData> CSiTRadar::mAcData;
+map<string, menuButton> TopMenu::menuButtons;
 
 CSiTRadar::CSiTRadar()
 {
@@ -153,41 +153,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			}
 
-			// CTP VERSION
-			if (mAcData[callSign].hasCTP) {
-				CFont font;
-				LOGFONT lgfont;
-
-				memset(&lgfont, 0, sizeof(LOGFONT));
-				lgfont.lfWeight = 500;
-				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-				lgfont.lfHeight = 12;
-				font.CreateFontIndirect(&lgfont);
-
-				dc.SetTextColor(C_PPS_ORANGE);
-
-				RECT rectPAM;
-				rectPAM.left = p.x - 9;
-				rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y + 30;
-
-				dc.DrawText("CTP", &rectPAM, DT_LEFT);
-
-				DeleteObject(font);
-			}
-
-			if (autoRefresh) {
-				time = clock();
-				if ((time - oldTime) / CLOCKS_PER_SEC > 300) {
-					CAsync* data = new CAsync();
-					data->Plugin = GetPlugIn();
-					_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
-					oldTime = clock();
-				}
-			}
-
-			// END CTP
-
-
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
@@ -268,7 +233,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
 				HaloTool::drawHalo(&dc, p, halorad, pixnm);
 			}
-
 		}
 
 		// Flight plan loop. Goes through flight plans, and if not correlated will display
@@ -550,19 +514,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
 		altFilterOn = !altFilterOn;
 	}
-
-	if (ObjectType == BUTTON_MENU_RELOCATE) {
-		if (Button == BUTTON_LEFT) {
-			CAsync* data = new CAsync();
-			data->Plugin = GetPlugIn();
-			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
-
-			oldTime = clock();
-		}
-
-		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
-	}
-
 	
 	if (Button == BUTTON_MIDDLE) {
 		// open Free Text menu
@@ -587,7 +538,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 		
 		if (Button == BUTTON_RIGHT) {
-
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_CALLSIGN, sObjectId, NULL, TAG_ITEM_FUNCTION_HANDOFF_POPUP_MENU, Pt, Area);
 		}
 	}
