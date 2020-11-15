@@ -91,15 +91,15 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURL_STATICLIB;WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>D:\Documents\EuroScope Development\VATCANSitu\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Documents\VATCANSitu\curl;D:\Documents\EuroScope Development\VATCANSitu\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>.\VATCANSitu.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>D:\Documents\VATCANSitu\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Normaliz.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;advapi32.lib;EuroScopePlugInDll.lib;libcurl_a_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -189,8 +189,8 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ACTag.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
-    <ClCompile Include="GndRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -198,9 +198,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PPS.cpp" />
     <ClCompile Include="SituPlugin.cpp" />
-    <ClCompile Include="tagRender.cpp" />
-    <ClCompile Include="TopMenu.cpp" />
     <ClCompile Include="VATCANSitu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -208,16 +207,17 @@
     <None Include="VATCANSitu.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ACTag.h" />
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="GndRadar.h" />
     <ClInclude Include="HaloTool.h" />
     <ClInclude Include="constants.h" />
+    <ClInclude Include="json.hpp" />
     <ClInclude Include="lib\EuroScopePlugIn.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PPS.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SituPlugin.h" />
-    <ClInclude Include="tagRender.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TopMenu.h" />
     <ClInclude Include="VATCANSitu.h" />

@@ -6,16 +6,38 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
+
+// Colours for the plugin
+const COLORREF C_WHITE = RGB(255, 255, 255);
+const COLORREF C_PPS_ORANGE = RGB(242, 120, 57);
+const COLORREF C_PPS_YELLOW = RGB(202, 205, 169);
+const COLORREF C_PPS_MAGENTA = RGB(197, 38, 212);
+const COLORREF C_PPS_RED = RGB(209, 39, 27);
+
+// Math
+const double PI = 3.14159;
+
+// Tag Settings
+const int TAG_MAX_X_OFFSET = 45;
+const int TAG_MAX_Y_OFFSET = 30;
+const int TAG_WIDTH = 60;
+const int TAG_HEIGHT = 25;
+
 // Tag Items
 const int TAG_ITEM_PLANE_HALO = 1;
 const int AIRCRAFT_SYMBOL = 200;
 const int AIRCRAFT_CJS = 400;
+
+const int TAG_ITEM_FP_CS = 401;
+const int TAG_ITEM_FP_FINAL_ALTITUDE = 402;
+const int TAG_ALT = 403;
 
 const int BUTTON_MENU = 201;
 const int BUTTON_MENU_HALO_OPTIONS = 202;
 const int BUTTON_MENU_ALT_FILT_OPT = 203;
 const int BUTTON_MENU_ALT_FILT_ON = 204;
 const int BUTTON_MENU_ALT_FILT_SAVE = 205;
+const int BUTTON_MENU_RELOCATE = 206;
 
 // Menu Modules
 const int MODULE_1_X = 0;
@@ -39,7 +61,3 @@ const int DELETE_ALL_FREE_TEXT = 1103;
 // Module 2 : distances relative to module origin
 const int HALO_TOOL_X = 0;
 const int HALO_TOOL_Y = 0;
-
-class colors {
-
-};

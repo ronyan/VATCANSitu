@@ -5,6 +5,39 @@
 	3. Mouse halo if enabled
 	4. Aircraft specific halos if enabled
 	5. PTLS for aircrafts if enabled
+
+
+	// DEBUG
+
+	POINT q;
+	q = ConvertCoordFromPositionToPixel(adsbSite);
+	HPEN targetPen;
+	targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+	dc.SelectObject(targetPen);
+
+	dc.MoveTo(q.x, q.y);
+	dc.LineTo(q.x + 20, q.y + 20);
+
+	CFont font;
+	LOGFONT lgfont;
+	memset(&lgfont, 0, sizeof(LOGFONT));
+	lgfont.lfHeight = 14;
+	lgfont.lfWeight = 500;
+	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+	font.CreateFontIndirect(&lgfont);
+	dc.SelectObject(font);
+
+	RECT debug;
+	debug.top = 250;
+	debug.left = 250;
+	dc.DrawText(to_string(adsbSite.m_Latitude).c_str(), &debug, DT_LEFT);
+	debug.top += 10;
+
+	DeleteObject(font);
+
+	DeleteObject(targetPen);
+
+	// DEBUG
 */
 
 #include "pch.h"
@@ -13,15 +46,24 @@
 #include "constants.h"
 #include "TopMenu.h"
 #include "SituPlugin.h"
-#include "GndRadar.h"
+#include "ACTag.h"
+#include "PPS.h"
 #include <chrono>
+
 
 using namespace Gdiplus;
 
+map<string, string> CSiTRadar::slotTime;
+map<string, ACData> CSiTRadar::mAcData;
+map<string, menuButton> TopMenu::menuButtons;
 
 CSiTRadar::CSiTRadar()
 {
 	halfSec = clock();
+	halfSecTick = FALSE;
+
+	time = clock();
+	oldTime = clock();
 }
 
 CSiTRadar::~CSiTRadar()
@@ -30,6 +72,9 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+	if (phase != REFRESH_PHASE_AFTER_TAGS && phase != REFRESH_PHASE_BEFORE_TAGS) {
+		return;
+	}
 
 	// get cursor position and screen info
 	POINT p;
@@ -53,22 +98,20 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	Graphics g(hdc);
 
-	int pixnm = PixelsPerNM();
+	double pixnm = PixelsPerNM();
 
 	if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
 		// Draw the mouse halo before menu, so it goes behind it
 		if (mousehalo == TRUE) {
-			HaloTool::drawHalo(dc, p, halorad, pixnm);
+			HaloTool::drawHalo(&dc, p, halorad, pixnm);
 			RequestRefresh();
 		}
-
-		// add orange PPS to aircrafts with VFR Flight Plans that have correlated targets
-		// iterate over radar targets
 
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 		{
+		
 			// altitude filtering 
 			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100) {
 				continue;
@@ -78,36 +121,48 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				continue;
 			}
 
-			// aircraft equipment parsing
-			string icaoACData = radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftInfo();
-			regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-			bool isRVSM = regex_search(icaoACData, icaoRVSM);
-			regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-			bool isADSB = regex_search(icaoACData, icaoADSB);
-
-			// get the target's position on the screen and add it as a screen object
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
-			RECT prect;
-			prect.left = p.x - 5;
-			prect.top = p.y - 5;
-			prect.right = p.x + 5;
-			prect.bottom = p.y + 5;
-			AddScreenObject(AIRCRAFT_SYMBOL, radarTarget.GetCallsign(), prect, FALSE, "");
+			string callSign = radarTarget.GetCallsign();
+
+			// Get information about the Aircraft/Flightplan
+			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
+			bool isVFR = mAcData[callSign].hasVFRFP;
+			bool isRVSM = mAcData[callSign].isRVSM;
+			bool isADSB = mAcData[callSign].isADSB;
+
+			COLORREF ppsColor;
+
+			// logic for the color of the PPS
+			if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
+			else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
+			else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
+			else if (isVFR) { ppsColor = C_PPS_ORANGE; }
+			else { ppsColor = C_PPS_YELLOW; }
+
+			if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
+
+			RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
+			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
+
+			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
+			if (radarTarget.GetPosition().GetRadarFlags() == 0
+				&& isADSB) {
+
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+
+			}
 
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2 
 					&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0) {
-					// blink the CJS
-					string callsign = radarTarget.GetCallsign();
-					isBlinking[callsign] = TRUE;
+					isBlinking[callSign] = TRUE;
 				}
 			}
 			else {
-				string callsign = radarTarget.GetCallsign();
-
-				isBlinking.erase(callsign);
+				isBlinking.erase(callSign);
 			}
 
 			// if in the process of handing off, flash the PPS (to be added), CJS and display the frequency 
@@ -176,201 +231,23 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
 			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
-				HaloTool::drawHalo(dc, p, halorad, pixnm);
+				HaloTool::drawHalo(&dc, p, halorad, pixnm);
 			}
-
-			// if squawking ident, PPS blinks -- skips drawing symbol every 0.5 seconds
-			if (radarTarget.GetPosition().GetTransponderI()
-				&& radarTarget.GetPosition().GetRadarFlags() != 0) {
-				
-				if (halfSecTick) {
-					continue;
-				}
-			}
-
-			// Draw red triangle for emergency aircraft
-
-			if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") ||
-				!strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) {
-
-				COLORREF targetPenColor;
-				targetPenColor = RGB(209, 39, 27); // Red
-				HPEN targetPen;
-				HBRUSH targetBrush;
-				targetBrush = CreateSolidBrush(RGB(209, 39, 27));
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-
-				dc.SelectObject(targetPen);
-				dc.SelectObject(targetBrush);
-
-				// draw the shape
-
-				POINT vertices[] = { { p.x - 3, p.y + 3 } , { p.x, p.y - 3 } , { p.x + 3,p.y + 3 } };
-				dc.Polygon(vertices, 3);
-
-				DeleteObject(targetBrush);
-				DeleteObject(targetPen);
-
-				continue;
-			}
-
-			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
-
-			if (radarTarget.GetPosition().GetRadarFlags() == 0
-				&& isADSB) { // need to add ADSB equipment logic -- currently based on filed FP; no tag will display though. WIP
-
-				COLORREF targetPenColor;
-				targetPenColor = RGB(202, 205, 169); // amber colour
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape
-				dc.MoveTo(p.x - 5, p.y - 5);
-				dc.LineTo(p.x + 5, p.y -5);
-				dc.LineTo(p.x + 5, p.y + 5);
-				dc.LineTo(p.x - 5, p.y + 5);
-				dc.LineTo(p.x - 5, p.y - 5);
-
-				// if primary and secondary target, draw the middle line
-				if (isRVSM) {
-					dc.MoveTo(p.x, p.y - 5);
-					dc.LineTo(p.x, p.y + 5);
-				}
-
-				// cleanup
-				DeleteObject(targetPen);
-			}
-
-			// if primary target draw the symbol in magenta
-
-			if (radarTarget.GetPosition().GetRadarFlags() == 1) {
-				COLORREF targetPenColor;
-				targetPenColor = RGB(197, 38, 212); // magenta colour
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape
-				dc.MoveTo(p.x, p.y + 4);
-				dc.LineTo(p.x, p.y);
-				dc.LineTo(p.x - 4, p.y - 4);
-				dc.MoveTo(p.x, p.y);
-				dc.LineTo(p.x + 4, p.y - 4);
-
-				// cleanup
-				DeleteObject(targetPen);
-
-			}
-
-			// if RVSM draw the RVSM diamond
-
-			if ((radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'L' || 
-				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'W' ||
-				radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetCapibilities() == 'Z' || // FAA RVSM
-				isRVSM) // ICAO equpmnet code indicates RVSM -- contains 'W'
-
-				&& radarTarget.GetPosition().GetRadarFlags() != 0 && 
-				radarTarget.GetPosition().GetRadarFlags() != 1) {
-
-				COLORREF targetPenColor;
-				targetPenColor = RGB(202, 205, 169); // amber colour
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape
-				dc.MoveTo(p.x, p.y - 5);
-				dc.LineTo(p.x + 5, p.y);
-				dc.LineTo(p.x, p.y + 5);
-				dc.LineTo(p.x - 5, p.y);
-				dc.LineTo(p.x, p.y - 5);
-
-				// if primary and secondary target, draw the middle line
-				if (radarTarget.GetPosition().GetRadarFlags() == 3) {
-					dc.MoveTo(p.x, p.y - 5);
-					dc.LineTo(p.x, p.y + 5);
-				}
-
-				DeleteObject(targetPen);
-			}
-			else {
-
-				if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "I") == 0 
-					&& radarTarget.GetPosition().GetRadarFlags() != 0
-					&& radarTarget.GetPosition().GetRadarFlags() != 1) {
-					COLORREF targetPenColor;
-					targetPenColor = RGB(202, 205, 169); // white when squawking ident
-					HPEN targetPen;
-					targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-					dc.SelectObject(targetPen);
-					dc.SelectStockObject(NULL_BRUSH);
-
-					dc.SelectObject(targetPen);
-
-					// Hexagon for secondary
-					dc.MoveTo(p.x - 4, p.y - 2);
-					dc.LineTo(p.x - 4, p.y + 2);
-					dc.LineTo(p.x, p.y + 5);
-					dc.LineTo(p.x + 4, p.y + 2);
-					dc.LineTo(p.x + 4, p.y - 2);
-					dc.LineTo(p.x, p.y - 5);
-					dc.LineTo(p.x - 4, p.y - 2);
-
-					// Triangle for primary
-					if (radarTarget.GetPosition().GetRadarFlags() == 3) {
-						dc.MoveTo(p.x - 4, p.y + 2);
-						dc.LineTo(p.x, p.y - 4);
-						dc.LineTo(p.x + 4, p.y + 2);
-						dc.LineTo(p.x - 4, p.y + 2);
-					}
-
-					// cleanup
-					DeleteObject(targetPen);
-				}
-			}
-
-			
-			// if VFR
-			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V") == 0
-				&& radarTarget.GetPosition().GetTransponderC() == TRUE
-				&& radarTarget.GetPosition().GetRadarFlags() != 0
-				&& radarTarget.GetPosition().GetRadarFlags() != 1) {
-
-				COLORREF targetPenColor;
-				targetPenColor = RGB(242, 120, 57); // PPS orange color
-				HPEN targetPen;
-				targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
-				dc.SelectObject(targetPen);
-				dc.SelectStockObject(NULL_BRUSH);
-
-				// draw the shape
-				dc.Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
-
-				dc.SelectObject(targetPen);
-				dc.MoveTo(p.x - 3, p.y - 2);
-				dc.LineTo(p.x + 1, p.y + 4);
-				dc.LineTo(p.x + 4, p.y - 2);
-
-				DeleteObject(targetPen);
-			}
-
-			// if ptl tag applied, draw it => not implemented
-
 		}
 
 		// Flight plan loop. Goes through flight plans, and if not correlated will display
 		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
 			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
 			
-			// if the flightplan does not have a correlated radar target
-			if (!flightPlan.GetCorrelatedRadarTarget().IsValid()
-				&& flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
+			if (flightPlan.GetCorrelatedRadarTarget().IsValid()) { continue; } 
 
-				// convert the predicted position to a point on the screen
+			// if the flightplan does not have a correlated radar target
+			if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
+				&& !mAcData[flightPlan.GetCallsign()].isADSB) {
+
+				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &tagOffset);
+				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &tagOffset);
+
 				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
 
 				// draw the orange airplane symbol (credits andrewogden1678)
@@ -404,18 +281,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
 				g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
 
-				// Fill the shape
-
 				SolidBrush orangeBrush(Color(255, 242, 120, 57));
-				COLORREF targetPenColor;
-				targetPenColor = RGB(242, 120, 57); // PPS orange color
 
 				g.FillPolygon(&orangeBrush, points, 19);
 				g.EndContainer(gCont);
 
 				DeleteObject(&orangeBrush);
-
-				
+								
 			}
 
 		}
@@ -433,12 +305,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 10;
 
 		// screen range, dummy buttons, not really necessary in ES.
-		TopMenu::DrawButton(dc, menutopleft, 70, 23, "Relocate", 0);
+		but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
+		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
 		menutopleft.y += 25;
 
-		TopMenu::DrawButton(dc, menutopleft, 35, 23, "Zoom", 0); 
+		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0); 
 		menutopleft.x += 35;
-		TopMenu::DrawButton(dc, menutopleft, 35, 23, "Pan", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
 		menutopleft.y -= 25;
 		menutopleft.x += 55;
 		
@@ -449,7 +322,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.y += 15;
 
 		// 109 pix per in on my monitor
-		int nmIn = 109 / pixnm;
+		int nmIn = (int)round(109 / pixnm);
 		string nmtext = "1\" = " + to_string(nmIn) + "nm";
 		TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
 		menutopleft.y += 17;
@@ -461,7 +334,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		// altitude filters
 
-		but = TopMenu::DrawButton(dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
+		but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
 		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
 		
 		menutopleft.y += 25;
@@ -472,33 +345,33 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
 
 		string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
-		but = TopMenu::DrawButton(dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
+		but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
 		ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
 		menutopleft.y -= 25;
 		menutopleft.x += 65; 
 
 		// separation tools
 		string haloText = "Halo " + halooptions[haloidx];
-		but = TopMenu::DrawButton(dc, menutopleft, 45, 23, haloText.c_str(), halotool);
+		but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), halotool);
 		ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
 
 		menutopleft.y = menutopleft.y + 25;
-		but = TopMenu::DrawButton(dc, menutopleft, 45, 23, "PTL 3", 0);
+		but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, "PTL 3", 0);
 		ButtonToScreen(this, but, "PTL", BUTTON_MENU_HALO_OPTIONS);
 
 		menutopleft.y = menutopleft.y - 25;
 		menutopleft.x = menutopleft.x + 47;
-		TopMenu::DrawButton(dc, menutopleft, 35, 23, "RBL", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
 
 		menutopleft.y = menutopleft.y + 25;
-		TopMenu::DrawButton(dc, menutopleft, 35, 23, "PIV", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
 
 		menutopleft.y = menutopleft.y - 25;
 		menutopleft.x = menutopleft.x + 37;
-		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Rings 20", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
 
 		menutopleft.y = menutopleft.y + 25;
-		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Grid", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
 
 		// get the controller position ID and display it (aesthetics :) )
 		if (GetPlugIn()->ControllerMyself().IsValid())
@@ -513,7 +386,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		RECT r = TopMenu::DrawButton2(dc, menutopleft, 50, 23, cid.c_str(), 0);
 
 		menutopleft.y += 25;
-		TopMenu::DrawButton(dc, menutopleft, 50, 23, "Qck Look", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Qck Look", 0);
 		menutopleft.y -= 25;
 
 		menutopleft.x = menutopleft.x + 100;
@@ -524,14 +397,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			RECT rect;
 			RECT r;
 
-			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "End", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
 			ButtonToScreen(this, r, "End", BUTTON_MENU_HALO_OPTIONS);
 			menutopleft.x += 35;
 
-			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "All On", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "All On", FALSE);
 			ButtonToScreen(this, r, "All On", BUTTON_MENU_HALO_OPTIONS);
 			menutopleft.x += 35;
-			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "Clr All", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Clr All", FALSE);
 			ButtonToScreen(this, r, "Clr All", BUTTON_MENU_HALO_OPTIONS);
 			menutopleft.x += 35;
 
@@ -545,7 +418,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");
 				menutopleft.x += 22;
 			}
-			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "Mouse", mousehalo);
+			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Mouse", mousehalo);
 			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
 		}
 
@@ -553,7 +426,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		
 		if (altFilterOpts) {
 			
-			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "End", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
 			ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
 			menutopleft.x += 45;
 			menutopleft.y += 5;
@@ -572,26 +445,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			menutopleft.x += 75;
 			menutopleft.y -= 25;
-			r = TopMenu::DrawButton(dc, menutopleft, 35, 46, "Save", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Save", FALSE);
 			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
 
 		}
-/*
-		// Ground Radar Tags WIP
-
-		for (CRadarTarget rt = GetPlugIn()->RadarTargetSelectFirst(); rt.IsValid(); rt = GetPlugIn()->RadarTargetSelectNext(rt))
-		{
-			if (!rt.IsValid())
-				continue;
-
-			if (strcmp(rt.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
-
-				POINT p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
-				GndRadar::DrawGndTag(dc, p, 0, rt, rt.GetCallsign());
-			}
-		}
-
-*/
 	}
 	g.ReleaseHDC(hdc);
 	dc.Detach();
@@ -657,8 +514,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
 		altFilterOn = !altFilterOn;
 	}
-
-	
 	
 	if (Button == BUTTON_MIDDLE) {
 		// open Free Text menu
@@ -677,7 +532,60 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	}
 
+	// Handle tag functions when clicking on tags generated by the plugin
+	
+	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS || ObjectType == TAG_ITEM_FP_FINAL_ALTITUDE) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
+		
+		if (Button == BUTTON_RIGHT) {
+			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_CALLSIGN, sObjectId, NULL, TAG_ITEM_FUNCTION_HANDOFF_POPUP_MENU, Pt, Area);
+		}
+	}
 
+}
+
+void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released) {
+	
+	// Handling moving of the tags rendered by the plugin
+	CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
+	CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
+
+	POINT p{ 0,0 };
+
+	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS || ObjectType == TAG_ITEM_FP_FINAL_ALTITUDE) {
+		
+		if (fp.IsValid()) {
+			p = ConvertCoordFromPositionToPixel(fp.GetFPTrackPosition().GetPosition());
+		}
+
+		RECT temp = Area;
+
+		POINT q;
+		q.x = ((temp.right + temp.left) / 2) - p.x - (TAG_WIDTH/2); // Get centre of box 
+		q.y = ((temp.top + temp.bottom) / 2) - p.y - (TAG_HEIGHT/2);	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
+
+		// check maximal offset
+		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
+		if (q.x < -TAG_MAX_X_OFFSET - TAG_WIDTH) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
+		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
+		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
+
+		// nudge tag if necessary (near horizontal, or if directly above target)
+		if (q.x > -((TAG_WIDTH) / 2) && q.x < 3) { q.x = 3; };
+		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
+		if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
+
+		tagOffset[sObjectId] = q;
+		
+		if (!Released) {
+
+		}
+		else {
+			// once released, check that the tag does not exceed the limits, and then save it to the map
+		}
+	}
+
+	RequestRefresh();
 }
 
 void CSiTRadar::OnFunctionCall(int FunctionId,
@@ -714,6 +622,47 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
 		altFilterLow = atoi(filt);
 	}
+
+	// Find the position of ADSB radars
+	GetPlugIn()->SelectActiveSectorfile();
+	for (CSectorElement sectorElement = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RADARS); sectorElement.IsValid();
+		sectorElement = GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_RADARS))	{
+		if (!strcmp(sectorElement.GetName(), "QER")) {
+			sectorElement.GetPosition(&adsbSite, 0);
+		}
+	}
+} 
+
+void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
+{
+	// These items don't need to be updated each loop, save loop type by storing data in a map
+	string callSign = FlightPlan.GetCallsign();
+	bool isVFR = !strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V");
+
+	// Get information about the Aircraft/Flightplan
+	string icaoACData = FlightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
+	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
+	if (FlightPlan.GetFlightPlanData().GetCapibilities() == 'L' ||
+		FlightPlan.GetFlightPlanData().GetCapibilities() == 'W' ||
+		FlightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
+		isRVSM = TRUE;
+	}
+	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
+	bool isADSB = regex_search(icaoACData, icaoADSB);
+
+	string CJS = FlightPlan.GetTrackingControllerId();
+
+	ACData acdata = { isVFR, isADSB, isRVSM };
+	mAcData[callSign] = acdata;
+
+}
+
+void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
+	string callSign = FlightPlan.GetCallsign();
+
+	mAcData.erase(callSign);
+
 }
 
 void CSiTRadar::OnAsrContentToBeSaved() {
