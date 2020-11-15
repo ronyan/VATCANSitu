@@ -12,8 +12,8 @@ SituPlugin::SituPlugin()
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
-    RegisterTagItemType("CTP Slot", TAG_ITEM_CTP_SLOT);
-    RegisterTagItemType("CTP CTOT", TAG_ITEM_CTP_CTOT);
+    RegisterTagItemType("Slot", TAG_ITEM_CTP_SLOT);
+    RegisterTagItemType("CTOT", TAG_ITEM_CTP_CTOT);
 }
 
 SituPlugin::~SituPlugin()

@@ -48,7 +48,8 @@ public:
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
-    const int BUTTON_MENU_RELOCATE = 1200;
+    const int BUTTON_MENU_REFRESH = 1200;
+    const int BUTTON_MENU_AMENDFP = 1201;
     BOOL autoRefresh = FALSE;
     clock_t time; 
     clock_t oldTime;

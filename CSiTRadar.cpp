@@ -70,7 +70,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menu.x = 10;
 
 		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Refresh", autoRefresh);
-		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
+		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_REFRESH);
 	}
 
 	if (autoRefresh) {
@@ -82,7 +82,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			oldTime = clock();
 		}
 	}
-
 	dc.Detach();
 }
 
@@ -92,7 +91,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	RECT Area,
 	int Button)
 {
-	if (ObjectType == BUTTON_MENU_RELOCATE) {
+	if (ObjectType == BUTTON_MENU_REFRESH) {
 		if (Button == BUTTON_LEFT) { 
 			
 			CAsync* data = new CAsync();
@@ -101,6 +100,16 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				
 			oldTime = clock(); }
 		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
+	}
+
+	if (ObjectType == BUTTON_MENU_AMENDFP) {
+		if (Button == BUTTON_LEFT) {
+			CAsync* data = new CAsync();
+			data->Plugin = GetPlugIn();
+			_beginthread(CDataHandler::AmendFlightPlans, 0, (void*)data);
+
+			oldTime = clock();
+		}
 	}
 }
 

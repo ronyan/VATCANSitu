@@ -16,7 +16,7 @@ static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 
 void CDataHandler::GetVatsimAPIData(void* args) {
 
-	CAsync* data = (CAsync*) args;
+	CAsync* data = (CAsync*)args;
 
 	string cidString;
 	json cidJson;
@@ -100,9 +100,13 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 	}
 	catch (exception& e) {
 		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
-
 	}
+	delete args;
+}
 
+void CDataHandler::AmendFlightPlans(void* args) {
+
+	CAsync* data = (CAsync*)args;
 	string oldRemarks;
 	string newRemarks;
 
@@ -110,7 +114,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 	time_t t;
 	t = time(NULL);
 	gmtime_s(&gmt, &t);
-	
+
 	char timeStr[50];
 	strftime(timeStr, 50, "%H%MZ", &gmt);
 
@@ -118,34 +122,34 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		flightPlan = data->Plugin->FlightPlanSelectNext(flightPlan)) {
 		oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
 
-		if (CSiTRadar::mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
-			oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+		if (flightPlan.GetFlightPlanData().IsReceived()) {
 
-			if (oldRemarks.find("CTP SLOT") == string::npos) {
+			if (CSiTRadar::mAcData[flightPlan.GetCallsign()].hasCTP == TRUE) {
+				oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
 
-				newRemarks = (string)"CTP SLOT / " + timeStr + " " + oldRemarks;
-				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+				if (oldRemarks.find("CTP SLOT") == string::npos) {
+
+					newRemarks = (string)"CTP SLOT / " + timeStr + " " + oldRemarks;
+					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+				}
 			}
+			// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
+			else {
+				if (oldRemarks.find("CTP SLOT") != string::npos && oldRemarks.find("CTP MISMATCH") == string::npos) {
+					newRemarks = (string)"CTP MISMATCH / NON EVENT / " + timeStr + " " + oldRemarks;
+
+					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+				}
+
+				else if (oldRemarks.find("NON EVENT") == string::npos) {
+					newRemarks = (string)"NON EVENT / " + timeStr + " " + oldRemarks;
+
+					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
+				}
+			}
+			flightPlan.GetFlightPlanData().AmendFlightPlan();
+			Sleep(25);
 		}
-		// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
-		else {
-			if (oldRemarks.find("CTP SLOT") != string::npos && oldRemarks.find("CTP MISMATCH") == string::npos) {
-				newRemarks = (string)"CTP MISMATCH / NON EVENT / " + timeStr + " " + oldRemarks;
-
-				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
-			}
-
-			else if (oldRemarks.find("NON EVENT") == string::npos) {
-				newRemarks = (string)"NON EVENT / " + timeStr + " " + oldRemarks;
-
-				flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
-			}
-		}
-		flightPlan.GetFlightPlanData().AmendFlightPlan();
-		Sleep(25);
 	}
-
-
-
 	delete args;
 }
