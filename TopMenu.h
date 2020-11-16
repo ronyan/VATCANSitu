@@ -11,13 +11,24 @@
 
 using namespace std;
 
+struct buttonStates {
+    BOOL halotool;
+};
+
 struct menuButton {
     POINT location;
+    string butText;
     int width;
     int height;
     COLORREF pressedColor;
     COLORREF unpressedColor;
     bool pressed;
+
+};
+
+struct module {
+    int level;
+    int width;
 };
 
 class TopMenu :
@@ -27,6 +38,64 @@ class TopMenu :
 public:
 
     static map<string, menuButton> menuButtons;
+
+    static RECT DrawIconBut(CDC* dc) {}
+
+    static RECT DrawBut(CDC* dc, menuButton mbut) {
+        int sDC = dc->SaveDC();
+
+        CFont font;
+        LOGFONT lgfont;
+
+        memset(&lgfont, 0, sizeof(LOGFONT));
+        lgfont.lfWeight = 700;
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        lgfont.lfHeight = 12;
+        font.CreateFontIndirect(&lgfont);
+
+        dc->SelectObject(font);
+        dc->SetTextColor(RGB(230, 230, 230));
+
+        //default is unpressed state
+        COLORREF pressedcolor = C_MENU_GREY3;
+        COLORREF pcolortl = C_MENU_GREY4;
+        COLORREF pcolorbr = C_MENU_GREY2;
+
+        if (mbut.pressed == TRUE) {
+            pressedcolor = RGB(40, 40, 40);
+            pcolortl = RGB(55, 55, 55);
+            pcolorbr = RGB(140, 140, 140);
+        }
+
+        COLORREF targetPenColor = RGB(140, 140, 140);
+        HPEN targetPen = CreatePen(PS_SOLID, 2, targetPenColor);
+        HBRUSH targetBrush = CreateSolidBrush(pressedcolor);
+
+        dc->SelectObject(targetPen);
+        dc->SelectObject(targetBrush);
+
+        // button rectangle
+        RECT rect1;
+        rect1.left = mbut.location.x;
+        rect1.right = mbut.location.x + mbut.width;
+        rect1.top = mbut.location.y;
+        rect1.bottom = mbut.location.y + mbut.height;
+
+        // 3d apperance calls
+        dc->Rectangle(&rect1);
+        dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
+        InflateRect(&rect1, -1, -1);
+        dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
+        dc->DrawText(mbut.butText.c_str(), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+
+        DeleteObject(targetPen);
+        DeleteObject(targetBrush);
+        DeleteObject(font);
+
+        dc->RestoreDC(sDC);
+
+        return rect1;
+    }
 
     static RECT DrawButton(CDC* dc, POINT p, int width, int height, const char* btext, bool pressed) 
     {        

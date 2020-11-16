@@ -140,10 +140,10 @@ public:
 
 		/// END DRAWING SYMBOLS ///
 
-
 		// Draw halo
 
 		// Draw the PTL
+
 
 
 		dc->RestoreDC(sDC);

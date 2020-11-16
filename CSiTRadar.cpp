@@ -389,6 +389,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Qck Look", 0);
 		menutopleft.y -= 25;
 
+		menuButton but_ALL = {};
+
 		menutopleft.x = menutopleft.x + 100;
 
 		// options for halo radius
