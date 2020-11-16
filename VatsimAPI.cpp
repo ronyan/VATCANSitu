@@ -7,12 +7,26 @@
 
 // Include dependency
 using json = nlohmann::json;
+string CDataHandler::url1;
+int CDataHandler::refreshInterval;
 
 static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 	((std::string*)userp)->append((char*)buffer, size * nmemb);
 	return size * nmemb;
 }
 
+void CDataHandler::loadSettings() {
+	try {
+		std::ifstream settings_file(".\\settings.json");
+		json j = json::parse(settings_file);
+
+		CDataHandler::url1 = j["slotURL"];
+		CDataHandler::refreshInterval = j["refreshInterval"];
+	}
+	catch (std::ifstream::failure e) {
+		
+	};
+}
 
 void CDataHandler::GetVatsimAPIData(void* args) {
 
@@ -25,7 +39,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 	CURL* curl1 = curl_easy_init();
 	if (curl)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, "https://cdn.ganderoceanic.com/resources/data/ctpCID.json");
+		curl_easy_setopt(curl, CURLOPT_URL, CDataHandler::url1.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cidString);
 		CURLcode res;
@@ -81,6 +95,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 				string apiCID = array["cid"];
 
 				CSiTRadar::mAcData[apiCallsign].CID = apiCID;
+
 				if (CSiTRadar::slotTime.find(apiCID) != CSiTRadar::slotTime.end()) {
 					CSiTRadar::mAcData[apiCallsign].slotTime = CSiTRadar::slotTime[apiCID];
 					CSiTRadar::mAcData[apiCallsign].hasCTP = TRUE;
@@ -95,12 +110,15 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		string timeStamp = jsonArray["general"]["update_timestamp"];
 
 		// Everything succeeded, show to user
-		data->Plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("Slot times validated at " + timeStamp).c_str(), true, false, false, false, false);
+		data->Plugin->DisplayUserMessage("Slot Helper", "Update Successful", string("Slot times validated at " + timeStamp).c_str(), true, false, false, false, false);
 
 	}
 	catch (exception& e) {
-		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+		data->Plugin->DisplayUserMessage("Slot Helper", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 	}
+
+	CSiTRadar::canAmend = TRUE;
+
 	delete args;
 }
 
@@ -109,10 +127,10 @@ void CDataHandler::AmendFlightPlans(void* args) {
 	CAsync* data = (CAsync*)args;
 	string oldRemarks;
 	string newRemarks;
+	int countFP = 0;
 
 	struct tm gmt;
-	time_t t;
-	t = time(NULL);
+	time_t t = time(0);
 	gmtime_s(&gmt, &t);
 
 	char timeStr[50];
@@ -121,6 +139,9 @@ void CDataHandler::AmendFlightPlans(void* args) {
 	for (CFlightPlan flightPlan = data->Plugin->FlightPlanSelectFirst(); flightPlan.IsValid();
 		flightPlan = data->Plugin->FlightPlanSelectNext(flightPlan)) {
 		oldRemarks = flightPlan.GetFlightPlanData().GetRemarks();
+
+		// if the callsign has not been correlated with a CID, don't try to amend the Flightplan yet, needs update from vatsim status
+		if (CSiTRadar::mAcData[flightPlan.GetCallsign()].CID == "") { continue; }
 
 		if (flightPlan.GetFlightPlanData().IsReceived()) {
 
@@ -133,7 +154,7 @@ void CDataHandler::AmendFlightPlans(void* args) {
 					flightPlan.GetFlightPlanData().SetRemarks(newRemarks.c_str());
 				}
 			}
-			// If someone is sneaky and just adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
+			// If someone adds CTP SLOT to their remarks, but isn't on the list, then flag this in the remarks
 			else {
 				if (oldRemarks.find("CTP SLOT") != string::npos && oldRemarks.find("CTP MISMATCH") == string::npos) {
 					newRemarks = (string)"CTP MISMATCH / NON EVENT / " + timeStr + " " + oldRemarks;
@@ -148,8 +169,10 @@ void CDataHandler::AmendFlightPlans(void* args) {
 				}
 			}
 			flightPlan.GetFlightPlanData().AmendFlightPlan();
-			Sleep(25);
 		}
+		countFP++;
 	}
+	data->Plugin->DisplayUserMessage("Slot Helper", "Success", (to_string(countFP) + (string)" Flight Plans Updated").c_str(), true, false, false, false, false);
+
 	delete args;
 }

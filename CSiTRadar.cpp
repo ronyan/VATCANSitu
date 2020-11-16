@@ -11,15 +11,22 @@ VATUSA version
 
 map<string, ACData> CSiTRadar::mAcData;
 map<string, string> CSiTRadar::slotTime;
+BOOL CSiTRadar::canAmend;
+int CSiTRadar::refreshStatus;
+int CSiTRadar::amendStatus;
 
 CSiTRadar::CSiTRadar()
-{
+{	
+	CDataHandler::loadSettings();
+
 	time = clock();
 	oldTime = clock();
 }
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+
+
 	if (phase != REFRESH_PHASE_AFTER_TAGS && phase != REFRESH_PHASE_BEFORE_TAGS) {
 		return;
 	}
@@ -70,12 +77,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menu.x = 10;
 
 		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Refresh", autoRefresh);
-		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_REFRESH);
+		ButtonToScreen(this, but, "Refresh Slot Data", BUTTON_MENU_REFRESH);
+
+		menu.x = 80;
+		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Amend FP", 0);
+		ButtonToScreen(this, but, "Amend Flight Plans", BUTTON_MENU_AMENDFP);
 	}
 
 	if (autoRefresh) {
 		time = clock();
-		if ((time - oldTime) / CLOCKS_PER_SEC > 120) {
+		if ((time - oldTime) / CLOCKS_PER_SEC > CDataHandler::refreshInterval) {
+			
 			CAsync* data = new CAsync();
 			data->Plugin = GetPlugIn();
 			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
@@ -94,6 +106,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_REFRESH) {
 		if (Button == BUTTON_LEFT) { 
 			
+			CSiTRadar::canAmend = FALSE;
+
 			CAsync* data = new CAsync();
 			data->Plugin = GetPlugIn();
 			_beginthread(CDataHandler::GetVatsimAPIData, 0, (void*) data);
@@ -121,7 +135,6 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	string callSign = FlightPlan.GetCallsign();
 
 	mAcData.erase(callSign);
-
 }
 
 CSiTRadar::~CSiTRadar()
