@@ -4,7 +4,7 @@
 #include <chrono>
 #include <string>
 #include <map>
-#include <iostream>
+#include <unordered_map>
 #include <array>
 #include <regex>
 #include <math.h>
@@ -19,9 +19,15 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
-    bool hasCTP;
-    string slotTime;
     string CID;
+};
+
+struct buttonStates {
+    bool haloTool;
+    bool ptlTool;
+    bool showExtrapFP = TRUE;
+    bool filterBypassAll = FALSE;
+    double ptlLength;
 };
 
 class CSiTRadar :
@@ -33,9 +39,10 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
-    static map<string, bool> isCTP;
-    static map<string, ACData> mAcData; 
-    static map<string, string> CSiTRadar::slotTime;
+    static unordered_map<string, ACData> mAcData;
+
+    static double magvar;
+    static buttonStates menuState;
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
@@ -129,6 +136,7 @@ protected:
     bool halfSecTick = FALSE; // toggles on and off every half second
 
     map<string, bool> hashalo;
+    map<string, bool> hasPTL;
     map<string, bool> isBlinking;
     map<string, bool> isHandOffHold;
     map<string, string> ppsCJS;

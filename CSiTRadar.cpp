@@ -50,17 +50,20 @@
 #include "PPS.h"
 #include <chrono>
 
-
 using namespace Gdiplus;
 
-map<string, string> CSiTRadar::slotTime;
-map<string, ACData> CSiTRadar::mAcData;
+unordered_map<string, ACData> CSiTRadar::mAcData;
 map<string, menuButton> TopMenu::menuButtons;
+buttonStates CSiTRadar::menuState = {};
+double CSiTRadar::magvar = 361;
 
 CSiTRadar::CSiTRadar()
 {
 	halfSec = clock();
 	halfSecTick = FALSE;
+
+	menuState.ptlLength = 3;
+	menuState.ptlTool = FALSE;
 
 	time = clock();
 	oldTime = clock();
@@ -72,10 +75,6 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
-	if (phase != REFRESH_PHASE_AFTER_TAGS && phase != REFRESH_PHASE_BEFORE_TAGS) {
-		return;
-	}
-
 	// get cursor position and screen info
 	POINT p;
 
@@ -111,18 +110,27 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 		{
-		
+			// to pull the magvar value from a plane; since can't get it easily from .sct -- do this only once
+			if (magvar == 361) {
+				magvar = (double)radarTarget.GetPosition().GetReportedHeading() - (double)radarTarget.GetPosition().GetReportedHeadingTrueNorth();
+			}
+
 			// altitude filtering 
-			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100) {
+			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
 				continue;
 			}
 
-			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100) {
+			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
 				continue;
 			}
 
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 			string callSign = radarTarget.GetCallsign();
+
+			// Draw PTL
+			if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
+				HaloTool::drawPTL(&dc, radarTarget, p, 3, pixnm);
+			}
 
 			// Get information about the Aircraft/Flightplan
 			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
@@ -233,13 +241,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
 				HaloTool::drawHalo(&dc, p, halorad, pixnm);
 			}
+
 		}
 
 		// Flight plan loop. Goes through flight plans, and if not correlated will display
 		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
 			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
 			
-			if (flightPlan.GetCorrelatedRadarTarget().IsValid()) { continue; } 
+			if (flightPlan.GetCorrelatedRadarTarget().IsValid() || menuState.showExtrapFP == FALSE) { continue; } 
 
 			// if the flightplan does not have a correlated radar target
 			if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
@@ -356,8 +365,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
 
 		menutopleft.y = menutopleft.y + 25;
-		but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, "PTL 3", 0);
-		ButtonToScreen(this, but, "PTL", BUTTON_MENU_HALO_OPTIONS);
+		but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
+		ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
 
 		menutopleft.y = menutopleft.y - 25;
 		menutopleft.x = menutopleft.x + 47;
@@ -383,15 +392,69 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 60;
 		string cid = "CJS - " + controllerID;
 
-		RECT r = TopMenu::DrawButton2(dc, menutopleft, 50, 23, cid.c_str(), 0);
+		RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
 
 		menutopleft.y += 25;
-		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Qck Look", 0);
+		TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", 0);
 		menutopleft.y -= 25;
 
-		menuButton but_ALL = {};
+		POINT psrPoor[13] = {
+			{0,0},
+			{0,-5},
+			{0,5},
+			{0,0},
+			{4,-4},
+			{-4,4},
+			{0,0},
+			{4,4},
+			{-4,-4},
+			{0,0},
+			{-5,0},
+			{5,0},
+			{0,0}
+		};
 
-		menutopleft.x = menutopleft.x + 100;
+		menuButton but_psrpoor = { {455, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		TopMenu::DrawBut(&dc, but_psrpoor);
+		TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
+
+		menuButton but_ALL = { { 455, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll};
+		but = TopMenu::DrawBut(&dc, but_ALL);
+		ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
+
+		menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		TopMenu::DrawBut(&dc, but_EXT);
+		menuButton but_EMode = { { 485, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		TopMenu::DrawBut(&dc, but_EMode);
+
+		POINT plane[19] = {
+			{0,-5},
+			{-1,-4},
+			{-1,-2},
+			{-5,2},
+			{-5,3},
+			{-1,1},
+			{-1,4},
+			{-4,6},
+			{-4,7},
+			{0,6},
+			{4,7},
+			{4,6},
+			{1,4},
+			{1,1},
+			{5,3},
+			{5,2},
+			{1,-2},
+			{1,-4},
+			{0,-5}
+		};
+
+		menuButton but_FPE = { { 517, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
+		but = TopMenu::DrawBut(&dc, but_FPE);
+		TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane)/sizeof(plane[0]));
+		ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
+
+		menutopleft.x = menutopleft.x + 200;
 
 		// options for halo radius
 		if (halotool) {
@@ -462,17 +525,34 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	RECT Area,
 	int Button)
 {
-	if (ObjectType == AIRCRAFT_SYMBOL && halotool == TRUE) {
+	if (ObjectType == AIRCRAFT_SYMBOL) {
 		
-		CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
-		string callsign = rt.GetCallsign();
+		if (halotool == TRUE) {
 
-		if (hashalo.find(callsign) != hashalo.end()) {
-			hashalo.erase(callsign);
+			CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
+			string callsign = rt.GetCallsign();
+
+			if (hashalo.find(callsign) != hashalo.end()) {
+				hashalo.erase(callsign);
+			}
+			else {
+				hashalo[callsign] = TRUE;
+			}
 		}
-		else {
-			hashalo[callsign] = TRUE;
+
+		if (menuState.ptlTool == TRUE) {
+
+			CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
+			string callsign = rt.GetCallsign();
+
+			if (hasPTL.find(callsign) != hasPTL.end()) {
+				hasPTL.erase(callsign);
+			}
+			else {
+				hasPTL[callsign] = TRUE;
+			}
 		}
+
 	}
 
 	if (ObjectType == BUTTON_MENU_HALO_OPTIONS) {
@@ -488,7 +568,20 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "Clr All")) { hashalo.clear(); }
 		if (!strcmp(sObjectId, "End")) { halotool = !halotool; }
 		if (!strcmp(sObjectId, "Mouse")) { mousehalo = !mousehalo; }
-		if (!strcmp(sObjectId, "Halo")) { halotool = !halotool; }
+		if (!strcmp(sObjectId, "Halo")) { halotool = !halotool; menuState.ptlTool = FALSE; }
+	}
+
+	if (ObjectType == BUTTON_MENU_PTL_TOOL) {
+		if (halotool) { halotool = FALSE; }
+		menuState.ptlTool = !menuState.ptlTool;
+	}
+
+	if (ObjectType == BUTTON_MENU_EXTRAP_FP) {
+		menuState.showExtrapFP = !menuState.showExtrapFP;
+	}
+
+	if (ObjectType == BUTTON_MENU_OVRD_ALL) {
+		menuState.filterBypassAll = !menuState.filterBypassAll;
 	}
 
 	if (ObjectType == BUTTON_MENU_ALT_FILT_OPT) {

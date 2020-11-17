@@ -31,9 +31,25 @@ public:
         dc->RestoreDC(sDC);
     };
 
-    static void drawPTL(CDC* dc, POINT p, double ptlTime)
+    static void drawPTL(CDC* dc, CRadarTarget radtar, POINT p, double ptlTime, double pixpernm)
     {
+        int sDC = dc->SaveDC();
+        
+        double theta = (radtar.GetTrackHeading() + CSiTRadar::magvar) * PI / 180;
+        double ptlDistance = radtar.GetGS() / 60 * ptlTime * pixpernm; 
+        double ptlYdelta = -cos(theta) * ptlDistance;
+        double ptlXdelta = sin(theta) * ptlDistance;
 
+        COLORREF targetPenColor = C_PTL_GREEN;
+        HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+        dc->SelectObject(targetPen);
+
+        dc->MoveTo(p);
+        dc->LineTo(p.x + (int)round(ptlXdelta), p.y + (int)round(ptlYdelta));
+
+        DeleteObject(targetPen);
+
+        dc->RestoreDC(sDC);
     };
 };
 

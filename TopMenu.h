@@ -11,10 +11,6 @@
 
 using namespace std;
 
-struct buttonStates {
-    BOOL halotool;
-};
-
 struct menuButton {
     POINT location;
     string butText;
@@ -22,8 +18,8 @@ struct menuButton {
     int height;
     COLORREF pressedColor;
     COLORREF unpressedColor;
+    COLORREF textColor = RGB(230, 230, 230);
     bool pressed;
-
 };
 
 struct module {
@@ -39,7 +35,28 @@ public:
 
     static map<string, menuButton> menuButtons;
 
-    static RECT DrawIconBut(CDC* dc) {}
+    static void DrawIconBut(CDC* dc, menuButton mbut, POINT icon[], int iconSize) {
+
+        int sDC = dc->SaveDC();
+
+        POINT x = { mbut.location.x + (mbut.width / 2), mbut.location.y + (mbut.height / 2) };
+
+        // shift the icon to the centre of the button
+        for (int idx = 0; idx < iconSize ; idx++) {
+            icon[idx].x += x.x-1;
+            icon[idx].y += x.y;
+        }
+        HPEN hPen = CreatePen(PS_SOLID, 1, mbut.textColor);
+        HBRUSH iconBrush = CreateSolidBrush(mbut.textColor);
+        dc->SelectObject(iconBrush);
+        dc->SelectObject(hPen);
+
+        dc->Polygon(icon, iconSize);
+        
+        DeleteObject(iconBrush);
+        DeleteObject(hPen);
+        dc->RestoreDC(sDC);
+    }
 
     static RECT DrawBut(CDC* dc, menuButton mbut) {
         int sDC = dc->SaveDC();
@@ -54,7 +71,7 @@ public:
         font.CreateFontIndirect(&lgfont);
 
         dc->SelectObject(font);
-        dc->SetTextColor(RGB(230, 230, 230));
+        dc->SetTextColor(mbut.textColor);
 
         //default is unpressed state
         COLORREF pressedcolor = C_MENU_GREY3;
