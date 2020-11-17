@@ -19,6 +19,7 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
+    int tagType = 0;
     string CID;
 };
 
@@ -114,6 +115,13 @@ public:
 
         delete this;
     };
+    static bool halfSecTick; // toggles on and off every half second
+
+    inline virtual void OnDoubleClickScreenObject(int ObjectType,
+        const char* sObjectId,
+        POINT Pt,
+        RECT Area,
+        int Button);
 
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
@@ -133,7 +141,6 @@ protected:
     int haloidx = 1; // default halo radius = 3, corresponds to index of the halooptions
 
     clock_t halfSec = 0;
-    bool halfSecTick = FALSE; // toggles on and off every half second
 
     map<string, bool> hashalo;
     map<string, bool> hasPTL;
