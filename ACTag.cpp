@@ -107,7 +107,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	int tagOffsetY = 0;
 
 	bool blinking = FALSE;
-	if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()) { blinking = TRUE; }
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) { blinking = TRUE; }
 	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
 
 	// Line 0 Items
@@ -132,6 +132,9 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1) { clrdAlt = "APR"; }
 	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }
 	string handoffCJS = rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId();
+	if (strcmp(rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+		handoffCJS = rt->GetCorrelatedFlightPlan().GetTrackingControllerId();
+	}
 	string groundSpeed = to_string(rt->GetPosition().GetReportedGS() / 10);
 
 	// Line 3 Items
@@ -197,6 +200,21 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 
+		// draw extension if tag is to the left of the PPS
+		if (rline1.left < p.x) {
+			HPEN targetPen;
+			COLORREF conColor = C_PPS_YELLOW;
+			if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+			targetPen = CreatePen(PS_SOLID, 1, conColor);
+			dc->SelectObject(targetPen);
+
+			dc->MoveTo(rline1.right + 5, rline1.top + 7);
+			dc->LineTo(p.x + tagOffsetX + TAG_WIDTH, rline1.top + 7);
+
+			DeleteObject(targetPen);
+		}
+
+
 		// Line 2
 		RECT rline2;
 		rline2.top = line2.y;
@@ -228,16 +246,10 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->SetTextColor(C_PPS_YELLOW);
 			rline2.left = rline2.right + 5;
 		}
-		if (rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId() != "") {
-			dc->SetTextColor(RGB(255, 255, 0));
-			if (blinking && CSiTRadar::halfSecTick) {
-				dc->SetTextColor(C_WHITE);
-			}
-			dc->DrawText(handoffCJS.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
-			dc->DrawText((handoffCJS).c_str(), &rline2, DT_LEFT);
-			rline2.left = rline2.right + 5;
-			dc->SetTextColor(C_PPS_YELLOW);
-		}
+		dc->DrawText(handoffCJS.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+		dc->DrawText((handoffCJS).c_str(), &rline2, DT_LEFT);
+		rline2.left = rline2.right + 5;
+
 		if (blinking && CSiTRadar::halfSecTick) {
 			dc->SetTextColor(C_WHITE);
 		}

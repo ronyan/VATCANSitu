@@ -19,8 +19,9 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
-    int tagType = 0;
+    int tagType;
     string CID;
+    ACData() : tagType(0) {}
 };
 
 struct buttonStates {

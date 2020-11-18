@@ -165,6 +165,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			}
 
+			// Tag Level Logic
+			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // Opens up alpha tag if getting handoff or if under jurisdiction
+			}
+			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
+				strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+			}
+
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
@@ -738,7 +747,7 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	}
 } 
 
-void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
+void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	// These items don't need to be updated each loop, save loop type by storing data in a map
 	string callSign = FlightPlan.GetCallsign();
@@ -758,13 +767,11 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate ( CFlightPlan FlightPlan )
 
 	string CJS = FlightPlan.GetTrackingControllerId();
 
-	ACData acdata = { isVFR, isADSB, isRVSM };
+	ACData acdata;
+	acdata.hasVFRFP = isVFR;
+	acdata.isADSB = isADSB;
+	acdata.isRVSM = isRVSM;
 	mAcData[callSign] = acdata;
-
-	if (FlightPlan.GetHandoffTargetControllerId() == GetPlugIn()->ControllerMyself().GetPositionId()) {
-		mAcData[FlightPlan.GetCallsign()].tagType = 1; // Opens up alpha tag if getting handoff
-	}
-
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
