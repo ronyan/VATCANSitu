@@ -118,6 +118,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
 	cs = cs + wtSymbol;
+	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
 
 	// Line 2 Items
 	string altThreeDigit = to_string((rt->GetPosition().GetFlightLevel() + 50) / 100); // +50 to force rounding up
@@ -138,7 +139,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	string groundSpeed = to_string(rt->GetPosition().GetReportedGS() / 10);
 
 	// Line 3 Items
-	string acType = to_string(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftType());
+	string acType = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftFPType();
 	string destination = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination();
 
 	// Initiate the default tag location, if no location is set already or find it in the map
@@ -199,6 +200,13 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+		rline1.left = rline1.right;
+		rline1.right = rline1.left + 8;
+		if (sizeof(sfi) > 0) {
+			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT);
+		}
+		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 
 		// draw extension if tag is to the left of the PPS
 		if (rline1.left < p.x) {
@@ -208,7 +216,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			targetPen = CreatePen(PS_SOLID, 1, conColor);
 			dc->SelectObject(targetPen);
 
-			dc->MoveTo(rline1.right + 5, rline1.top + 7);
+			dc->MoveTo(rline1.right + 6, rline1.top + 7);
 			dc->LineTo(p.x + tagOffsetX + TAG_WIDTH, rline1.top + 7);
 
 			DeleteObject(targetPen);
@@ -233,7 +241,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->DrawText(vmr.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmr.c_str(), &rline2, DT_LEFT);
 		}
-		rline2.left = rline2.right + 5;
+		rline2.left = rline2.right + 8;
 
 		if (abs(rt->GetPosition().GetFlightLevel() - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
 			rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() != 0) {
@@ -244,19 +252,32 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->DrawText(("C" + clrdAlt).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(("C" + clrdAlt).c_str(), &rline2, DT_LEFT);
 			dc->SetTextColor(C_PPS_YELLOW);
-			rline2.left = rline2.right + 5;
+			rline2.left = rline2.right + 8;
 		}
 		dc->DrawText(handoffCJS.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 		dc->DrawText((handoffCJS).c_str(), &rline2, DT_LEFT);
-		rline2.left = rline2.right + 5;
+		rline2.left = rline2.right + 8;
+		if (rline2.left < p.x + tagOffsetX + 38) { rline2.left = p.x + tagOffsetX + 38; }
 
 		if (blinking && CSiTRadar::halfSecTick) {
 			dc->SetTextColor(C_WHITE);
 		}
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT);
-		dc->SetTextColor(C_PPS_YELLOW);
 
+		RECT rline3;
+		rline3.top = line3.y;
+		rline3.left = line3.x;
+		rline3.bottom = line4.y;
+		dc->DrawText(acType.c_str(), &rline3, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(acType.c_str(), &rline3, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, rt->GetCallsign(), rline3, TRUE, "");
+		rline3.left = rline3.right + 10;
+		dc->DrawText(destination.c_str(), &rline3, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(destination.c_str(), &rline3, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_DESTINATION, rt->GetCallsign(), rline3, TRUE, "");
+
+		dc->SetTextColor(C_PPS_YELLOW);
 	}
 
 	// BRAVO TAGS

@@ -26,7 +26,7 @@ const double PI = 3.14159;
 // Tag Settings
 const int TAG_MAX_X_OFFSET = 45;
 const int TAG_MAX_Y_OFFSET = 30;
-const int TAG_WIDTH = 60;
+const int TAG_WIDTH = 65;
 const int TAG_HEIGHT = 25;
 
 // Tag Items

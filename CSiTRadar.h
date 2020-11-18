@@ -19,15 +19,14 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
-    int tagType;
+    int tagType = 0;
     string CID;
-    ACData() : tagType(0) {}
 };
 
 struct buttonStates {
     bool haloTool;
     bool ptlTool;
-    bool showExtrapFP = TRUE;
+    bool showExtrapFP = FALSE;
     bool filterBypassAll = FALSE;
     double ptlLength;
 };

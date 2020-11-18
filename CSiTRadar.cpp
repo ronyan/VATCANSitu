@@ -153,8 +153,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
-			CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
-			CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+
+			if (radarTarget.GetPosition().GetRadarFlags() != 0 || isADSB) {
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+			}
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 			if (radarTarget.GetPosition().GetRadarFlags() == 0
@@ -654,6 +657,30 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (ObjectType == TAG_ITEM_TYPE_ALTITUDE) {
 			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_ALTITUDE, sObjectId, NULL, TAG_ITEM_FUNCTION_TEMP_ALTITUDE_POPUP, Pt, Area);
+		}
+	}
+
+	if (ObjectType == TAG_ITEM_TYPE_PLANE_TYPE) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		if (Button == BUTTON_LEFT) {
+			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_TOGGLE_ROUTE_DRAW, Pt, Area);
+		}
+		if (Button == BUTTON_RIGHT) {
+			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, Pt, Area);
+		}
+	}
+
+	if (ObjectType == CTR_DATA_TYPE_SCRATCH_PAD_STRING) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		if (Button == BUTTON_LEFT) {
+			StartTagFunction(sObjectId, NULL, CTR_DATA_TYPE_SCRATCH_PAD_STRING, sObjectId, NULL, TAG_ITEM_FUNCTION_EDIT_SCRATCH_PAD, Pt, Area);
+		}
+	}
+
+	if (ObjectType == TAG_ITEM_TYPE_DESTINATION) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		if (Button == BUTTON_RIGHT) {
+			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_DESTINATION, sObjectId, NULL, TAG_ITEM_FUNCTION_ASSIGNED_HEADING_POPUP, Pt, Area);
 		}
 	}
 }
