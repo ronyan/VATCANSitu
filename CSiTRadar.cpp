@@ -55,6 +55,7 @@ using namespace Gdiplus;
 // Initialize Static Members
 unordered_map<string, ACData> CSiTRadar::mAcData;
 map<string, menuButton> TopMenu::menuButtons;
+unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 buttonStates CSiTRadar::menuState = {};
 double CSiTRadar::magvar = 361;
 bool CSiTRadar::halfSecTick = FALSE;
@@ -170,8 +171,27 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// Tag Level Logic
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // Opens up alpha tag if getting handoff or if under jurisdiction
+				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // alpha tag if you have jurisdiction over the aircraft
+
+				// if you are handing off to someone
+				if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+					mAcData[callSign].isHandoff = TRUE;
+				}
 			}
+
+			// Once the handoff is complete, 
+			if (mAcData[callSign].isHandoff == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+				mAcData[callSign].isHandoff = FALSE;
+				// record the time of handoff acceptance
+				hoAcceptedTime[callSign] = clock();
+			}
+
+			// Post handoff blinking and then close the tag
+			if ((clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 6) {
+				hoAcceptedTime.erase(callSign);
+			}
+
+			// Open a bravo tag, during a handoff to you
 			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
 				strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
 				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;

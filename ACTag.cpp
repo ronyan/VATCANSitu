@@ -3,7 +3,7 @@
 
 using namespace EuroScopePlugIn;
 
-void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, map<string, POINT>* tOffset) {
+void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
 
 	POINT p{0,0};
 	int tagOffsetX = 0;
@@ -99,7 +99,7 @@ rad->AddScreenObject(TAG_ITEM_FP_FINAL_ALTITUDE, fp->GetCallsign(), tagAltitude,
 
 // Draws tag for Radar Targets
 
-void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, map<string, POINT>* tOffset) {
+void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
 
 	POINT p{ 0,0 };
 	p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
@@ -109,6 +109,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	bool blinking = FALSE;
 	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) { blinking = TRUE; }
 	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
+	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
 
 	// Line 0 Items
 
@@ -121,7 +122,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
 
 	// Line 2 Items
-	string altThreeDigit = to_string((rt->GetPosition().GetFlightLevel() + 50) / 100); // +50 to force rounding up
+	string altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100); // +50 to force rounding up
 	if(altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
 	string vmi;
 	if (rt->GetVerticalSpeed() > 200) { vmi = "^"; }
@@ -243,7 +244,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 		rline2.left = rline2.right + 8;
 
-		if (abs(rt->GetPosition().GetFlightLevel() - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
+		if (abs(rt->GetPosition().GetPressureAltitude() - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
 			rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() != 0) {
 			dc->SetTextColor(C_PPS_ORANGE);
 			if (blinking && CSiTRadar::halfSecTick) {
@@ -313,7 +314,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	DeleteObject(font);
 }
 
-void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, map<string, POINT>* tOffset)
+void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)
 {
 	
 	// save context
@@ -399,7 +400,7 @@ void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 	dc->RestoreDC(sDC);
 }
 
-void CACTag::DrawRTConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, map<string, POINT>* tOffset)
+void CACTag::DrawRTConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)
 {
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0) { return; }
 	// save context

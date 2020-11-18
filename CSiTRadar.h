@@ -19,7 +19,8 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
-    int tagType = 0;
+    int tagType{ 0 };
+    bool isHandoff{ FALSE };
     string CID;
 };
 
@@ -41,6 +42,7 @@ public:
     virtual ~CSiTRadar(void);
 
     static unordered_map<string, ACData> mAcData;
+    static unordered_map<string, clock_t> hoAcceptedTime;
 
     static double magvar;
     static buttonStates menuState;
@@ -152,8 +154,8 @@ protected:
     CPosition adsbSite; 
 
     // Tag Properties
-    map<string, POINT> tagOffset; // the centre of the aircraft tag
-    map<string, POINT> connectorOrigin; // the Tag end of the connector, this flips from right side to left side
+    unordered_map<string, POINT> tagOffset; // the centre of the aircraft tag
+    unordered_map<string, POINT> connectorOrigin; // the Tag end of the connector, this flips from right side to left side
 
     // menu functions
     RECT rLLim = { 0, 0, 10, 10 };
