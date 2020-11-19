@@ -200,80 +200,41 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
 
+			COLORREF cjsColor = C_PPS_YELLOW;
+
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2 
-					&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0) {
-					isBlinking[callSign] = TRUE;
+				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2
+					&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0
+					&& halfSecTick == TRUE
+					&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+					cjsColor = C_WHITE;
 				}
 			}
-			else {
-				isBlinking.erase(callSign);
-			}
+			// show CJS for controller tracking aircraft
+			string CJS = radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId();
 
-			// if in the process of handing off, flash the PPS (to be added), CJS and display the frequency 
-			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0
-				&& radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()
-				) {
-				string handOffFreq = "-" + to_string(GetPlugIn()->ControllerSelectByPositionId(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId()).GetPrimaryFrequency()).substr(0,6);
-				string handOffCJS = radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId();
+			CFont font;
+			LOGFONT lgfont;
 
-				string handOffText = handOffCJS + handOffFreq;
+			memset(&lgfont, 0, sizeof(LOGFONT));
+			lgfont.lfWeight = 500;
+			strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+			lgfont.lfHeight = 12;
+			font.CreateFontIndirect(&lgfont);
 
-				CFont font;
-				LOGFONT lgfont;
+			dc.SelectObject(font);
+			dc.SetTextColor(cjsColor);
 
-				memset(&lgfont, 0, sizeof(LOGFONT));
-				lgfont.lfWeight = 500;
-				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-				lgfont.lfHeight = 12;
-				font.CreateFontIndirect(&lgfont);
+			RECT rectCJS;
+			rectCJS.left = p.x - 6 ;
+			rectCJS.right = p.x + 75;
+			rectCJS.top = p.y - 18;
+			rectCJS.bottom = p.y;
 
-				dc.SetTextColor(RGB(255, 255, 255));
+			dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
-				dc.SelectObject(font);
-				if (isBlinking.find(radarTarget.GetCallsign()) != isBlinking.end()
-					&& halfSecTick) {
-					handOffText=""; // blank CJS symbol drawing when blinked out
-				}
-
-				RECT rectCJS;
-				rectCJS.left = p.x - 6;
-				rectCJS.right = p.x + 75;
-				rectCJS.top = p.y - 18;
-				rectCJS.bottom = p.y;
-
-				dc.DrawText(handOffText.c_str(), &rectCJS, DT_LEFT);
-
-				DeleteObject(font);
-			}
-			else {
-
-				// show CJS for controller tracking aircraft
-				string CJS = radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId();
-
-				CFont font;
-				LOGFONT lgfont;
-
-				memset(&lgfont, 0, sizeof(LOGFONT));
-				lgfont.lfWeight = 500;
-				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-				lgfont.lfHeight = 12;
-				font.CreateFontIndirect(&lgfont);
-
-				dc.SelectObject(font);
-				dc.SetTextColor(RGB(202, 205, 169));
-
-				RECT rectCJS;
-				rectCJS.left = p.x - 6 ;
-				rectCJS.right = p.x + 75;
-				rectCJS.top = p.y - 18;
-				rectCJS.bottom = p.y;
-
-				dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
-
-				DeleteObject(font);
-			}
-
+			DeleteObject(font);
+			
 			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
 			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
 				HaloTool::drawHalo(&dc, p, halorad, pixnm);
