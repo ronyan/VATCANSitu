@@ -1,0 +1,81 @@
+EuroScope Sector File Provider File
+
+NAME:EuroScope main sector file provider
+URL:http://www.euroscope.hu/sectorfile/euroscope_sector_providers.txt
+NEXTDOWNLOAD:20090720
+DOWNLOADINTERVAL:48
+
+# other sector file providers
+
+PROVIDER_NAME:VATSIM Bulgarian Sector File Provider
+PROVIDER_URL:http://vaccbul.avsim-bg.org/ES/VACCBUL_sector_provider.txt
+
+PROVIDER_NAME:EuroCenter vACC Sector File Provider
+PROVIDER_URL:http://www.euc-vacc.org/es/EUROCEN_sector_file.txt
+
+PROVIDER_NAME:LHCC - VACCHUN Sector Files
+PROVIDER_URL:http://www.vacchun.hu/es/vacchun_sector_files.txt
+
+PROVIDER_NAME:Shanwick & Gander Oceanic
+PROVIDER_URL:http://idisk.mac.com/boerner-Public/EuroScope/EGGX-CZQX_sector_file.txt
+
+PROVIDER_NAME:VATSIM Germany Sector File Provider
+PROVIDER_URL:http://nav.vatsim-germany.org/files/VATGER_sector_provider.txt
+
+PROVIDER_NAME:VATSIM CZQM Sector File Provider
+PROVIDER_URL:http://czqm.ca/files/VATCAN_CZQM_Sector_Provider.txt
+
+PROVIDER_NAME:Central & North Africa sector files
+PROVIDER_URL:http://vatcaf.flyvatsimafrica.org/euroscopeupdate/VATCAF_Sector_Provider.txt
+
+PROVIDER_NAME:vACC Italy Sector Files
+PROVIDER_URL:http://www.vatita.net/es/vatita_sector_files.txt
+
+PROVIDER_NAME:LRBB - ROvACC Sector Files
+PROVIDER_URL:http://rovacc.ro/downloads/ROvACC_sector_stuff.txt
+
+PROVIDER_NAME:Ukraine vACC Sector Files
+PROVIDER_URL:http://www.vacc-ua.aero/information/controllers/sectors/VACCUKR_sectors.txt
+
+PROVIDER_NAME:vZAU Chicago - Beta
+PROVIDER_URL:http://zausector.webbhq.net/vZAU_Sector_Files.txt
+
+PROVIDER_NAME:Alaska ARTCC Control File
+PROVIDER_URL:http://vzanartcc.net/downloads/euroscope/vZAN_sectorfiles.txt
+
+PROVIDER_NAME:VATSIM-UK Euroscope Sector File Provider
+PROVIDER_URL:http://www.vatsim-uk.co.uk/files/sector/esad/VATUK_Euroscope_files.txt
+
+PROVIDER_NAME:VATSIM UAE Sector File Provider
+PROVIDER_URL:http://vatme.net/FILES/VATUAE/sector/VATUAE_ES_sector_files.txt
+
+PROVIDER_NAME:Latvia vACC Sector File Provider
+PROVIDER_URL:http://www.lv-vacc.org/es/EVRR_FIR_sector_file.txt
+
+PROVIDER_NAME:TRvACC.Org Turkish Virtual Area Control Center
+PROVIDER_URL:http://trvacc.org/es/TRvACC_es_provider.txt
+
+PROVIDER_NAME:Vatsim-Scandinavia - Denmark
+PROVIDER_URL:http://www.vatsim-scandinavia.org/euroscope/sectorfiles/denmark/EKDK_sector_file.txt
+
+PROVIDER_NAME:Vatsim-Scandinavia - Norway
+PROVIDER_URL:http://www.vatsim-scandinavia.org/euroscope/sectorfiles/norway/ENOR_sector_files.txt
+
+PROVIDER_NAME:Vatsim-Scandinavia - Sweden
+PROVIDER_URL:http://www.vatsim-scandinavia.org/euroscope/sectorfiles/sweden/ESAA_sector_file.txt
+
+PROVIDER_NAME:VATSIM MIDDLE EAST Euroscope Sector File Provider
+PROVIDER_URL:http://vatme.net/files/Sectors/VATME_sector_Provider.txt
+
+PROVIDER_NAME:AeroNav GNG Sector File Provider
+PROVIDER_URL:http://files.aero-nav.com/AeroNav_sector_provider.txt
+
+PROVIDER_NAME:Cuba vACC Sector Files Provider
+PROVIDER_URL:http://havana.vatcar.org/es/mufh_sector_files.txt
+
+PROVIDER_NAME:VATNZ Sector File Provider
+PROVIDER_URL:http://www.vatnz.net/airspace/sector_files/euroscope/VATNZ_SectorFileProvider.txt
+
+PROVIDER_NAME:Polish vACC Sector Provider
+PROVIDER_URL:http://pl-vacc.org.pl/files/soft_atc/ES_sectorfiles/sectors.txt
+

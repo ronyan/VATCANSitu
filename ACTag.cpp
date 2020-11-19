@@ -122,7 +122,13 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
 
 	// Line 2 Items
-	string altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100); // +50 to force rounding up
+	string altThreeDigit;
+	if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+		altThreeDigit = to_string((rt->GetPosition().GetFlightLevel() + 50) / 100); // +50 to force rounding up
+	}
+	else {
+		altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100);
+	}
 	if(altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
 	string vmi;
 	if (rt->GetVerticalSpeed() > 200) { vmi = "^"; }
@@ -203,7 +209,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		rline1.left = rline1.right;
 		rline1.right = rline1.left + 8;
-		if (sizeof(sfi) > 0) {
+		if (sfi.size() > 0  && sfi.size() <= 2) {
+			
 			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT);
 		}
@@ -218,7 +225,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->SelectObject(targetPen);
 
 			dc->MoveTo(rline1.right + 6, rline1.top + 7);
-			dc->LineTo(p.x + tagOffsetX + TAG_WIDTH, rline1.top + 7);
+			dc->LineTo(p.x + tagOffsetX + TAG_WIDTH - 2, rline1.top + 7);
 
 			DeleteObject(targetPen);
 		}
@@ -255,16 +262,24 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->SetTextColor(C_PPS_YELLOW);
 			rline2.left = rline2.right + 8;
 		}
+
+		dc->SetTextColor(RGB(255, 234, 46));
+		if (blinking && CSiTRadar::halfSecTick) {
+			dc->SetTextColor(C_WHITE);
+		}
 		dc->DrawText(handoffCJS.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 		dc->DrawText((handoffCJS).c_str(), &rline2, DT_LEFT);
 		rline2.left = rline2.right + 8;
 		if (rline2.left < p.x + tagOffsetX + 38) { rline2.left = p.x + tagOffsetX + 38; }
+		dc->SetTextColor(C_PPS_YELLOW);
 
 		if (blinking && CSiTRadar::halfSecTick) {
 			dc->SetTextColor(C_WHITE);
 		}
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT);
+
+		// Line 3
 
 		RECT rline3;
 		rline3.top = line3.y;
@@ -279,6 +294,16 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rad->AddScreenObject(TAG_ITEM_TYPE_DESTINATION, rt->GetCallsign(), rline3, TRUE, "");
 
 		dc->SetTextColor(C_PPS_YELLOW);
+
+		// Line 4
+		RECT rline4;
+		rline4.top = line4.y;
+		rline4.left = line4.x;
+		if (sfi.size() >2) {
+			dc->DrawText(sfi.c_str(), &rline4, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(sfi.c_str(), &rline4, DT_LEFT);
+			rad->AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, rt->GetCallsign(), rline3, TRUE, "");
+		}
 	}
 
 	// BRAVO TAGS

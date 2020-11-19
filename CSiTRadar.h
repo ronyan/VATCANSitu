@@ -154,7 +154,8 @@ protected:
     CPosition adsbSite; 
 
     // Tag Properties
-    unordered_map<string, POINT> tagOffset; // the centre of the aircraft tag
+    unordered_map<string, POINT> rtagOffset;
+    unordered_map<string, POINT> fptagOffset;// the centre of the aircraft tag
     unordered_map<string, POINT> connectorOrigin; // the Tag end of the connector, this flips from right side to left side
 
     // menu functions

@@ -156,16 +156,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
 			if (radarTarget.GetPosition().GetRadarFlags() != 0 || isADSB) {
-				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
-				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &rtagOffset);
 			}
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 			if (radarTarget.GetPosition().GetRadarFlags() == 0
 				&& isADSB) {
 
-				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &tagOffset);
-				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &tagOffset);
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &rtagOffset);
 
 			}
 
@@ -187,8 +187,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// Post handoff blinking and then close the tag
-			if ((clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 6) {
+			if ( hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 8) {
 				hoAcceptedTime.erase(callSign);
+				mAcData[callSign].tagType = 0;
 			}
 
 			// Open a bravo tag, during a handoff to you
@@ -290,8 +291,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
 				&& !mAcData[flightPlan.GetCallsign()].isADSB) {
 
-				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &tagOffset);
-				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &tagOffset);
+				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
+				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
 
 				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
 
@@ -713,7 +714,7 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 	POINT p{ 0,0 };
 
-	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS || ObjectType == TAG_ITEM_FP_FINAL_ALTITUDE) {
+	if (ObjectType == TAG_ITEM_FP_CS ) {
 		
 		if (fp.IsValid()) {
 			p = ConvertCoordFromPositionToPixel(fp.GetFPTrackPosition().GetPosition());
@@ -736,8 +737,41 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
 		if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
 
-		tagOffset[sObjectId] = q;
+		fptagOffset[sObjectId] = q;
 		
+		if (!Released) {
+
+		}
+		else {
+			// once released, check that the tag does not exceed the limits, and then save it to the map
+		}
+	}
+
+	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN) {
+
+		if (fp.IsValid()) {
+			p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+		}
+
+		RECT temp = Area;
+
+		POINT q;
+		q.x = ((temp.right + temp.left) / 2) - p.x - (TAG_WIDTH / 2); // Get centre of box 
+		q.y = ((temp.top + temp.bottom) / 2) - p.y - (TAG_HEIGHT / 2);	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
+
+		// check maximal offset
+		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
+		if (q.x < -TAG_MAX_X_OFFSET - TAG_WIDTH) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
+		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
+		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
+
+		// nudge tag if necessary (near horizontal, or if directly above target)
+		if (q.x > -((TAG_WIDTH) / 2) && q.x < 3) { q.x = 3; };
+		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
+		if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
+
+		rtagOffset[sObjectId] = q;
+
 		if (!Released) {
 
 		}
