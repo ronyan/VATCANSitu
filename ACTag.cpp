@@ -131,8 +131,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	}
 	if(altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
 	string vmi;
-	if (rt->GetVerticalSpeed() > 200) { vmi = "^"; }
-	if (rt->GetVerticalSpeed() < -200) { vmi = "|"; }; // up arrow "??!" = downarrow
+	if (rt->GetVerticalSpeed() > 400) { vmi = "^"; }
+	if (rt->GetVerticalSpeed() < -400) { vmi = "|"; }; // up arrow "??!" = downarrow
 	string vmr = to_string(abs(rt->GetVerticalSpeed()/200));
 	if (vmr.size() <= 2) { vmr.insert(vmr.begin(), 2 - vmr.size(), '0'); }
 	string clrdAlt = to_string(rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()/100);
@@ -143,7 +143,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (strcmp(rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
 		handoffCJS = rt->GetCorrelatedFlightPlan().GetTrackingControllerId();
 	}
-	string groundSpeed = to_string(rt->GetPosition().GetReportedGS() / 10);
+	string groundSpeed = to_string((rt->GetPosition().GetReportedGS() + 5) / 10);
 
 	// Line 3 Items
 	string acType = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftFPType();
@@ -240,7 +240,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(altThreeDigit.c_str(), &rline2, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), rline2, TRUE, "");
 
-		if (abs(rt->GetVerticalSpeed()) > 200) {
+		if (abs(rt->GetVerticalSpeed()) > 400) {
 			rline2.left = rline2.right;
 			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT);
@@ -319,7 +319,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(altThreeDigit.c_str(), &bline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), bline1, TRUE, "BRAVO ALT");
 
-		if (abs(rt->GetVerticalSpeed()) > 200) {
+		if (abs(rt->GetVerticalSpeed()) > 400) {
 			bline1.left = bline1.right;
 			dc->DrawText(vmi.c_str(), &bline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmi.c_str(), &bline1, DT_LEFT);
@@ -505,6 +505,11 @@ void CACTag::DrawRTConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 	dc->MoveTo(p.x, p.y);
 	dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
 	dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
+
+	// ADSB circle
+	if (CSiTRadar::mAcData[rt->GetCallsign()].isADSB) {
+		dc->Ellipse((int)doglegX - 3, (int)doglegY - 3, (int)doglegX + 4, (int)doglegY + 4);
+	}
 
 	DeleteObject(targetPen);
 
