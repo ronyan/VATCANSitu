@@ -54,6 +54,7 @@ using namespace Gdiplus;
 
 // Initialize Static Members
 unordered_map<string, ACData> CSiTRadar::mAcData;
+unordered_map<string, int> CSiTRadar::tempTagData;
 map<string, menuButton> TopMenu::menuButtons;
 unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 buttonStates CSiTRadar::menuState = {};
@@ -189,7 +190,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// Post handoff blinking and then close the tag
 			if ( hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 8) {
 				hoAcceptedTime.erase(callSign);
-				mAcData[callSign].tagType = 0;
+				
+				// if quick look is open, defer closing teh tag until quicklook is off;
+				if (!menuState.quickLook) {
+					mAcData[callSign].tagType = 0;
+				}
+				if (menuState.quickLook) {
+					tempTagData[callSign] = 0;
+				}
 			}
 
 			// Open a bravo tag, during a handoff to you
@@ -393,8 +401,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
 
 		menutopleft.y += 25;
-		TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", 0);
+		but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
 		menutopleft.y -= 25;
+		ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
 
 		POINT psrPoor[13] = {
 			{0,0},
@@ -606,6 +615,30 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_ALT_FILT_ON) {
 		altFilterOn = !altFilterOn;
+	}
+
+	if (ObjectType == BUTTON_MENU_QUICK_LOOK) {
+		if (menuState.quickLook == FALSE) {
+			menuState.quickLook = TRUE;
+
+			for (auto& p : CSiTRadar::mAcData) {
+				CSiTRadar::tempTagData[p.first] = p.second.tagType;
+				p.second.tagType = 1;
+			}
+
+		}
+		else if (menuState.quickLook == TRUE) {
+
+			for (auto& p : CSiTRadar::tempTagData) {
+				// prevents closing of tags that became under your jurisdiction during quicklook
+				if (!GetPlugIn()->FlightPlanSelect(p.first.c_str()).GetTrackingControllerIsMe()) { 
+					CSiTRadar::mAcData[p.first].tagType = p.second;
+				}
+			}
+
+			tempTagData.clear();
+			menuState.quickLook = FALSE;
+		}
 	}
 	
 	if (Button == BUTTON_MIDDLE) {

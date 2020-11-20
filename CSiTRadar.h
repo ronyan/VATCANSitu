@@ -27,9 +27,10 @@ struct ACData {
 struct buttonStates {
     bool haloTool;
     bool ptlTool;
-    bool showExtrapFP = FALSE;
-    bool filterBypassAll = FALSE;
+    bool showExtrapFP{ FALSE };
+    bool filterBypassAll{ FALSE };
     double ptlLength;
+    bool quickLook{ FALSE };
 };
 
 class CSiTRadar :
@@ -42,6 +43,7 @@ public:
     virtual ~CSiTRadar(void);
 
     static unordered_map<string, ACData> mAcData;
+    static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
 
     static double magvar;
