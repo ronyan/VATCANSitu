@@ -112,7 +112,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
 
 	// Line 0 Items
-
+	string ssr = rt->GetPosition().GetSquawk();
+	
 	// Line 1 Items
 	string cs = rt->GetCallsign();
 	string wtSymbol = "";
@@ -332,6 +333,38 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	}
 
+	// Uncorrelated 
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3) {
+		RECT uline0;
+		RECT uline1;
+		RECT uline2;
+		RECT uline3;
+
+		uline0.top = p.y - 19;
+		uline0.left = p.x + 10;
+		dc->DrawText(ssr.c_str(), &uline0, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(ssr.c_str(), &uline0, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_SQUAWK, rt->GetCallsign(), uline0, TRUE, "");
+
+		uline1.top = p.y - 7;
+		uline1.left = p.x + 10;
+		dc->DrawText(altThreeDigit.c_str(), &uline1, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(altThreeDigit.c_str(), &uline1, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), uline1, TRUE, "Uncorr ALT");
+
+		if (abs(rt->GetVerticalSpeed()) > 400) {
+			uline1.left = uline1.right;
+			dc->DrawText(vmi.c_str(), &uline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(vmi.c_str(), &uline1, DT_LEFT);
+
+			uline1.left = uline1.right;
+			dc->DrawText(vmr.c_str(), &uline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(vmr.c_str(), &uline1, DT_LEFT);
+		}
+		uline1.left = uline1.right + 5;
+	}
+
+
 	// restore context
 	dc->RestoreDC(sDC);
 
@@ -427,7 +460,8 @@ void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 
 void CACTag::DrawRTConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)
 {
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0) { return; }
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 ||
+		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3) { return; }
 	// save context
 	int sDC = dc->SaveDC();
 
