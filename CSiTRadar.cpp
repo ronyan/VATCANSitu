@@ -164,7 +164,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			if (radarTarget.GetPosition().GetRadarFlags() != 0 || isADSB) {
 				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &rtagOffset);
 			}
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
@@ -736,7 +735,7 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 		// check maximal offset
 		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
-		if (q.x < -TAG_MAX_X_OFFSET - TAG_WIDTH) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
+		if (q.x < -TAG_MAX_X_OFFSET - CSiTRadar::mAcData[rt.GetCallsign()].tagWidth) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
 		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
 		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
 
@@ -764,18 +763,18 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		RECT temp = Area;
 
 		POINT q;
-		q.x = ((temp.right + temp.left) / 2) - p.x - (TAG_WIDTH / 2); // Get centre of box 
+		q.x = ((temp.right + temp.left) / 2) - p.x - (CSiTRadar::mAcData[rt.GetCallsign()].tagWidth / 2); // Get centre of box 
 		q.y = ((temp.top + temp.bottom) / 2) - p.y - (TAG_HEIGHT / 2);	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
 
 		// check maximal offset
 		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
-		if (q.x < -TAG_MAX_X_OFFSET - TAG_WIDTH) { q.x = -TAG_MAX_X_OFFSET - TAG_WIDTH; }
+		if (q.x < -TAG_MAX_X_OFFSET - CSiTRadar::mAcData[rt.GetCallsign()].tagWidth) { q.x = -TAG_MAX_X_OFFSET - CSiTRadar::mAcData[rt.GetCallsign()].tagWidth; }
 		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
 		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
 
 		// nudge tag if necessary (near horizontal, or if directly above target)
-		if (q.x > -((TAG_WIDTH) / 2) && q.x < 3) { q.x = 3; };
-		if (q.x > -TAG_WIDTH && q.x <= -(TAG_WIDTH / 2)) { q.x = -TAG_WIDTH; }
+		if (q.x > -((CSiTRadar::mAcData[rt.GetCallsign()].tagWidth) / 2) && q.x < 3) { q.x = 3; };
+		if (q.x > -CSiTRadar::mAcData[rt.GetCallsign()].tagWidth && q.x <= -(CSiTRadar::mAcData[rt.GetCallsign()].tagWidth / 2)) { q.x = -CSiTRadar::mAcData[rt.GetCallsign()].tagWidth; }
 		if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
 
 		rtagOffset[sObjectId] = q;
