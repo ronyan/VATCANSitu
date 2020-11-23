@@ -13,7 +13,7 @@
 6. (UPDATED) CJS will now wink white during a H/O warning event rather than disappear and reappear.
 7. (UPDATED) CTP specific feature removed, will be a separate plugin for future events.
 
-WIP features for the next updated:
+WIP features for the next update:
 1. Configuration for tags and H/O Persist and H/O warn.
 2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
 under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
