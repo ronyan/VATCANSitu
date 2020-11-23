@@ -5,7 +5,7 @@
   * a) Tag connectors are now drawn with a dogleg in a similar style to the real scope. -- 
   * b) Datatags now 'wink' during squawk ident and handoff events
   * c) Handoff tag handling behaviour modelled. Aircraft handed off to you will have its tag wink. After handoff, tags will wink and then revert to a "Bravo Tag" (less detailed) automatically. An option in the real software is to enable "H/O Persist" (planned for next version to allow you to choose).
-  * d) Scratchpad content with one or two characters displays on line 1 as the SFI (one letter field after the callsign used by some FIRs). Longer scratchpad strings display on the last line of tag as "Controller Rermarks". (play around with )
+  * d) Scratchpad content with one or two characters displays on line 1 as the SFI (one letter field after the callsign used by some FIRs). Longer scratchpad strings display on the last line of tag as "Controller Rermarks". 
 2. (NEW) Quick Look button is now functional. Data tags moved during quick look will remain open. 
 3. (NEW) Show "All" targets now a functional button.
 4. (NEW) PTL drawn in a green colour now implemented (fixed at 3 mins at the moment).
