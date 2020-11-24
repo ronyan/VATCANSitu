@@ -342,7 +342,16 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 		rline2.left = rline2.right + 8;
 
-		if (abs(rt->GetPosition().GetPressureAltitude() - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
+		double alt;
+
+		if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+			alt = rt->GetPosition().GetFlightLevel(); // +50 to force rounding up
+		}
+		else {
+			alt = rt->GetPosition().GetPressureAltitude();
+		}
+
+		if (abs(alt - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
 			rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() != 0) {
 			dc->SetTextColor(C_PPS_ORANGE);
 			if (blinking && CSiTRadar::halfSecTick) {
@@ -398,7 +407,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	}
 
 	// BRAVO TAGS
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0) {
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
 		RECT bline0;
 		RECT bline1;
 		RECT bline2;
@@ -424,7 +433,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	}
 
 	// Uncorrelated 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3) {
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3 
+		&& rt->GetPosition().GetRadarFlags() != 1) {
 		RECT uline0;
 		RECT uline1;
 		RECT uline2;
