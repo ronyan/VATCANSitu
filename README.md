@@ -1,7 +1,29 @@
 # VATCANSitu
 
-Latest Version 0.2.4.5a
+### Latest Version 0.3.1.0 NOV23-2020
+1. (NEW) Radar target tags are now drawn by the plugin. Tag functions remain in click spots from stock Canscope installs to facilitate an easier transition. Please note, I cannot find examples of direct-to and temp headings displayed in the tags of reference material I have access to, as such these are not shown (but you can assign them using the click spot or scractpad box to label for other controllers).
+  * a) Tag connectors are now drawn with a dogleg in a similar style to the real scope. -- 
+  * b) Datatags now 'wink' during squawk ident and handoff events
+  * c) Handoff tag handling behaviour modelled. Aircraft handed off to you will have its tag wink. After handoff, tags will wink and then revert to a "Bravo Tag" (less detailed) automatically. An option in the real software is to enable "H/O Persist" (planned for next version to allow you to choose).
+  * d) Scratchpad content with one or two characters displays on line 1 as the SFI (one letter field after the callsign used by some FIRs). Longer scratchpad strings display on the last line of tag as "Controller Rermarks". 
+2. (NEW) Quick Look button is now functional. Data tags moved during quick look will remain open. 
+3. (NEW) Show "All" targets now a functional button.
+4. (NEW) PTL drawn in a green colour now implemented (fixed at 3 mins at the moment).
+5. (UPDATED) CJS during handoff events have been tweaked and no longer show the frequency (this behaviour was clarified using new source material.
+6. (UPDATED) CJS will now wink white during a H/O warning event rather than disappear and reappear.
+7. (UPDATED) CTP specific feature removed, will be a separate plugin for future events.
 
+WIP features for the next update:
+1. Configuration for tags and H/O Persist and H/O warn.
+2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
+under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
+3. PTL: currently crudely drawn using euclidean geometry, will be refactored and adjustable in 0.3.2.x
+
+
+Installation notes: Disable the default ES symbology for correlated targets in the symbology settings by replacing with the line "MOVETO 0 0", use the Tag Editor to change ES default tags to "Static Line" as the only entry to avoid double tags.
+
+# CHANGELOG
+#### 0.2.4.5a
 - RVSM aircraft will show with the diamond PPS symbology. 
 - Primary targets will show in magenta.
 - Squawk 7600 and 7700 will show a red triangle.
@@ -10,16 +32,13 @@ Latest Version 0.2.4.5a
 - FP predicted tracks show with the appropriate orange airplane symbol.
 - Altitude filter will be on by default.
 
-Disable the default ES symbology for correlated targets in the symbology settings by replacing with the line "MOVETO 0 0"
-
-version 0.2.3
+#### version 0.2.3
 - Added altitude filter settings, and altitude filter toggle. Only works for tags draw for by the plugin (i.e. the VFR tags) since there is no way to hook directly into the ES default filters. Saves settings to sector files. 
 
-version 0.2.1: AUG3
+#### version 0.2.1: AUG3
 - hotfix for 0.2 retargetted character encoding for better compatibility
-
 - Added the range display
-- Aaded Controller jurisdiction symbol that updates depending on the position you log in as.
+- Added Controller jurisdiction symbol that updates depending on the position you log in as.
 
 ![Screenshot](https://i.imgur.com/CKYPSyb.png)
 
@@ -42,10 +61,10 @@ https://vimeo.com/443838489
 7. Primary targets will show in magenta.
 8. Squawk 7600 and 7700 will show a red triangle.
 9. Aircrafts identing will have their PPS flash instead of the unusual ES target.
-10. CJS will flash if aircraft are nearing your airspace border to remind you to hand-off (I believe an option on the real thing)
+10. CJS will flash if aircraft are nearing your airspace border to remind you to hand-off.
 11. FP predicted tracks show with the appropriate orange airplane symbol.
 
-Not implemented for now: There are some sham buttons just to replicate the UI (also I don't know what some of them do in the real system). The PTL and RBL default ES tools work well, unlikely will be a priority.
+Not implemented for now: There are some sham buttons just to replicate the UI (also I don't know what some of them do in the real system). RBL default ES tools work well, unlikely will be a priority.
 
 # Installation
 The dll was compiled using Visual Studio 2019 (v142) using MFC libraries. The source code is provided to allow you to review and compile yourself.
