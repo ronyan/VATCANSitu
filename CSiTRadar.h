@@ -24,7 +24,7 @@ class CSiTRadar :
 
 {
 public:
-    static BOOL canAmend;
+    static bool canAmend;
     static int refreshStatus;
     static int amendStatus;
 

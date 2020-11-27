@@ -11,7 +11,7 @@ VATUSA version
 
 map<string, ACData> CSiTRadar::mAcData;
 map<string, string> CSiTRadar::slotTime;
-BOOL CSiTRadar::canAmend;
+bool CSiTRadar::canAmend;
 int CSiTRadar::refreshStatus;
 int CSiTRadar::amendStatus;
 
