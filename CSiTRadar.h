@@ -23,6 +23,7 @@ struct ACData {
     bool isHandoff{ FALSE };
     int tagWidth{ 65 }; 
     string CID;
+    bool extAlt{ FALSE };
 };
 
 struct buttonStates {
@@ -32,6 +33,7 @@ struct buttonStates {
     bool filterBypassAll{ FALSE };
     double ptlLength;
     bool quickLook{ FALSE };
+    bool extAltToggle{ FALSE };
 };
 
 class CSiTRadar :

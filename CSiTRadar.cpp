@@ -436,8 +436,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		but = TopMenu::DrawBut(&dc, but_ALL);
 		ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
 
-		menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-		TopMenu::DrawBut(&dc, but_EXT);
+		menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
+		but = TopMenu::DrawBut(&dc, but_EXT);
+		ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
+
 		menuButton but_EMode = { { 485, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_EMode);
 
@@ -598,6 +600,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		menuState.filterBypassAll = !menuState.filterBypassAll;
 	}
 
+	if (ObjectType == BUTTON_MENU_EXT_ALT) {
+		menuState.extAltToggle = !menuState.extAltToggle;
+	}
+	
+
 	if (ObjectType == BUTTON_MENU_ALT_FILT_OPT) {
 		if (!strcmp(sObjectId, "Alt Filt Opts")) { altFilterOpts = !altFilterOpts; }
 		if (!strcmp(sObjectId, "End")) { altFilterOpts = 0; }
@@ -683,10 +690,16 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
-	if (Button == BUTTON_RIGHT) {
-		if (ObjectType == TAG_ITEM_TYPE_ALTITUDE) {
+	if (ObjectType == TAG_ITEM_TYPE_ALTITUDE) {
+		if (Button == BUTTON_RIGHT) {		
 			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_ALTITUDE, sObjectId, NULL, TAG_ITEM_FUNCTION_TEMP_ALTITUDE_POPUP, Pt, Area);
+		}
+
+		if (Button == BUTTON_LEFT) {
+			if (menuState.extAltToggle) {
+				mAcData[sObjectId].extAlt = !mAcData[sObjectId].extAlt;
+			}
 		}
 	}
 

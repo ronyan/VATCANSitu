@@ -138,8 +138,12 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (vmr.size() <= 2) { vmr.insert(vmr.begin(), 2 - vmr.size(), '0'); }
 	string clrdAlt = to_string(rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()/100);
 	if (clrdAlt.size() <= 3) { clrdAlt.insert(clrdAlt.begin(), 3 - clrdAlt.size(), '0'); }
+	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 0) { clrdAlt = "clr"; }
 	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1) { clrdAlt = "APR"; }
-	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }
+	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }	
+	string fpAlt = to_string(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetFinalAltitude() / 100);
+	if (fpAlt.size() <=3) { fpAlt.insert(fpAlt.begin(), 3 - fpAlt.size(), '0'); }
+	if (rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetFinalAltitude() == 0) { fpAlt = "fld"; }
 	string handoffCJS = rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId();
 	if (strcmp(rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
 		handoffCJS = rt->GetCorrelatedFlightPlan().GetTrackingControllerId();
@@ -351,14 +355,32 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			alt = rt->GetPosition().GetPressureAltitude();
 		}
 
-		if (abs(alt - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
-			rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() != 0) {
+		if (
+			// altitude differential 
+			(abs(alt - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
+			rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() != 0) 
+			
+			// or extended altitudes toggled on
+			|| (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt)) {
+
+
 			dc->SetTextColor(C_PPS_ORANGE);
 			if (blinking && CSiTRadar::halfSecTick) {
 				dc->SetTextColor(C_WHITE);
 			}
 			dc->DrawText(("C" + clrdAlt).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(("C" + clrdAlt).c_str(), &rline2, DT_LEFT);
+			dc->SetTextColor(C_PPS_YELLOW);
+			rline2.left = rline2.right + 8;
+		}
+
+		if (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt) {
+			dc->SetTextColor(C_PPS_ORANGE);
+			if (blinking && CSiTRadar::halfSecTick) {
+				dc->SetTextColor(C_WHITE);
+			}
+			dc->DrawText(("F" + fpAlt).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(("F" + fpAlt).c_str(), &rline2, DT_LEFT);
 			dc->SetTextColor(C_PPS_YELLOW);
 			rline2.left = rline2.right + 8;
 		}
