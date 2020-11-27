@@ -69,6 +69,8 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlLength = 3;
 	menuState.ptlTool = FALSE;
 
+	CSiTRadar::mAcData.reserve(64);
+
 	time = clock();
 	oldTime = clock();
 }
@@ -193,7 +195,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// Post handoff blinking and then close the tag
-			if ( hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 8) {
+			if ( hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 12) {
 				hoAcceptedTime.erase(callSign);
 				
 				// if quick look is open, defer closing the tag until quicklook is off;
