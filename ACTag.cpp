@@ -136,23 +136,23 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rt->GetVerticalSpeed() < -400) { vmi = "|"; }; // up arrow "??!" = downarrow
 	string vmr = to_string(abs(rt->GetVerticalSpeed()/200));
 	if (vmr.size() <= 2) { vmr.insert(vmr.begin(), 2 - vmr.size(), '0'); }
-	string clrdAlt = to_string(rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()/100);
+	string clrdAlt = to_string(fp->GetControllerAssignedData().GetClearedAltitude()/100);
 	if (clrdAlt.size() <= 3) { clrdAlt.insert(clrdAlt.begin(), 3 - clrdAlt.size(), '0'); }
-	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 0) { clrdAlt = "clr"; }
-	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1) { clrdAlt = "APR"; }
-	if (rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }	
-	string fpAlt = to_string(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetFinalAltitude() / 100);
+	if (fp->GetControllerAssignedData().GetClearedAltitude() == 0) { clrdAlt = "clr"; }
+	if (fp->GetControllerAssignedData().GetClearedAltitude() == 1) { clrdAlt = "APR"; }
+	if (fp->GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }
+	string fpAlt = to_string(fp->GetFlightPlanData().GetFinalAltitude() / 100);
 	if (fpAlt.size() <=3) { fpAlt.insert(fpAlt.begin(), 3 - fpAlt.size(), '0'); }
-	if (rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetFinalAltitude() == 0) { fpAlt = "fld"; }
-	string handoffCJS = rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId();
-	if (strcmp(rt->GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
-		handoffCJS = rt->GetCorrelatedFlightPlan().GetTrackingControllerId();
+	if (fp->GetFlightPlanData().GetFinalAltitude() == 0) { fpAlt = "fld"; }
+	string handoffCJS = fp->GetHandoffTargetControllerId();
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+		handoffCJS = fp->GetTrackingControllerId();
 	}
 	string groundSpeed = to_string((rt->GetPosition().GetReportedGS() + 5) / 10);
 
 	// Line 3 Items
-	string acType = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftFPType();
-	string destination = rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination();
+	string acType = fp->GetFlightPlanData().GetAircraftFPType();
+	string destination = fp->GetFlightPlanData().GetDestination();
 
 	// Initiate the default tag location, if no location is set already or find it in the map
 
@@ -207,7 +207,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		tagOffsetY = pTag.y;
 
 		bool blinking = FALSE;
-		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()) { blinking = TRUE; }
+		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
+			&& !strcmp(fp->GetHandoffTargetControllerId(), "") == 0) { blinking = TRUE; }
 		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
 
 		if (rt->IsValid()) {
@@ -278,7 +279,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	// Draw Connector Ends
 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1) {
+	if (CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1) {
 		// Tag formatting
 		RECT tagCallsign;
 		tagCallsign.left = p.x + tagOffsetX;
@@ -296,7 +297,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline1.bottom = line2.y;
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
-		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
 		rline1.left = rline1.right;
 		rline1.right = rline1.left + 8;
 		if (sfi.size() > 0  && sfi.size() <= 2) {
@@ -429,7 +430,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	}
 
 	// BRAVO TAGS
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
+	if (CSiTRadar::mAcData[fp->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
 		RECT bline0;
 		RECT bline1;
 		RECT bline2;

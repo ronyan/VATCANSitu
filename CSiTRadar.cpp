@@ -144,7 +144,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			bool isRVSM = mAcData[callSign].isRVSM;
 			bool isADSB = mAcData[callSign].isADSB;
 
-			if (!isCorrelated) {
+			if (!isCorrelated && !isADSB) {
 				mAcData[callSign].tagType = 3; // sets this if RT is uncorr
 			} 
 			else if (isCorrelated && mAcData[callSign].tagType == 3) { mAcData[callSign].tagType = 0; } // only sets once to go from uncorr to corr
@@ -164,16 +164,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
-			if (radarTarget.GetPosition().GetRadarFlags() != 0 || isADSB) {
+			if (radarTarget.GetPosition().GetRadarFlags() != 0 ) {
 				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
 			}
 
 			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 			if (radarTarget.GetPosition().GetRadarFlags() == 0
 				&& isADSB) {
-
-				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-				CACTag::DrawRTConnector(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), C_PPS_YELLOW, &rtagOffset);
+				if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
+				CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
+				CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
 
 			}
 
