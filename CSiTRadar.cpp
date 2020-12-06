@@ -226,7 +226,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 			// show CJS for controller tracking aircraft
-			string CJS = radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId();
+			string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
 			CFont font;
 			LOGFONT lgfont;
