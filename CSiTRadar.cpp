@@ -719,10 +719,13 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
-	if (ObjectType == CTR_DATA_TYPE_SCRATCH_PAD_STRING) {
+	if (ObjectType == CTR_DATA_TYPE_SCRATCH_PAD_STRING || ObjectType == TAG_ITEM_TYPE_COMMUNICATION_TYPE) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 		if (Button == BUTTON_LEFT) {
 			StartTagFunction(sObjectId, NULL, CTR_DATA_TYPE_SCRATCH_PAD_STRING, sObjectId, NULL, TAG_ITEM_FUNCTION_EDIT_SCRATCH_PAD, Pt, Area);
+		}
+		if (Button == BUTTON_RIGHT) {
+			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_COMMUNICATION_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_COMMUNICATION_POPUP, Pt, Area);
 		}
 	}
 

@@ -120,6 +120,14 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
 	cs = cs + wtSymbol;
+
+	char commTypeChar = tolower(fp->GetControllerAssignedData().GetCommunicationType());
+	if (commTypeChar == '\0') {
+		commTypeChar = tolower(fp->GetFlightPlanData().GetCommunicationType());
+	}
+	string commType = "";
+	if (commTypeChar != 'v') { commType = "/"; commType += commTypeChar; }
+
 	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
 
 	// Line 2 Items
@@ -300,13 +308,22 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
 		rline1.left = rline1.right;
 		rline1.right = rline1.left + 8;
+
+		// Show Communication Type if not Voice
+		if (commType.size() > 0) {
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
+		}
+		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+		rline1.left = rline1.right;
+
 		if (sfi.size() > 0  && sfi.size() <= 2) {
 			
 			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT);
 		}
 		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
-			
+		
 		// add some padding for the SFI + long callsigns
 		if (sfi.size() == 0) { CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 12; }
 		else { CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 6; }
