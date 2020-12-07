@@ -368,9 +368,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.y += 25;
 
 		string altFilterLowFL = to_string(altFilterLow);
-		altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+		if (altFilterLowFL.size() < 3) {
+			altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+		}
 		string altFilterHighFL = to_string(altFilterHigh);
-		altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+		if (altFilterHighFL.size() < 3) {
+			altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+		}
 
 		string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
 		but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
@@ -616,12 +620,16 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "End")) { altFilterOpts = 0; }
 		if (!strcmp(sObjectId, "LLim")) {
 			string altFilterLowFL = to_string(altFilterLow);
-			altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+			if (altFilterLowFL.size() < 3) {
+				altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+			}
 			GetPlugIn()->OpenPopupEdit(rLLim, FUNCTION_ALT_FILT_LOW, altFilterLowFL.c_str());
 		}
 		if (!strcmp(sObjectId, "HLim")) {
 			string altFilterHighFL = to_string(altFilterHigh);
-			altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+			if (altFilterHighFL.size() < 3) {
+				altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+			}
 			GetPlugIn()->OpenPopupEdit(rHLim, FUNCTION_ALT_FILT_HIGH, altFilterHighFL.c_str());
 		}
 		if (!strcmp(sObjectId, "Save")) {

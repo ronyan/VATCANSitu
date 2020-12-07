@@ -446,12 +446,14 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 	}
 
+	
 	// BRAVO TAGS
-	if (CSiTRadar::mAcData[fp->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
-		RECT bline0;
-		RECT bline1;
-		RECT bline2;
-		RECT bline3;
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
+
+		RECT bline0{};
+		RECT bline1{};
+		RECT bline2{};
+		RECT bline3{};
 
 		bline1.top = p.y - 7;
 		bline1.left = p.x + 10;
@@ -471,14 +473,18 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		bline1.left = bline1.right + 5;
 
 	}
+	
 
 	// Uncorrelated 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3 
 		&& rt->GetPosition().GetRadarFlags() != 1) {
-		RECT uline0;
-		RECT uline1;
-		RECT uline2;
-		RECT uline3;
+
+		dc->SetTextColor(C_PPS_YELLOW);
+		
+		RECT uline0{};
+		RECT uline1{};
+		RECT uline2{};
+		RECT uline3{};
 
 		uline0.top = p.y - 19;
 		uline0.left = p.x + 10;
