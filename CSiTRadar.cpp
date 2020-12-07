@@ -677,6 +677,15 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 		
+		if (Button == BUTTON_LEFT) {
+			CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
+			string callsign = rt.GetCallsign();
+
+			if (mAcData[callsign].isHandoff == TRUE) {
+				GetPlugIn()->FlightPlanSelect(sObjectId).AcceptHandoff();
+			}
+		}
+
 		if (Button == BUTTON_RIGHT) {
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_CALLSIGN, sObjectId, NULL, TAG_ITEM_FUNCTION_HANDOFF_POPUP_MENU, Pt, Area);
 		}
