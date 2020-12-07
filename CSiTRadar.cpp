@@ -207,10 +207,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 
+			// Once the handoff to me is completed,
+			if (mAcData[callSign].isHandoffToMe == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+				mAcData[callSign].isHandoffToMe = FALSE;
+			}
+
 			// Open a bravo tag, during a handoff to you
 			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
 				strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
 				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+				mAcData[callSign].isHandoffToMe = TRUE;
 			}
 
 			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
@@ -678,7 +684,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 		
 		if (Button == BUTTON_LEFT) {
-			if (mAcData[sObjectId].isHandoff == TRUE) {
+			if (mAcData[sObjectId].isHandoffToMe == TRUE) {
 				GetPlugIn()->FlightPlanSelect(sObjectId).AcceptHandoff();
 			}
 		}
