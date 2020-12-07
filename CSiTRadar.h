@@ -21,6 +21,7 @@ struct ACData {
     bool isRVSM;
     int tagType{ 0 };
     bool isHandoff{ FALSE };
+    bool isHandoffToMe{ FALSE };
     int tagWidth{ 65 }; 
     string CID;
     bool extAlt{ FALSE };
