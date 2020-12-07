@@ -216,7 +216,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		bool blinking = FALSE;
 		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
-			&& !strcmp(fp->GetHandoffTargetControllerId(), "") == 0) { blinking = TRUE; }
+			&& strcmp(fp->GetHandoffTargetControllerId(), "") != 0) { blinking = TRUE; }
 		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
 
 		if (rt->IsValid()) {
