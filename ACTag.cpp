@@ -316,12 +316,12 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		rline1.left = rline1.right;
-
-		if (sfi.size() > 0  && sfi.size() <= 2) {
-			
-			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(sfi.c_str(), &rline1, DT_LEFT);
+		
+		if (sfi.size() > 1) {
+			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT);
 		}
+	
 		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		
 		// add some padding for the SFI + long callsigns
@@ -440,6 +440,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline4.top = line4.y;
 		rline4.left = line4.x;
 		if (sfi.size() >2) {
+			sfi = sfi.substr(3, sfi.size() - 2);
 			dc->DrawText(sfi.c_str(), &rline4, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.c_str(), &rline4, DT_LEFT);
 			rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline4, TRUE, rt->GetCallsign());
