@@ -678,10 +678,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 		
 		if (Button == BUTTON_LEFT) {
-			CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
-			string callsign = rt.GetCallsign();
-
-			if (mAcData[callsign].isHandoff == TRUE) {
+			if (mAcData[sObjectId].isHandoff == TRUE) {
 				GetPlugIn()->FlightPlanSelect(sObjectId).AcceptHandoff();
 			}
 		}
