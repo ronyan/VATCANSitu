@@ -425,7 +425,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		if (sfi.size() >2) {
 			dc->DrawText(sfi.c_str(), &rline4, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.c_str(), &rline4, DT_LEFT);
-			rad->AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, rt->GetCallsign(), rline3, TRUE, "");
+			rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline4, TRUE, rt->GetCallsign());
 		}
 	}
 
