@@ -157,6 +157,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		handoffCJS = fp->GetTrackingControllerId();
 	}
 	string groundSpeed = to_string((rt->GetPosition().GetReportedGS() + 5) / 10);
+	string setSpeed = to_string(fp->GetControllerAssignedData().GetAssignedSpeed());
+	string setMach = to_string(fp->GetControllerAssignedData().GetAssignedMach());
 
 	// Line 3 Items
 	string acType = fp->GetFlightPlanData().GetAircraftFPType();
@@ -189,7 +191,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	CFont font;
 	LOGFONT lgfont;
-	memset(&lgfont, 0, sizeof(LOGFONT));
+	std::memset(&lgfont, 0, sizeof(LOGFONT));
 	lgfont.lfHeight = 14;
 	lgfont.lfWeight = 500;
 	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
@@ -422,8 +424,35 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_GROUND_SPEED_WITH_N, fp->GetCallsign(), rline2, TRUE, "");
+
+		rline2.left = rline2.right + 8;
+
+		dc->SetTextColor(C_PPS_ORANGE);
+
+		if (blinking && CSiTRadar::halfSecTick) {
+			dc->SetTextColor(C_WHITE);
+		}
+		if (fp->GetControllerAssignedData().GetAssignedSpeed() != 0) {
+			setSpeed = setSpeed.insert(0, "A");
+			dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT);
+			rline2.left = rline2.right + 8;
+			rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+		}
+		if (fp->GetControllerAssignedData().GetAssignedMach() != 0 ) {
+			setMach = setMach.insert(0, "A.");
+			dc->DrawText(setMach.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(setMach.c_str(), &rline2, DT_LEFT);
+			rline2.left = rline2.right + 8;
+			rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+		}
 
 		// Line 3
+		dc->SetTextColor(C_PPS_YELLOW);
+		if (blinking && CSiTRadar::halfSecTick) {
+			dc->SetTextColor(C_WHITE);
+		}
 
 		RECT rline3;
 		rline3.top = line3.y;
@@ -436,8 +465,6 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(destination.c_str(), &rline3, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(destination.c_str(), &rline3, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_DESTINATION, rt->GetCallsign(), rline3, TRUE, "");
-
-		dc->SetTextColor(C_PPS_YELLOW);
 
 		// Line 4
 		RECT rline4;
