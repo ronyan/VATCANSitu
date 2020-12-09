@@ -320,7 +320,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		rline1.left = rline1.right;
 		
-		if (sfi.size() >1 && sfi.find(" ", 2) != sfi.npos && sfi.find(" ", 2) < 3) {
+		if (sfi.size() >1 && sfi.find(" ", 2) != sfi.npos && sfi.find(" ", 2) < 3 && sfi.at(0) == ' ') {
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT);
 		}
