@@ -289,7 +289,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	// Draw Connector Ends
 
-	if (CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1) {
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
+		( CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1)) {
 		// Tag formatting
 		RECT tagCallsign;
 		tagCallsign.left = p.x + tagOffsetX;

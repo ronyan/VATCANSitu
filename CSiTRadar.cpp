@@ -232,29 +232,31 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 			// show CJS for controller tracking aircraft
-			string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
+			if (radarTarget.GetPosition().GetRadarFlags() != 0 || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+				string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
-			CFont font;
-			LOGFONT lgfont;
+				CFont font;
+				LOGFONT lgfont;
 
-			memset(&lgfont, 0, sizeof(LOGFONT));
-			lgfont.lfWeight = 500;
-			strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-			lgfont.lfHeight = 12;
-			font.CreateFontIndirect(&lgfont);
+				memset(&lgfont, 0, sizeof(LOGFONT));
+				lgfont.lfWeight = 500;
+				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+				lgfont.lfHeight = 12;
+				font.CreateFontIndirect(&lgfont);
 
-			dc.SelectObject(font);
-			dc.SetTextColor(cjsColor);
+				dc.SelectObject(font);
+				dc.SetTextColor(cjsColor);
 
-			RECT rectCJS;
-			rectCJS.left = p.x - 6 ;
-			rectCJS.right = p.x + 75;
-			rectCJS.top = p.y - 18;
-			rectCJS.bottom = p.y;
+				RECT rectCJS;
+				rectCJS.left = p.x - 6;
+				rectCJS.right = p.x + 75;
+				rectCJS.top = p.y - 18;
+				rectCJS.bottom = p.y;
 
-			dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
+				dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
-			DeleteObject(font);
+				DeleteObject(font);
+			}
 			
 			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
 			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
@@ -651,7 +653,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 			for (auto& p : CSiTRadar::mAcData) {
 				CSiTRadar::tempTagData[p.first] = p.second.tagType;
-				p.second.tagType = 1;
+				// Do not open uncorrelated tags
+				if (p.second.tagType == 0) {
+					p.second.tagType = 1;
+				}
 			}
 
 		}

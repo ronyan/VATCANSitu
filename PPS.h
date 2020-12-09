@@ -34,16 +34,16 @@ public:
 		if (radFlag == 0) {
 			// Draw ADSB PPS symbology
 			if (isADSB) {
-				dc->MoveTo(p.x - 5, p.y - 5);
-				dc->LineTo(p.x + 5, p.y - 5);
-				dc->LineTo(p.x + 5, p.y + 5);
-				dc->LineTo(p.x - 5, p.y + 5);
-				dc->LineTo(p.x - 5, p.y - 5);
+				dc->MoveTo(p.x - 4, p.y - 4);
+				dc->LineTo(p.x + 4, p.y - 4);
+				dc->LineTo(p.x + 4, p.y + 4);
+				dc->LineTo(p.x - 4, p.y + 4);
+				dc->LineTo(p.x - 4, p.y - 4);
 
 				// RVSM ADSB symbol
 				if (isRVSM) {
-					dc->MoveTo(p.x, p.y - 5);
-					dc->LineTo(p.x, p.y + 5);
+					dc->MoveTo(p.x, p.y - 4);
+					dc->LineTo(p.x, p.y + 4);
 				}
 			}
 		}
