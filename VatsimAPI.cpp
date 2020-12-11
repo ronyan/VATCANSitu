@@ -9,6 +9,8 @@
 using json = nlohmann::json;
 string CDataHandler::url1;
 int CDataHandler::refreshInterval;
+string CDataHandler::tagLabel;
+string CDataHandler::vatsimURL;
 
 static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 	((std::string*)userp)->append((char*)buffer, size * nmemb);
@@ -22,6 +24,8 @@ void CDataHandler::loadSettings() {
 
 		CDataHandler::url1 = j["slotURL"];
 		CDataHandler::refreshInterval = j["refreshInterval"];
+		CDataHandler::tagLabel = j["tagLabel"];
+		CDataHandler::vatsimURL = j["vatsimURL"];
 	}
 	catch (std::ifstream::failure e) {
 		
@@ -54,11 +58,11 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 
 		// Everything succeeded, show to user
 
-		data->Plugin->DisplayUserMessage("VATCAN Situ", "Update Successful", string("CTP slot times parsed").c_str(), true, false, false, false, false);
+		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Update Successful", string("Slot times parsed").c_str(), true, false, false, false, false);
 
 	}
 	catch (exception& e) {
-		data->Plugin->DisplayUserMessage("VATCAN Situ", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 
 	}
 
@@ -68,7 +72,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 
 	if (curl1)
 	{
-		curl_easy_setopt(curl1, CURLOPT_URL, "http://cluster.data.vatsim.net/vatsim-data.json");
+		curl_easy_setopt(curl1, CURLOPT_URL, CDataHandler::vatsimURL.c_str());
 		curl_easy_setopt(curl1, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl1, CURLOPT_WRITEDATA, &responseString);
 		CURLcode res;
@@ -110,11 +114,11 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		string timeStamp = jsonArray["general"]["update_timestamp"];
 
 		// Everything succeeded, show to user
-		data->Plugin->DisplayUserMessage("Slot Helper", "Update Successful", string("Slot times validated at " + timeStamp).c_str(), true, false, false, false, false);
+		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Update Successful", string("Slot times validated at " + timeStamp).c_str(), true, false, false, false, false);
 
 	}
 	catch (exception& e) {
-		data->Plugin->DisplayUserMessage("Slot Helper", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
 	}
 
 	CSiTRadar::canAmend = TRUE;

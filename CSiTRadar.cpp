@@ -44,7 +44,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			string callSign = radarTarget.GetCallsign();
 
 			if (radarTarget.GetPosition().GetRadarFlags() != 0) {
-				// CTP VERSION
+
 				if (mAcData[callSign].hasCTP) {
 					CFont font;
 					LOGFONT lgfont;
@@ -61,13 +61,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					rectPAM.left = p.x - 9;
 					rectPAM.right = p.x + 75; rectPAM.top = p.y + 8;	rectPAM.bottom = p.y + 30;
 
-					dc.DrawText("CTP", &rectPAM, DT_LEFT);
+					dc.DrawText(CDataHandler::tagLabel.c_str(), &rectPAM, DT_LEFT);
 
 					DeleteObject(font);
 				}
 			}
-
-			// END CTP
 		}
 
 		POINT menu;
@@ -79,9 +77,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Refresh", autoRefresh);
 		ButtonToScreen(this, but, "Refresh Slot Data", BUTTON_MENU_REFRESH);
 
+		/* 
 		menu.x = 80;
 		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Amend FP", 0);
 		ButtonToScreen(this, but, "Amend Flight Plans", BUTTON_MENU_AMENDFP);
+		*/
 	}
 
 	if (autoRefresh) {
@@ -116,7 +116,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
 	}
 
-	if (ObjectType == BUTTON_MENU_AMENDFP) {
+	/* if (ObjectType == BUTTON_MENU_AMENDFP) {
 		if (Button == BUTTON_LEFT) {
 			CAsync* data = new CAsync();
 			data->Plugin = GetPlugIn();
@@ -125,6 +125,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			oldTime = clock();
 		}
 	}
+	*/
 }
 
 void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype) {

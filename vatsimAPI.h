@@ -18,5 +18,7 @@ public:
 
 	static string url1;
 	static int CDataHandler::refreshInterval;
+	static string CDataHandler::tagLabel;
+	static string CDataHandler::vatsimURL;
 
 };
