@@ -1,16 +1,25 @@
 # VATCANSitu
 
+VATCANSitu is a EuroScope Plugin to simulate tools from NAVCANsuite
+
+The author of this plugin has NO AFFILIATION with NavCanada. This tool is for simulation use only on the VATSIM network and not for real world aviation. 
+
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
+
+New features in the continuous integration build and not in 0.3.1.2:
+* ADSB capable aircraft outside of radar coverage display as an ADS-B PPS with modifiable datatags.
+* SFI and controller remark handling (see wiki)
+* Assigned speed and mach now displayed in data tag and assignable by right or left clicking the ground speed.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
 
 ### Latest Version 0.3.1.2 NOV23-2020
 1. (NEW) Radar target tags are now drawn by the plugin. Tag functions remain in click spots from stock Canscope installs to facilitate an easier transition. Please note, I cannot find examples of direct-to and temp headings displayed in the tags of reference material I have access to, as such these are not shown (but you can assign them using the click spot or scractpad box to label for other controllers).
-  * a) Tag connectors are now drawn with a dogleg in a similar style to the real scope. -- 
-  * b) Datatags now 'wink' during squawk ident and handoff events
-  * c) Handoff tag handling behaviour modelled. Aircraft handed off to you will have its tag wink. After handoff, tags will wink and then revert to a "Bravo Tag" (less detailed) automatically. An option in the real software is to enable "H/O Persist" (planned for next version to allow you to choose).
-  * d) Scratchpad content with one or two characters displays on line 1 as the SFI (one letter field after the callsign used by some FIRs). Longer scratchpad strings display on the last line of tag as "Controller Rermarks". 
+  * Tag connectors are now drawn with a dogleg in a similar style to the real scope. ADSB capable aircraft will display a small circle at the elbow.
+  * Datatags now 'wink' during squawk ident and handoff events
+  * Handoff tag handling behaviour modelled. Aircraft handed off to you will have its tag wink. After handoff, tags will wink and then revert to a "Bravo Tag" (less detailed) automatically. An option in the real software is to enable "H/O Persist" (planned for next version to allow you to choose).
+  * Scratchpad content with one or two characters displays on line 1 as the SFI (one letter field after the callsign used by some FIRs). Longer scratchpad strings display on the last line of tag as "Controller Rermarks". 
 2. (NEW) Quick Look button is now functional. Data tags moved during quick look will remain open. 
 3. (NEW) Show "All" targets now a functional button.
 4. (NEW) PTL drawn in a green colour now implemented (fixed at 3 mins at the moment).
