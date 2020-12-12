@@ -33,6 +33,7 @@ public:
 
     static map<string, ACData> mAcData; 
     static map<string, string> slotTime;
+    static string eventCode;
 
     inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
     static void RegisterButton(RECT rect) {};
@@ -44,6 +45,11 @@ public:
         POINT Pt,
         RECT Area,
         int Button);
+
+    inline  virtual void    OnFunctionCall(int FunctionId,
+        const char* sItemString,
+        POINT Pt,
+        RECT Area);
 
     inline virtual void OnAsrContentToBeClosed(void) {
 
@@ -57,6 +63,9 @@ protected:
 
     const int BUTTON_MENU_REFRESH = 1200;
     const int BUTTON_MENU_AMENDFP = 1201;
+    const int BUTTON_MENU_SETTINGS = 1202;
+
+    const int FUNCTION_SET_URL = 301;
 
     BOOL autoRefresh = FALSE;
     clock_t time; 

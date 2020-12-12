@@ -14,10 +14,13 @@ map<string, string> CSiTRadar::slotTime;
 bool CSiTRadar::canAmend;
 int CSiTRadar::refreshStatus;
 int CSiTRadar::amendStatus;
+string CSiTRadar::eventCode;
 
 CSiTRadar::CSiTRadar()
 {	
 	CDataHandler::loadSettings();
+
+	CSiTRadar::eventCode = "Enter Code";
 
 	time = clock();
 	oldTime = clock();
@@ -77,11 +80,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Refresh", autoRefresh);
 		ButtonToScreen(this, but, "Refresh Slot Data", BUTTON_MENU_REFRESH);
 
-		/* 
+		
 		menu.x = 80;
-		but = TopMenu::DrawButton(&dc, menu, 60, 23, "Amend FP", 0);
-		ButtonToScreen(this, but, "Amend Flight Plans", BUTTON_MENU_AMENDFP);
-		*/
+		but = TopMenu::DrawButton(&dc, menu, 60, 23, CSiTRadar::eventCode.c_str(), 0);
+		ButtonToScreen(this, but, "Settings", BUTTON_MENU_SETTINGS);
+		
 	}
 
 	if (autoRefresh) {
@@ -116,16 +119,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (Button == BUTTON_RIGHT) { autoRefresh = !autoRefresh; }
 	}
 
-	/* if (ObjectType == BUTTON_MENU_AMENDFP) {
+	if (ObjectType == BUTTON_MENU_SETTINGS) {
 		if (Button == BUTTON_LEFT) {
-			CAsync* data = new CAsync();
-			data->Plugin = GetPlugIn();
-			_beginthread(CDataHandler::AmendFlightPlans, 0, (void*)data);
-
-			oldTime = clock();
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_SET_URL, CSiTRadar::eventCode.c_str());
 		}
 	}
-	*/
 }
 
 void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype) {
@@ -136,6 +134,18 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	string callSign = FlightPlan.GetCallsign();
 
 	mAcData.erase(callSign);
+}
+
+void CSiTRadar::OnFunctionCall(int FunctionId,
+	const char* sItemString,
+	POINT Pt,
+	RECT Area) {
+	if (FunctionId == FUNCTION_SET_URL) {
+		try {
+			CSiTRadar::eventCode = sItemString;
+		}
+		catch (...) {}
+	}
 }
 
 CSiTRadar::~CSiTRadar()
