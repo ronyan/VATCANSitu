@@ -233,7 +233,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			// show CJS for controller tracking aircraft
-			if (radarTarget.GetPosition().GetRadarFlags() >= 2 || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+			if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 				string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
 				CFont font;
