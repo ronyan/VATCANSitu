@@ -123,7 +123,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			string callSign = radarTarget.GetCallsign();
 			// altitude filtering 
-			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || mAcData[callSign].isHandoffToMe) {
+			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
 				if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
 					continue;
 				}
