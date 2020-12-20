@@ -12,6 +12,9 @@ class wxRadar :
     public CRadarScreen
 {
 public:
+    int wxReturns[256][256];
+    bool wxDrawAll[256][256];
+    bool wxDrawHigh[256][256];
 
     void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename) //designed for loading files from hard disk in an std::vector
     {
@@ -33,7 +36,7 @@ public:
 
     int main(int argc, char* argv[])
     {
-        const char* filename = argc > 1 ? argv[1] : "0_0.png";
+        const char* filename = argc > 1 ? argv[1] : ".\\situWx\\0_0.png";
 
         //load and decode
         std::vector<unsigned char> buffer, image;
@@ -47,5 +50,22 @@ public:
         //the pixels are now in the vector "image", use it as texture, draw it, ...
     };
 
-    void renderRadar() {};
+    static void renderRadar(CDC* Hdc, CRadarScreen* rad, int highDBA, int allDBA) {
+        CPosition radReturnTL, radReturnBR;
+        
+        radReturnTL.m_Latitude;
+        
+        POINT tl = rad->ConvertCoordFromPositionToPixel(radReturnTL);
+        POINT br = rad->ConvertCoordFromPositionToPixel(radReturnBR);
+
+        int pixelSpanX = (br.x - tl.x) / 256;
+        int pixelSpanY = (br.y - tl.y) / 256;
+        
+        // Render radar returns
+        for (int i = 0; i < 256; i++) {
+            for (int j = 0; j < 256; j++) {
+
+            }
+        }
+    };
 };
