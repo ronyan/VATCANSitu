@@ -36,8 +36,11 @@
     <ClCompile Include="PPS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="picopng.h">
-      <Filter>Header Files</Filter>
+    <ClCompile Include="wxRadar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="picopng.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

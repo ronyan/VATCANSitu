@@ -48,6 +48,7 @@
 #include "SituPlugin.h"
 #include "ACTag.h"
 #include "PPS.h"
+#include "wxRadar.h"
 #include <chrono>
 
 using namespace Gdiplus;
@@ -555,7 +556,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (phase == REFRESH_PHASE_BACK_BITMAP) {
-
+		wxRadar::parseRadarPNG(this);
+		wxRadar::renderRadar(&dc, this, true);
 	}
 
 	g.ReleaseHDC(hdc);
