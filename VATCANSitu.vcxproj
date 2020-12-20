@@ -198,6 +198,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="picopng.h" />
     <ClCompile Include="PPS.cpp" />
     <ClCompile Include="SituPlugin.cpp" />
     <ClCompile Include="VATCANSitu.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TopMenu.h" />
     <ClInclude Include="VATCANSitu.h" />
+    <ClInclude Include="wxRadar.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VATCANSitu.rc" />

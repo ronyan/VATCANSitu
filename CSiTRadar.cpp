@@ -483,7 +483,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane)/sizeof(plane[0]));
 		ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
 
-		menutopleft.x = menutopleft.x + 200;
+		menuButton but_highWx = { { 557, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		TopMenu::DrawBut(&dc, but_highWx);
+
+		menuButton but_allWx = { { 587, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		TopMenu::DrawBut(&dc, but_allWx);
+
+		menuButton but_topsWx = { { 557, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		TopMenu::DrawBut(&dc, but_topsWx);
+
+		menutopleft.x = menutopleft.x + 250;
 
 		// options for halo radius
 		if (halotool) {
@@ -544,6 +553,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		}
 	}
+
+	if (phase == REFRESH_PHASE_BACK_BITMAP) {
+
+	}
+
 	g.ReleaseHDC(hdc);
 	dc.Detach();
 }
