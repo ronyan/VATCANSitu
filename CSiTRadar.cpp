@@ -18,9 +18,8 @@ string CSiTRadar::eventCode;
 
 CSiTRadar::CSiTRadar()
 {	
-	CDataHandler::loadSettings();
-
 	CSiTRadar::eventCode = "Enter Code";
+	CDataHandler::GetVatsimAPIData();
 
 	time = clock();
 	oldTime = clock();

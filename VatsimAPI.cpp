@@ -10,37 +10,52 @@ using json = nlohmann::json;
 string CDataHandler::url1;
 int CDataHandler::refreshInterval;
 string CDataHandler::tagLabel;
-string CDataHandler::vatsimURL;
+string CDataHandler::vatsimJson3URL;
 
 static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
 	((std::string*)userp)->append((char*)buffer, size * nmemb);
 	return size * nmemb;
 }
 
-void CDataHandler::loadSettings() {
-	try {
-		std::ifstream settings_file(".\\settings.json");
-		json j = json::parse(settings_file);
 
-		CDataHandler::url1 = j["slotURL"];
-		CDataHandler::refreshInterval = j["refreshInterval"];
-		CDataHandler::tagLabel = j["tagLabel"];
-		CDataHandler::vatsimURL = j["vatsimURL"];
+void CDataHandler::GetVatsimAPIData() {
+
+	CURL* vatsimStatus = curl_easy_init();
+
+	string vatsimURLs;
+
+	if (vatsimStatus)
+	{
+
+		curl_easy_setopt(vatsimStatus, CURLOPT_URL, "https://status.vatsim.net/");
+		curl_easy_setopt(vatsimStatus, CURLOPT_WRITEFUNCTION, write_data);
+		curl_easy_setopt(vatsimStatus, CURLOPT_WRITEDATA, &vatsimURLs);
+		CURLcode res;
+		res = curl_easy_perform(vatsimStatus);
+		curl_easy_cleanup(vatsimStatus);
 	}
-	catch (std::ifstream::failure e) {
-		
-	};
+	size_t pos = vatsimURLs.find("json3=");
+	vatsimURLs = vatsimURLs.substr(pos+6);
+	CDataHandler::vatsimJson3URL = vatsimURLs.substr(0, vatsimURLs.find("\n") - 1 );
+
 }
 
 void CDataHandler::GetVatsimAPIData(void* args) {
 
 	CAsync* data = (CAsync*)args;
 
+	CDataHandler::url1 = "https://bookings.vatcan.ca/api/event/" + CSiTRadar::eventCode;
+	CDataHandler::refreshInterval = 300;
+	CDataHandler::tagLabel = "EVT";
+	CDataHandler::vatsimJson3URL;
+
 	string cidString;
 	json cidJson;
 
+
 	CURL* curl = curl_easy_init();
 	CURL* curl1 = curl_easy_init();
+
 	if (curl)
 	{
 		curl_easy_setopt(curl, CURLOPT_URL, CDataHandler::url1.c_str());
@@ -62,7 +77,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 
 	}
 	catch (exception& e) {
-		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Error", string("Failed to parse CID data" + string(e.what())).c_str(), true, true, true, true, true);
+		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Error", string("Failed to parse slot data. Please check event code." + string(e.what())).c_str(), true, true, true, true, true);
 
 	}
 
@@ -72,7 +87,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 
 	if (curl1)
 	{
-		curl_easy_setopt(curl1, CURLOPT_URL, CDataHandler::vatsimURL.c_str());
+		curl_easy_setopt(curl1, CURLOPT_URL, CDataHandler::vatsimJson3URL.c_str());
 		curl_easy_setopt(curl1, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl1, CURLOPT_WRITEDATA, &responseString);
 		CURLcode res;
@@ -114,7 +129,7 @@ void CDataHandler::GetVatsimAPIData(void* args) {
 		string timeStamp = jsonArray["general"]["update_timestamp"];
 
 		// Everything succeeded, show to user
-		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Update Successful", string("Slot times validated at " + timeStamp).c_str(), true, false, false, false, false);
+		data->Plugin->DisplayUserMessage("VATCAN Slot Manager", "Update Successful", string("CIDs fetched at " + timeStamp).c_str(), true, false, false, false, false);
 
 	}
 	catch (exception& e) {
