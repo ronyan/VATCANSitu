@@ -50,6 +50,8 @@ const int BUTTON_MENU_EXTRAP_FP = 208;
 const int BUTTON_MENU_OVRD_ALL = 209;
 const int BUTTON_MENU_QUICK_LOOK = 210;
 const int BUTTON_MENU_EXT_ALT = 211;
+const int BUTTON_MENU_WX_HIGH = 212;
+const int BUTTON_MENU_WX_ALL = 213;
 
 // Menu Modules
 const int MODULE_1_X = 0;

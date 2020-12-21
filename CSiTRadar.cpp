@@ -70,6 +70,8 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlLength = 3;
 	menuState.ptlTool = FALSE;
 
+	wxRadar::parseRadarPNG(this);
+
 	CSiTRadar::mAcData.reserve(64);
 
 	time = clock();
@@ -484,11 +486,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane)/sizeof(plane[0]));
 		ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
 
-		menuButton but_highWx = { { 557, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-		TopMenu::DrawBut(&dc, but_highWx);
+		menuButton but_highWx = { { 557, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
+		but = TopMenu::DrawBut(&dc, but_highWx);
+		ButtonToScreen(this, but, "WxHigh", BUTTON_MENU_WX_HIGH);
 
-		menuButton but_allWx = { { 587, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-		TopMenu::DrawBut(&dc, but_allWx);
+		menuButton but_allWx = { { 587, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxAll };
+		but = TopMenu::DrawBut(&dc, but_allWx);
+		ButtonToScreen(this, but, "WxAll", BUTTON_MENU_WX_ALL);
 
 		menuButton but_topsWx = { { 557, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_topsWx);
@@ -556,8 +560,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (phase == REFRESH_PHASE_BACK_BITMAP) {
-		wxRadar::parseRadarPNG(this);
-		wxRadar::renderRadar(&dc, this, true);
+		if (menuState.wxAll || menuState.wxHigh) {
+			wxRadar::renderRadar(&g, this, menuState.wxAll);
+		}
 	}
 
 	g.ReleaseHDC(hdc);
@@ -689,6 +694,18 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			tempTagData.clear();
 			menuState.quickLook = FALSE;
 		}
+	}
+
+	if (ObjectType == BUTTON_MENU_WX_HIGH) {
+		if (menuState.wxAll) { menuState.wxAll = false; }
+		RefreshMapContent();
+		menuState.wxHigh = !menuState.wxHigh;
+	}
+
+	if (ObjectType == BUTTON_MENU_WX_ALL) {
+		if (menuState.wxHigh) { menuState.wxHigh = false; }
+		RefreshMapContent();
+		menuState.wxAll = !menuState.wxAll;
 	}
 	
 	if (Button == BUTTON_MIDDLE) {

@@ -35,6 +35,8 @@ struct buttonStates {
     double ptlLength;
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
+    bool wxAll{ FALSE };
+    bool wxHigh{ FALSE };
 };
 
 class CSiTRadar :

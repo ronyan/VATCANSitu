@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 
+using namespace Gdiplus;
 
 class wxRadar :
     public CRadarScreen
@@ -551,5 +552,5 @@ public:
     */
 
     static void parseRadarPNG(CRadarScreen* rad); 
-    static void renderRadar(CDC* dc, CRadarScreen* rad, bool showAllPrecip);
+    static void renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
 };
