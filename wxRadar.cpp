@@ -83,15 +83,10 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
     CPosition pos3;
     CPosition pos4;
 
-    CPosition pos5;
-    CPosition pos6;
-    CPosition pos7;
-    CPosition pos8;
+    Point defp1;
+    Point defp4;
 
-    int tempX = 0;
-    int tempY = 0;
-    int tempX2 = 0;
-    int tempY2 = 0;
+    bool deferDraw = false;
 
     radReturnTL.m_Longitude = -85.8 - 11.25;
     radReturnTL.m_Latitude = 50.55 + 11.25;
@@ -126,12 +121,50 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
                 Point p4 = Point(pix4.x, pix4.y);
                 Point radarPixel[4] = { p1, p2, p3, p4 };
 
+
                 if (wxDrawHigh[j][i] == true) {
-                    g->FillPolygon(&heavyPrecip, radarPixel, 4);
+                    // check if next pixel is also true, defer drawing to draw two pixels as one
+                    if (j < 256 && wxDrawHigh[j + 1][i]) {
+
+                        deferDraw = true;
+                        defp1 = p1;
+                        defp4 = p4;
+
+                        continue;
+                    }
+
+                    if (deferDraw) {
+
+                        Point defradarPixel[4] = { defp1, p2, p3, defp4 };
+
+                        g->FillPolygon(&heavyPrecip, defradarPixel, 4);
+                        deferDraw = false;
+                    }
+                    else {
+                        g->FillPolygon(&heavyPrecip, radarPixel, 4);
+                    }
                 }
 
                 if (wxDrawAll[j][i] == true) {
-                    g->FillPolygon(&lightPrecip, radarPixel, 4);
+                    if (j < 256 && wxDrawAll[j + 1][i]) {
+
+                        deferDraw = true;
+                        defp1 = p1;
+                        defp4 = p4;
+
+                        continue;
+                    }
+
+                    if (deferDraw) {
+
+                        Point defradarPixel[4] = { defp1, p2, p3, defp4 };
+
+                        g->FillPolygon(&lightPrecip, defradarPixel, 4);
+                        deferDraw = false;
+                    }
+                    else {
+                        g->FillPolygon(&lightPrecip, radarPixel, 4);
+                    }
                 }
 
             }
