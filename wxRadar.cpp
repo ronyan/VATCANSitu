@@ -1,14 +1,13 @@
 #include "pch.h"
 #include "wxRadar.h"
 
-
-
 int wxRadar::wxReturns[256][256];
 bool wxRadar::wxDrawAll[256][256]; // true if between high and low
 bool wxRadar::wxDrawHigh[256][256]; // true if DBA above threshold
 double wxRadar::wxLatCtr;
 double wxRadar::wxLongCtr;
 int wxRadar::zoomLevel;
+string wxRadar::ts;
 
 void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& filename) //designed for loading files from hard disk in an std::vector
 {

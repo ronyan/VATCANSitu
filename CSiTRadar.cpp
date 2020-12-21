@@ -494,7 +494,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		but = TopMenu::DrawBut(&dc, but_allWx);
 		ButtonToScreen(this, but, "WxAll", BUTTON_MENU_WX_ALL);
 
-		menuButton but_topsWx = { { 557, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		menuButton but_topsWx = { { 557, radarea.top + 31 }, wxRadar::ts.c_str(), 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_topsWx);
 
 		menutopleft.x = menutopleft.x + 250;
@@ -706,6 +706,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (menuState.wxHigh) { menuState.wxHigh = false; }
 		RefreshMapContent();
 		menuState.wxAll = !menuState.wxAll;
+		wxRadar::GetRainViewerJSON(this);
 	}
 	
 	if (Button == BUTTON_MIDDLE) {

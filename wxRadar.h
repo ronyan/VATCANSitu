@@ -5,8 +5,17 @@
 #include "CSiTRadar.h"
 #include <iostream>
 #include <fstream>
+#include "json.hpp"
+#include "curl/curl.h"
 
 using namespace Gdiplus;
+
+using json = nlohmann::json;
+
+static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
+    ((std::string*)userp)->append((char*)buffer, size * nmemb);
+    return size * nmemb;
+}
 
 class wxRadar :
     public CRadarScreen
@@ -530,27 +539,41 @@ public:
     static double wxLatCtr; 
     static double wxLongCtr;
     static int zoomLevel;
+    static string ts; 
 
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 
-    /*
-    int main(int argc, char* argv[])
-    {
-        const char* filename = argc > 1 ? argv[1] : ".\\situWx\\0_0.png";
-
-        //load and decode
-        std::vector<unsigned char> buffer, image;
-        loadPNG(buffer, filename);
-        unsigned long w, h;
-        int error = decodePNG(image, w, h, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size());
-
-        //if there's an error, display it
-        if (error != 0) std::cout << "error: " << error << std::endl;
-
-        //the pixels are now in the vector "image", use it as texture, draw it, ...
-    };
-    */
-
     static void parseRadarPNG(CRadarScreen* rad); 
     static void renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
+
+    static void GetRainViewerJSON(CRadarScreen* rad) {
+
+        CURL* rainViewerJson = curl_easy_init();
+
+        string rainViewerJsonString;
+
+        if (rainViewerJson)
+        {
+            curl_easy_setopt(rainViewerJson, CURLOPT_URL, "https://api.rainviewer.com/public/maps.json");
+            curl_easy_setopt(rainViewerJson, CURLOPT_WRITEFUNCTION, write_data);
+            curl_easy_setopt(rainViewerJson, CURLOPT_WRITEDATA, &rainViewerJsonString);
+            CURLcode res;
+            res = curl_easy_perform(rainViewerJson);
+            curl_easy_cleanup(rainViewerJson);
+        }
+        try {
+            json j = json::parse(rainViewerJsonString.c_str());
+            wxRadar::ts = to_string(j.back());
+        }
+        catch (exception& e) {
+            rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", string("Failed to get RainViewer JSON" + string(e.what())).c_str(), true, true, true, true, true);
+        }
+    }
+
+    void GetPNG() {
+        string apiURL = "https://tilecache.rainviewer.com/v2/radar/";
+        apiURL = apiURL + ts;
+        apiURL = apiURL + "/256/4/";
+        // 50.55 / -85.79 / 0 / 0_0.png";
+    }
 };
