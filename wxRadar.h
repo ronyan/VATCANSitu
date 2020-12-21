@@ -12,9 +12,20 @@ using namespace Gdiplus;
 
 using json = nlohmann::json;
 
+struct cell {
+    int dbz;
+    CPosition cellPos;
+};
+
 static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)buffer, size * nmemb);
     return size * nmemb;
+};
+
+static size_t write_png(void* ptr, size_t size, size_t nmemb, void* stream)
+{
+    size_t written = fwrite(ptr, size, nmemb, (FILE*)stream);
+    return written;
 }
 
 class wxRadar :
@@ -533,9 +544,7 @@ public:
         return decoder.error;
     }
 
-    static int wxReturns[256][256];
-    static bool wxDrawAll[256][256]; // true if between high and low
-    static bool wxDrawHigh[256][256]; // true if DBA above threshold
+    static cell wxReturn[256][256];
     static double wxLatCtr; 
     static double wxLongCtr;
     static int zoomLevel;

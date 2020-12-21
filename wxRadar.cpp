@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "wxRadar.h"
 
-int wxRadar::wxReturns[256][256];
-bool wxRadar::wxDrawAll[256][256]; // true if between high and low
-bool wxRadar::wxDrawHigh[256][256]; // true if DBA above threshold
+cell wxRadar::wxReturn[256][256];
 double wxRadar::wxLatCtr;
 double wxRadar::wxLongCtr;
 int wxRadar::zoomLevel;
@@ -42,31 +40,17 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
 
     // convert vector into 2d array with dBa values only;
     // png starts as RGBARGBARGBA... etc. 
+    CPosition radReturnTL;
 
-    int alldBZ = 30;
-    int highdBZ = 50;
-
-    for (int i = 0; i < 256; i++) {
-        for (int j = 0; j < 256; j++) {
-            wxReturns[j][i] = (int)image[(i * 256 * 4)  + (j*4)];
-        }
-    }
+    radReturnTL.m_Longitude = -85.8 - 11.25;
+    radReturnTL.m_Latitude = 50.55 + 11.25;
 
     for (int i = 0; i < 256; i++) {
         for (int j = 0; j < 256; j++) {
-            if (wxReturns[j][i] > alldBZ && wxReturns[j][i] < highdBZ) {
-                wxDrawAll[j][i] = true;
-            }
-            else {
-                wxDrawAll[j][i] = false;
-            }
-
-            if (wxReturns[j][i] > highdBZ) {
-                wxDrawHigh[j][i] = true;
-            }
-            else {
-                wxDrawHigh[j][i] = false;
-            }
+            
+            wxReturn[j][i].dbz = (int)image[(i * 256 * 4)  + (j*4)];
+            wxReturn[j][i].cellPos.m_Longitude = radReturnTL.m_Longitude + (double)(j * 22.5 / 256);
+            wxReturn[j][i].cellPos.m_Latitude = radReturnTL.m_Latitude - (double)(i * 22.5 / 256);
         }
     }
 }
@@ -76,7 +60,9 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
     SolidBrush lightPrecip(Color(64, 0, 32, 120));
     SolidBrush heavyPrecip(Color(128, 0, 32, 120));
 
-    CPosition radReturnTL;
+    int alldBZ = 30;
+    int highdBZ = 50;
+
     CPosition pos1;
     CPosition pos2;
     CPosition pos3;
@@ -87,31 +73,16 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
 
     bool deferDraw = false;
 
-    radReturnTL.m_Longitude = -85.8 - 11.25;
-    radReturnTL.m_Latitude = 50.55 + 11.25;
-
     // Render radar returns
-    for (int i = 0; i < 256; i++) {
-        for (int j = 0; j < 256; j++) {
+    for (int i = 0; i < 255; i++) {
+        for (int j = 0; j < 255; j++) {
 
-            if (wxDrawHigh[j][i] == true || (wxDrawAll[j][i] == true && showAllPrecip)) {
+            if (wxReturn[j][i].dbz >= highdBZ || (wxReturn[j][i].dbz >= alldBZ && showAllPrecip)) {
 
-                pos1.m_Longitude = radReturnTL.m_Longitude + (double)(j * 22.5 / 256);
-                pos1.m_Latitude = radReturnTL.m_Latitude - (double)(i * 22.5 / 256);
-
-                pos2.m_Longitude = radReturnTL.m_Longitude + (double)((j + 1) * 22.5 / 256);
-                pos2.m_Latitude = radReturnTL.m_Latitude - (double)((i) * 22.5 / 256);
-
-                pos3.m_Longitude = radReturnTL.m_Longitude + (double)((j + 1) * 22.5 / 256);
-                pos3.m_Latitude = radReturnTL.m_Latitude - (double)((i + 1) * 22.5 / 256);
-
-                pos4.m_Longitude = radReturnTL.m_Longitude + (double)((j) * 22.5 / 256);
-                pos4.m_Latitude = radReturnTL.m_Latitude - (double)((i + 1) * 22.5 / 256);
-
-                POINT pix1 = rad->ConvertCoordFromPositionToPixel(pos1);
-                POINT pix2 = rad->ConvertCoordFromPositionToPixel(pos2);
-                POINT pix3 = rad->ConvertCoordFromPositionToPixel(pos3);
-                POINT pix4 = rad->ConvertCoordFromPositionToPixel(pos4);
+                POINT pix1 = rad->ConvertCoordFromPositionToPixel(wxReturn[j][i].cellPos);
+                POINT pix2 = rad->ConvertCoordFromPositionToPixel(wxReturn[j + 1][i].cellPos);
+                POINT pix3 = rad->ConvertCoordFromPositionToPixel(wxReturn[j + 1][i + 1].cellPos);
+                POINT pix4 = rad->ConvertCoordFromPositionToPixel(wxReturn[j][i + 1].cellPos);
 
                 // draw X for high precip color
                 Point p1 = Point(pix1.x, pix1.y);
@@ -120,10 +91,10 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
                 Point p4 = Point(pix4.x, pix4.y);
                 Point radarPixel[4] = { p1, p2, p3, p4 };
 
-
-                if (wxDrawHigh[j][i] == true) {
+                if (wxReturn[j][i].dbz >= highdBZ) {
                     // check if next pixel is also true, defer drawing to draw two pixels as one
-                    if (j < 256 && wxDrawHigh[j + 1][i]) {
+                    // j<254 makes sure last pixel doesn't get deferred 
+                    if (j<254 && wxReturn[j+1][i].dbz >= highdBZ) {
 
                         deferDraw = true;
                         defp1 = p1;
@@ -144,8 +115,8 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
                     }
                 }
 
-                if (wxDrawAll[j][i] == true) {
-                    if (j < 256 && wxDrawAll[j + 1][i]) {
+                if (wxReturn[j][i].dbz >= alldBZ && wxReturn[j][i].dbz < highdBZ && showAllPrecip) {
+                    if (j < 254 && wxReturn[j+1][i].dbz >= alldBZ && wxReturn[j+1][i].dbz < highdBZ) {
 
                         deferDraw = true;
                         defp1 = p1;
@@ -167,6 +138,7 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
                 }
 
             }
-        }
+        }                       
+        
     }
 }
