@@ -27,7 +27,30 @@ void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& fil
 
 void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     
+    CURL* pngDL = curl_easy_init();
+    FILE* dlPNG;
+    errno_t err;
+    string tileCacheurl = "https://tilecache.rainviewer.com/v2/radar/" + wxRadar::ts + "/256/4/46.5/-80.2/0/0_0.png";
+
     const char* filename = ".\\situWx\\0_0.png";
+    curl_easy_setopt(pngDL, CURLOPT_URL, tileCacheurl.c_str());
+    curl_easy_setopt(pngDL, CURLOPT_WRITEFUNCTION, write_file);
+
+    err = fopen_s(&dlPNG, filename, "wb");
+    if (err == 0) {
+
+        /* write the page body to this file handle */
+        curl_easy_setopt(pngDL, CURLOPT_WRITEDATA, dlPNG);
+
+        /* get it! */
+        curl_easy_perform(pngDL);
+
+        fclose(dlPNG);
+    }
+
+    /* cleanup curl stuff */
+    curl_easy_cleanup(pngDL);
+
 
     std::vector<unsigned char> buffer, image;
     loadPNG(buffer, filename);
@@ -42,15 +65,25 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     // png starts as RGBARGBARGBA... etc. 
     CPosition radReturnTL;
 
-    radReturnTL.m_Longitude = -85.8 - 11.25;
-    radReturnTL.m_Latitude = 50.55 + 11.25;
+    radReturnTL.m_Longitude = -80.2 - 11.25000;
+    radReturnTL.m_Latitude = 46.5; 
+
+    // get the pixel coord of the latitude.
+    int yCoord = lat2pixel(radReturnTL.m_Latitude, 4);
+
+    // get coord of the top of the image
+    yCoord = yCoord - 128; 
 
     for (int i = 0; i < 256; i++) {
+
+        double pixLat = pixel2lat(yCoord + i, 4);
+        // calculate latitdue for each row, use the pixel coordinate
+
         for (int j = 0; j < 256; j++) {
             
             wxReturn[j][i].dbz = (int)image[(i * 256 * 4)  + (j*4)];
-            wxReturn[j][i].cellPos.m_Longitude = radReturnTL.m_Longitude + (double)(j * 22.5 / 256);
-            wxReturn[j][i].cellPos.m_Latitude = radReturnTL.m_Latitude - (double)(i * 22.5 / 256);
+            wxReturn[j][i].cellPos.m_Longitude = radReturnTL.m_Longitude + (double)(j * (22.5 / 256.0));
+            wxReturn[j][i].cellPos.m_Latitude = pixLat;
         }
     }
 }
@@ -93,7 +126,7 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
 
                 if (wxReturn[j][i].dbz >= highdBZ) {
                     // check if next pixel is also true, defer drawing to draw two pixels as one
-                    // j<254 makes sure last pixel doesn't get deferred 
+
                     if (j<254 && wxReturn[j+1][i].dbz >= highdBZ) {
 
                         deferDraw = true;

@@ -70,6 +70,7 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlLength = 3;
 	menuState.ptlTool = FALSE;
 
+	wxRadar::GetRainViewerJSON(this);
 	wxRadar::parseRadarPNG(this);
 
 	CSiTRadar::mAcData.reserve(64);

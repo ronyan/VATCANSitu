@@ -22,7 +22,7 @@ static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
     return size * nmemb;
 };
 
-static size_t write_png(void* ptr, size_t size, size_t nmemb, void* stream)
+static size_t write_file(void* ptr, size_t size, size_t nmemb, void* stream)
 {
     size_t written = fwrite(ptr, size, nmemb, (FILE*)stream);
     return written;
@@ -584,5 +584,18 @@ public:
         apiURL = apiURL + ts;
         apiURL = apiURL + "/256/4/";
         // 50.55 / -85.79 / 0 / 0_0.png";
+    }
+
+
+    static double pixel2lat(int y, int zoom) {
+        double pixels = 256 * pow(2, zoom);
+        double n = PI - 2 * PI * y / pixels;
+        return 180 / PI * atan(0.5 * (exp(n) - exp(-n)));
+    }
+
+    static long lat2pixel(double lat, int zoom) {
+        double pixels = 256 * pow(2, zoom);
+        long ans = (long)(pixels * (1 - log(tan(lat * PI / 180) + 1 / cos(lat * PI / 180)) / PI) / 2);
+        return ans;
     }
 };
