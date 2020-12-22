@@ -27,6 +27,8 @@ void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& fil
 
 void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     
+    GetRainViewerJSON(rad);
+
     CURL* pngDL = curl_easy_init();
     FILE* dlPNG;
     errno_t err;

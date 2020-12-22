@@ -579,14 +579,6 @@ public:
         }
     }
 
-    void GetPNG() {
-        string apiURL = "https://tilecache.rainviewer.com/v2/radar/";
-        apiURL = apiURL + ts;
-        apiURL = apiURL + "/256/4/";
-        // 50.55 / -85.79 / 0 / 0_0.png";
-    }
-
-
     static double pixel2lat(int y, int zoom) {
         double pixels = 256 * pow(2, zoom);
         double n = PI - 2 * PI * y / pixels;

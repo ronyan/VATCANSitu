@@ -140,6 +140,7 @@ protected:
     // helper functions
     clock_t time = clock();
     clock_t oldTime = clock();
+    clock_t lastWxRefresh = 0;
 
     // menu states
     bool halotool = FALSE;

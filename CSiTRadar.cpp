@@ -101,6 +101,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		halfSecTick = !halfSecTick;
 	}
 
+	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600 && menuState.wxOn) {
+
+		// autorefresh weather download every 10 minutes
+
+		wxRadar::parseRadarPNG(this);
+		lastWxRefresh = clock();
+	}
+
 	// set up the drawing renderer
 	CDC dc;
 	dc.Attach(hdc);
@@ -701,13 +709,20 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (menuState.wxAll) { menuState.wxAll = false; }
 		RefreshMapContent();
 		menuState.wxHigh = !menuState.wxHigh;
+		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+			wxRadar::parseRadarPNG(this);
+			lastWxRefresh = clock();
+		}
 	}
 
 	if (ObjectType == BUTTON_MENU_WX_ALL) {
 		if (menuState.wxHigh) { menuState.wxHigh = false; }
 		RefreshMapContent();
 		menuState.wxAll = !menuState.wxAll;
-		wxRadar::GetRainViewerJSON(this);
+		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+			wxRadar::parseRadarPNG(this);
+			lastWxRefresh = clock();
+		}
 	}
 	
 	if (Button == BUTTON_MIDDLE) {
