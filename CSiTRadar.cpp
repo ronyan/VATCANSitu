@@ -101,7 +101,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		halfSecTick = !halfSecTick;
 	}
 
-	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600 && menuState.wxOn) {
+	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
 
 		// autorefresh weather download every 10 minutes
 
