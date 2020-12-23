@@ -47,7 +47,9 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
         /* get it! */
         curl_easy_perform(pngDL);
 
-        fclose(dlPNG);
+        if (dlPNG != NULL) {
+            fclose(dlPNG);
+        }
     }
 
     /* cleanup curl stuff */
