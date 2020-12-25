@@ -133,17 +133,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				magvar = (double)radarTarget.GetPosition().GetReportedHeading() - (double)radarTarget.GetPosition().GetReportedHeadingTrueNorth();
 			}
 
+			string callSign = radarTarget.GetCallsign();
 			// altitude filtering 
-			if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
-				continue;
-			}
+			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+				if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
+					continue;
+				}
 
-			if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
-				continue;
+				if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
+					continue;
+				}
 			}
 
 			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
-			string callSign = radarTarget.GetCallsign();
 
 			// Draw PTL
 			if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
@@ -960,13 +962,15 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	}
 	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
 	bool isADSB = regex_search(icaoACData, icaoADSB);
-
+	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
+	
 	string CJS = FlightPlan.GetTrackingControllerId();
 
 	ACData acdata;
 	acdata.hasVFRFP = isVFR;
 	acdata.isADSB = isADSB;
 	acdata.isRVSM = isRVSM;
+	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	mAcData[callSign] = acdata;
 }
 
