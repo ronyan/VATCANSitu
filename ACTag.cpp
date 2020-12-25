@@ -190,12 +190,15 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	int sDC = dc->SaveDC();
 
 	CFont font;
+	CFont boldfont;
 	LOGFONT lgfont;
 	std::memset(&lgfont, 0, sizeof(LOGFONT));
 	lgfont.lfHeight = 14;
 	lgfont.lfWeight = 500;
 	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
 	font.CreateFontIndirect(&lgfont);
+	lgfont.lfWeight = 1200;
+	boldfont.CreateFontIndirect(&lgfont);
 	dc->SelectObject(font);
 
 	// Draw Connector
@@ -306,6 +309,25 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline1.top = line1.y;
 		rline1.left = line1.x;
 		rline1.bottom = line2.y;
+
+		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac) {
+			dc->SetTextColor(C_PPS_RED);
+			if (blinking && CSiTRadar::halfSecTick) {
+				dc->SetTextColor(C_WHITE);
+			}
+			
+			dc->SelectObject(boldfont);
+
+			dc->DrawText("+", &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText("+", &rline1, DT_LEFT);
+			dc->SetTextColor(C_PPS_YELLOW);
+
+			dc->SelectObject(font);
+
+			rline1.left = rline1.right;
+			rline1.right = rline1.left;
+		}
+
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
@@ -555,6 +577,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	// cleanup
 	DeleteObject(font);
+	DeleteObject(boldfont);
 }
 
 void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)

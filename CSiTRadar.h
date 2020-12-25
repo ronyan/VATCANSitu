@@ -19,6 +19,7 @@ struct ACData {
     bool hasVFRFP;
     bool isADSB;
     bool isRVSM;
+    bool isMedevac{ FALSE };
     int tagType{ 0 };
     bool isHandoff{ FALSE };
     bool isHandoffToMe{ FALSE };
