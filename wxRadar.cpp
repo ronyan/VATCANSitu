@@ -97,8 +97,8 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
     SolidBrush lightPrecip(Color(64, 0, 32, 120));
     SolidBrush heavyPrecip(Color(128, 0, 32, 120));
 
-    int alldBZ = 30;
-    int highdBZ = 50;
+    int alldBZ = 60;
+    int highdBZ = 80;
 
     CPosition pos1;
     CPosition pos2;
@@ -131,7 +131,7 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
                 if (wxReturn[j][i].dbz >= highdBZ) {
                     // check if next pixel is also true, defer drawing to draw two pixels as one
 
-                    if (j<254 && wxReturn[j+1][i].dbz >= highdBZ) {
+                    if (j<254 && wxReturn[j+1][i].dbz >= highdBZ && !deferDraw) {
 
                         deferDraw = true;
                         defp1 = p1;
@@ -153,7 +153,7 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
                 }
 
                 if (wxReturn[j][i].dbz >= alldBZ && wxReturn[j][i].dbz < highdBZ && showAllPrecip) {
-                    if (j < 254 && wxReturn[j+1][i].dbz >= alldBZ && wxReturn[j+1][i].dbz < highdBZ) {
+                    if (j < 254 && wxReturn[j+1][i].dbz >= alldBZ && wxReturn[j+1][i].dbz < highdBZ && !deferDraw) {
 
                         deferDraw = true;
                         defp1 = p1;
