@@ -144,7 +144,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			bool isRVSM = mAcData[callSign].isRVSM;
 			bool isADSB = mAcData[callSign].isADSB;
 
-			if (!isCorrelated && !isADSB) {
+			if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 				mAcData[callSign].tagType = 3; // sets this if RT is uncorr
 			} 
 			else if (isCorrelated && mAcData[callSign].tagType == 3) { mAcData[callSign].tagType = 0; } // only sets once to go from uncorr to corr
