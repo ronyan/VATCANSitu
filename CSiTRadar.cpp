@@ -81,6 +81,14 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+	
+	// Check if ASR is an IFR file
+	if (GetDataFromAsr("DisplayTypeName") == NULL) { return; }
+	else {
+		string DisplayType = GetDataFromAsr("DisplayTypeName");
+		if (strcmp(DisplayType.c_str(), "IFR") != 0) { return; }
+	}
+
 	// get cursor position and screen info
 	POINT p;
 
