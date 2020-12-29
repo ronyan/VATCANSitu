@@ -7,6 +7,21 @@
 const int TAG_ITEM_CTP_SLOT = 5000;
 const int TAG_ITEM_CTP_CTOT = 5001;
 
+HHOOK appHook;
+
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	switch (wParam)
+	{
+	case WM_MBUTTONDOWN:
+		{
+			
+			break;
+		}
+	}
+	return CallNextHookEx(0, nCode, wParam, lParam);
+}
+
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
@@ -14,11 +29,13 @@ SituPlugin::SituPlugin()
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
-
+    DWORD appProc = GetCurrentThreadId();
+	appHook = SetWindowsHookEx(WH_MOUSE, MouseProc, NULL, appProc);
 }
 
 SituPlugin::~SituPlugin()
 {
+	UnhookWindowsHookEx(appHook);
 }
 
 EuroScopePlugIn::CRadarScreen* SituPlugin::OnRadarScreenCreated(const char* sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
