@@ -47,6 +47,9 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
+    // Pointer back at screen;
+    static CRadarScreen* m_pRadScr;
+
     static unordered_map<string, ACData> mAcData;
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
@@ -114,16 +117,9 @@ public:
     };
 
     inline virtual void OnAsrContentToBeClosed(void) {
-
-        // saving settings to the ASR file
-
-        /*
-        const char* sv = radtype.c_str();
-        SaveDataToAsr("tagfamily", "Tag Family", sv);
-        */
-
         delete this;
     };
+
     static bool halfSecTick; // toggles on and off every half second
 
     inline virtual void OnDoubleClickScreenObject(int ObjectType,
@@ -133,6 +129,7 @@ public:
         int Button);
 
 protected:
+
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
     // helper functions

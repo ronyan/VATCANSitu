@@ -60,9 +60,57 @@ unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 buttonStates CSiTRadar::menuState = {};
 double CSiTRadar::magvar = 361;
 bool CSiTRadar::halfSecTick = FALSE;
+CRadarScreen* CSiTRadar::m_pRadScr;
+
+HHOOK appHook;
+
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
+	switch (wParam)
+	{
+	case WM_MOUSEWHEEL:
+	{
+		POINT p;
+		CSiTRadar::menuState.ptlTool = !CSiTRadar::menuState.ptlTool;
+
+		return 0;
+	}
+	case WM_MBUTTONDOWN:
+	{
+		POINT Pt{};
+		Pt.x = mouseStruct->pt.x;
+		Pt.y = mouseStruct->pt.y;
+
+		string printX = to_string(Pt.x);
+
+		RECT freeTextPopUp;
+		freeTextPopUp.left = Pt.x;
+		freeTextPopUp.top = Pt.y;
+		freeTextPopUp.right = Pt.x + 20;
+		freeTextPopUp.bottom = Pt.y + 10;
+
+		CSiTRadar::m_pRadScr->GetPlugIn()->OpenPopupList(freeTextPopUp, "Free Text", 1);
+
+		CSiTRadar::m_pRadScr->GetPlugIn()->AddPopupListElement("Add Free Text", "", ADD_FREE_TEXT);
+		CSiTRadar::m_pRadScr->GetPlugIn()->AddPopupListElement("Delete", "", DELETE_FREE_TEXT, FALSE, POPUP_ELEMENT_NO_CHECKBOX, true, false);
+		CSiTRadar::m_pRadScr->GetPlugIn()->AddPopupListElement("Delete All", "", DELETE_ALL_FREE_TEXT);
+
+		CSiTRadar::m_pRadScr->RequestRefresh();
+
+		return -1;
+	}
+	}
+	return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
 
 CSiTRadar::CSiTRadar()
 {
+	m_pRadScr = this;
+
+	DWORD appProc = GetCurrentThreadId();
+	appHook = SetWindowsHookEx(WH_MOUSE, MouseProc, NULL, appProc);
+
 	halfSec = clock();
 	halfSecTick = FALSE;
 
@@ -77,6 +125,7 @@ CSiTRadar::CSiTRadar()
 
 CSiTRadar::~CSiTRadar()
 {
+	UnhookWindowsHookEx(appHook);
 }
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
@@ -688,17 +737,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (Button == BUTTON_MIDDLE) {
 		// open Free Text menu
 
-		RECT freeTextPopUp;
-		freeTextPopUp.left = Pt.x;
-		freeTextPopUp.top = Pt.y;
-		freeTextPopUp.right = Pt.x + 20;
-		freeTextPopUp.bottom = Pt.y + 10;
 
-		GetPlugIn()->OpenPopupList(freeTextPopUp, "Free Text", 1);
-
-		GetPlugIn()->AddPopupListElement("ADD FREE TEXT", "", ADD_FREE_TEXT);
-		GetPlugIn()->AddPopupListElement("DELETE", "", DELETE_FREE_TEXT, FALSE, POPUP_ELEMENT_NO_CHECKBOX, true, false);
-		GetPlugIn()->AddPopupListElement("DELETE ALL", "", DELETE_ALL_FREE_TEXT);
 
 	}
 
