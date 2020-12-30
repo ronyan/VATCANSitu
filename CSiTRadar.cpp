@@ -66,7 +66,13 @@ HHOOK appHook;
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
+	RECT winRect{};
+	GetWindowRect(GetActiveWindow(), &winRect);
+	int winLeft = winRect.left;
+
 	MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
+
+
 	switch (wParam)
 	{
 	case WM_MOUSEWHEEL:
@@ -79,7 +85,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONDOWN:
 	{
 		POINT Pt{};
-		Pt.x = mouseStruct->pt.x;
+		Pt.x = mouseStruct->pt.x - winLeft;
 		Pt.y = mouseStruct->pt.y;
 
 		string printX = to_string(Pt.x);
