@@ -29,6 +29,8 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     
     GetRainViewerJSON(rad);
 
+    if(CreateDirectory(".\\situWx\\", NULL)) {}
+
     CURL* pngDL = curl_easy_init();
     FILE* dlPNG;
     errno_t err;
@@ -178,5 +180,5 @@ int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
         }                       
         
     }
-    return 0;
+    return 0;   
 }

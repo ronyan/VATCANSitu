@@ -11,6 +11,7 @@
 *.sln.docstates
 SectorFileProviderDescriptor.txt
 euroscope_sector_providers.txt
+situWx/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
