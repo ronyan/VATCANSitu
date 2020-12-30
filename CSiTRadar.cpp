@@ -50,6 +50,7 @@
 #include "PPS.h"
 #include "wxRadar.h"
 #include <chrono>
+#include <future>
 
 using namespace Gdiplus;
 
@@ -70,8 +71,8 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlLength = 3;
 	menuState.ptlTool = FALSE;
 
-	wxRadar::GetRainViewerJSON(this);
-	wxRadar::parseRadarPNG(this);
+	std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
+	std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 
 	CSiTRadar::mAcData.reserve(64);
 
@@ -572,7 +573,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (phase == REFRESH_PHASE_BACK_BITMAP) {
 		if (menuState.wxAll || menuState.wxHigh) {
-			wxRadar::renderRadar(&g, this, menuState.wxAll);
+			
+			std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
+
 		}
 	}
 
@@ -709,20 +712,25 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_WX_HIGH) {
 		if (menuState.wxAll) { menuState.wxAll = false; }
-		RefreshMapContent();
+		
 		menuState.wxHigh = !menuState.wxHigh;
+		RefreshMapContent();
+		
 		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
-			wxRadar::parseRadarPNG(this);
+			
+			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			lastWxRefresh = clock();
 		}
 	}
 
 	if (ObjectType == BUTTON_MENU_WX_ALL) {
 		if (menuState.wxHigh) { menuState.wxHigh = false; }
-		RefreshMapContent();
+		
 		menuState.wxAll = !menuState.wxAll;
+		RefreshMapContent();
+
 		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
-			wxRadar::parseRadarPNG(this);
+			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			lastWxRefresh = clock();
 		}
 	}

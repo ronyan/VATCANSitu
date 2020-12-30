@@ -92,7 +92,7 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     }
 }
 
-void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
+int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
 
     SolidBrush lightPrecip(Color(64, 0, 32, 120));
     SolidBrush heavyPrecip(Color(128, 0, 32, 120));
@@ -178,4 +178,5 @@ void wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
         }                       
         
     }
+    return 0;
 }

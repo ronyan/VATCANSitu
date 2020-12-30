@@ -553,7 +553,7 @@ public:
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 
     static void parseRadarPNG(CRadarScreen* rad); 
-    static void renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
+    static int renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
 
     static void GetRainViewerJSON(CRadarScreen* rad) {
 
