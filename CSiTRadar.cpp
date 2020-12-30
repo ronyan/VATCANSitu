@@ -105,8 +105,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
 
 		// autorefresh weather download every 10 minutes
-
-		wxRadar::parseRadarPNG(this);
+		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 		lastWxRefresh = clock();
 	}
 
@@ -351,9 +350,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 10;
 
 		// screen range, dummy buttons, not really necessary in ES.
+		but = TopMenu::DrawButton(&dc, menutopleft, 60, 23, "Setup", 0);
+		menutopleft.y += 25;
+
+		but = TopMenu::DrawButton(&dc, menutopleft, 60, 23, "Tags", 0);
+		menutopleft.x += 70;
+		menutopleft.y -= 25;
+
 		but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
 		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
 		menutopleft.y += 25;
+
 
 		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0); 
 		menutopleft.x += 35;
@@ -373,7 +380,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
 		menutopleft.y += 17;
 
-		TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
+		TopMenu::MakeDropDown(dc, menutopleft, 30, 15, rng.c_str());
 
 		menutopleft.x += 80;
 		menutopleft.y -= 32;
@@ -456,19 +463,23 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			{0,0}
 		};
 
-		menuButton but_psrpoor = { {455, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		POINT modOrigin{};
+		modOrigin.x = 520;
+		modOrigin.y = radarea.top + 6;
+
+		menuButton but_psrpoor = { {modOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_psrpoor);
 		TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
 
-		menuButton but_ALL = { { 455, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll};
+		menuButton but_ALL = { { modOrigin.x, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll};
 		but = TopMenu::DrawBut(&dc, but_ALL);
 		ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
 
-		menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
+		menuButton but_EXT = { { modOrigin.x + 30, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
 		but = TopMenu::DrawBut(&dc, but_EXT);
 		ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
 
-		menuButton but_EMode = { { 485, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		menuButton but_EMode = { { modOrigin.x + 30, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_EMode);
 
 		POINT plane[19] = {
@@ -493,20 +504,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			{0,-5}
 		};
 
-		menuButton but_FPE = { { 517, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
+		menuButton but_FPE = { { modOrigin.x + 62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
 		but = TopMenu::DrawBut(&dc, but_FPE);
 		TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane)/sizeof(plane[0]));
 		ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
 
-		menuButton but_highWx = { { 557, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
+		modOrigin.x = 620;
+
+		menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
 		but = TopMenu::DrawBut(&dc, but_highWx);
 		ButtonToScreen(this, but, "WxHigh", BUTTON_MENU_WX_HIGH);
 
-		menuButton but_allWx = { { 587, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxAll };
+		menuButton but_allWx = { { modOrigin.x + 30, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxAll };
 		but = TopMenu::DrawBut(&dc, but_allWx);
 		ButtonToScreen(this, but, "WxAll", BUTTON_MENU_WX_ALL);
 
-		menuButton but_topsWx = { { 557, radarea.top + 31 }, wxRadar::ts.c_str(), 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+		menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, wxRadar::ts.c_str(), 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_topsWx);
 
 		menutopleft.x = menutopleft.x + 250;
