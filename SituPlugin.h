@@ -18,4 +18,9 @@ public:
         int* pColorCode,
         COLORREF* pRGB,
         double* pFontSize);
+
+    inline virtual void OnFunctionCall(int FunctionId,
+        const char* sItemString,
+        POINT Pt,
+        RECT Area);
 };
