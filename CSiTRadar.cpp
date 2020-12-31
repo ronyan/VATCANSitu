@@ -946,8 +946,6 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	const char* filt = nullptr;
 
-	// if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
-
 	// getting altitude filter information
 	if ((filt = GetDataFromAsr("altFilterHigh")) != NULL) {
 		altFilterHigh = atoi(filt);
