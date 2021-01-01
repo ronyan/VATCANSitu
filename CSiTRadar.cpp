@@ -158,7 +158,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			// Draw PTL
 			if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
-				HaloTool::drawPTL(&dc, radarTarget, this, p, 3, pixnm);
+				HaloTool::drawPTL(&dc, radarTarget, this, p, 3);
 			}
 
 			// Get information about the Aircraft/Flightplan
