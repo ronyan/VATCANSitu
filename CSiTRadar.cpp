@@ -73,6 +73,7 @@ CSiTRadar::CSiTRadar()
 
 	std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 	std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+	lastWxRefresh = clock();
 
 	CSiTRadar::mAcData.reserve(64);
 
