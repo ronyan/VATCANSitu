@@ -417,27 +417,32 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 65; 
 
 		// separation tools
-		string haloText = "Halo " + halooptions[haloidx];
-		but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), halotool);
-		ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
+		if (true) {
+			string haloText = "Halo " + halooptions[haloidx];
+			but = TopMenu::DrawButton(&dc, menutopleft, 52, 23, haloText.c_str(), halotool);
+			ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
 
-		menutopleft.y = menutopleft.y + 25;
-		but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
-		ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
+			menutopleft.y = menutopleft.y + 25;
+			but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
+			ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
 
-		menutopleft.y = menutopleft.y - 25;
-		menutopleft.x = menutopleft.x + 47;
-		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
+			menutopleft.y = menutopleft.y - 25;
+			menutopleft.x = menutopleft.x + 54;
+			TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
 
-		menutopleft.y = menutopleft.y + 25;
-		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
+			menutopleft.y = menutopleft.y + 25;
+			TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
 
-		menutopleft.y = menutopleft.y - 25;
-		menutopleft.x = menutopleft.x + 37;
-		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
+			menutopleft.y = menutopleft.y - 25;
+			menutopleft.x = menutopleft.x + 35;
+			TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Rings 20", 0);
 
-		menutopleft.y = menutopleft.y + 25;
-		TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
+			menutopleft.y = menutopleft.y + 25;
+			TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Grid", 0);
+
+			menuButton airspaceCov = { { menutopleft.x + 55, radarea.top + 6 }, "Airspace", 55, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+			TopMenu::DrawBut(&dc, airspaceCov);
+		}
 
 		// get the controller position ID and display it (aesthetics :) )
 		if (GetPlugIn()->ControllerMyself().IsValid())
@@ -446,7 +451,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		}
 
 		menutopleft.y -= 25;
-		menutopleft.x += 60;
+		menutopleft.x += 120;
 		string cid = "CJS - " + controllerID;
 
 		RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
@@ -473,7 +478,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		};
 
 		POINT modOrigin{};
-		modOrigin.x = 520;
+		modOrigin.x = 620;
 		modOrigin.y = radarea.top + 6;
 
 		menuButton but_psrpoor = { {modOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
@@ -518,7 +523,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane)/sizeof(plane[0]));
 		ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
 
-		modOrigin.x = 620;
+		modOrigin.x = 730;
 
 		menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
 		but = TopMenu::DrawBut(&dc, but_highWx);
@@ -554,7 +559,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				rect.left = menutopleft.x;
 				rect.top = menutopleft.y + 31;
-				rect.right = menutopleft.x + 127;
+				rect.right = menutopleft.x + 22;
 				rect.bottom = menutopleft.y + 46;
 				string key = to_string(idx);
 				AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");

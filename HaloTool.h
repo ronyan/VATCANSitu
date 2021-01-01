@@ -70,8 +70,6 @@ public:
         CPosition ptl = calcPTL(radtar.GetPosition().GetPosition(), ptlTime, radtar.GetPosition().GetReportedGS(), theta);
         POINT p2 = radscr->ConvertCoordFromPositionToPixel(ptl);
 
-        radscr->GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Bearing", to_string(theta).c_str(), true, true, false, true, false);
-
         COLORREF targetPenColor = C_PTL_GREEN;
         HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
         dc->SelectObject(targetPen);
