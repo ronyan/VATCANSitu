@@ -419,15 +419,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		// separation tools
 		if (true) {
 			string haloText = "Halo " + halooptions[haloidx];
-			but = TopMenu::DrawButton(&dc, menutopleft, 52, 23, haloText.c_str(), halotool);
+			but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, haloText.c_str(), halotool);
 			ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
 
 			menutopleft.y = menutopleft.y + 25;
-			but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
+			but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
 			ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
 
 			menutopleft.y = menutopleft.y - 25;
-			menutopleft.x = menutopleft.x + 54;
+			menutopleft.x = menutopleft.x + 50;
 			TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
 
 			menutopleft.y = menutopleft.y + 25;
@@ -536,7 +536,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, wxRadar::ts.c_str(), 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 		TopMenu::DrawBut(&dc, but_topsWx);
 
-		menutopleft.x = menutopleft.x + 250;
+		menutopleft.x = menutopleft.x + 300;
 
 		// options for halo radius
 		if (halotool) {
@@ -544,16 +544,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			RECT rect;
 			RECT r;
 
-			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 48, 18, "End", FALSE);
 			ButtonToScreen(this, r, "End", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x += 35;
+			menutopleft.x += 50;
 
-			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "All On", FALSE);
+			r = TopMenu::DrawButton(&dc, menutopleft, 50, 18, "All On", FALSE);
 			ButtonToScreen(this, r, "All On", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x += 35;
-			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Clr All", FALSE);
+			menutopleft.x += 50;
+			r = TopMenu::DrawButton(&dc, menutopleft, 50, 18, "Clr All", FALSE);
 			ButtonToScreen(this, r, "Clr All", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x += 35;
+			menutopleft.x += 50;
+			r = TopMenu::DrawButton(&dc, menutopleft, 48, 18, "Mouse", mousehalo);
+			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
+			menutopleft.x -= 150;
 
 			for (int idx = 0; idx < 9; idx++) {
 
@@ -565,8 +568,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");
 				menutopleft.x += 22;
 			}
-			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Mouse", mousehalo);
-			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
 		}
 
 		// options for the altitude filter sub menu

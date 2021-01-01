@@ -422,8 +422,6 @@ public:
 
         int idx;
 
-        p.x += 105;
-
         p.y += 31;
         for (idx = 0; idx < 9; idx++) {
             bool pressed = FALSE;
