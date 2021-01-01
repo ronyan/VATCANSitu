@@ -596,7 +596,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		if (menuState.wxAll || menuState.wxHigh) {
 			
 			std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
-
+			// wxRadar::renderRadar( &g, this, menuState.wxAll);
 		}
 	}
 
