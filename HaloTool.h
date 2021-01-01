@@ -11,6 +11,11 @@ class HaloTool :
 {
 public:
 
+    static inline double degtorad(double deg) {
+        double ans = deg * PI / 180;
+        return ans;
+    }
+
     static void drawHalo(CDC* dc, POINT p, double r, double pixpernm) 
     {
         int sDC = dc->SaveDC();
@@ -31,21 +36,22 @@ public:
         dc->RestoreDC(sDC);
     };
 
-    static void drawPTL(CDC* dc, CRadarTarget radtar, POINT p, double ptlTime, double pixpernm)
+    static void drawPTL(CDC* dc, CRadarTarget radtar, CRadarScreen* radscr, POINT p, double ptlTime, double pixpernm)
     {
         int sDC = dc->SaveDC();
         
-        double theta = (radtar.GetTrackHeading() + CSiTRadar::magvar) * PI / 180;
-        double ptlDistance = radtar.GetGS() / 60 * ptlTime * pixpernm; 
-        double ptlYdelta = -cos(theta) * ptlDistance;
-        double ptlXdelta = sin(theta) * ptlDistance;
+        CPosition pos1 = radtar.GetPreviousPosition(radtar.GetPosition()).GetPosition();
+        CPosition pos2 = radtar.GetPosition().GetPosition();
+        double theta = calcBearing(pos2, pos1);
+        CPosition ptl = calcPTL(radtar.GetPosition().GetPosition(), ptlTime, radtar.GetPosition().GetReportedGS(), theta);
+        POINT p2 = radscr->ConvertCoordFromPositionToPixel(ptl);
 
         COLORREF targetPenColor = C_PTL_GREEN;
         HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
         dc->SelectObject(targetPen);
 
         dc->MoveTo(p);
-        dc->LineTo(p.x + (int)round(ptlXdelta), p.y + (int)round(ptlYdelta));
+        dc->LineTo(p2);
 
         DeleteObject(targetPen);
 
@@ -66,5 +72,16 @@ public:
         
         return ptlEnd;
     };
+
+    static double calcBearing(CPosition origin, CPosition end) {
+        double y = sin(degtorad(end.m_Longitude) - degtorad(origin.m_Longitude)) * cos(degtorad(end.m_Latitude));
+        double x = cos(degtorad(origin.m_Latitude))*sin(degtorad(end.m_Latitude)) - sin(degtorad(origin.m_Latitude)) * cos(degtorad(end.m_Latitude)) * cos(degtorad(end.m_Longitude) - degtorad(origin.m_Longitude));
+        double phi = atan2(y, x);
+        double bearing = fmod((phi * 180 / PI + 360), 360);
+
+        return bearing;
+    }
+
+
 };
 
