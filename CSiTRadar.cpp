@@ -71,9 +71,14 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlLength = 3;
 	menuState.ptlTool = FALSE;
 
-	std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
-	std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-	lastWxRefresh = clock();
+	try {
+		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
+		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+		lastWxRefresh = clock();
+	}
+	catch (...) {
+		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "WX Parser", string("PNG Failed to Parse").c_str(), true, false, false, false, false);
+	}
 
 	CSiTRadar::mAcData.reserve(64);
 
@@ -350,6 +355,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
 		// this point moves to the origin of each subsequent area
 		POINT menutopleft = CPoint(radarea.left, radarea.top); 
+		POINT modOrigin{};
+		POINT sepOrigin{};
 
 		TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
 		RECT but;
@@ -417,30 +424,33 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menutopleft.x += 65; 
 
 		// separation tools
+		sepOrigin = { 315, menutopleft.y };
 		if (true) {
 			string haloText = "Halo " + halooptions[haloidx];
-			but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, haloText.c_str(), halotool);
+			but = TopMenu::DrawButton(&dc, sepOrigin, 50, 23, haloText.c_str(), halotool);
 			ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
 
-			menutopleft.y = menutopleft.y + 25;
-			but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
+			sepOrigin.y = sepOrigin.y + 25;
+			but = TopMenu::DrawButton(&dc, sepOrigin, 50, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
 			ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
 
-			menutopleft.y = menutopleft.y - 25;
-			menutopleft.x = menutopleft.x + 50;
-			TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
+			sepOrigin.y = sepOrigin.y - 25;
+			sepOrigin.x = sepOrigin.x + 50;
+			TopMenu::DrawButton(&dc, sepOrigin, 35, 23, "RBL", 0);
 
-			menutopleft.y = menutopleft.y + 25;
-			TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
+			sepOrigin.y = sepOrigin.y + 25;
+			TopMenu::DrawButton(&dc, sepOrigin, 35, 23, "PIV", 0);
 
-			menutopleft.y = menutopleft.y - 25;
-			menutopleft.x = menutopleft.x + 35;
-			TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Rings 20", 0);
+			sepOrigin.y = sepOrigin.y - 25;
+			sepOrigin.x = sepOrigin.x + 35;
+			TopMenu::DrawButton(&dc, sepOrigin, 55, 23, "Rings 20", 0);
 
-			menutopleft.y = menutopleft.y + 25;
-			TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Grid", 0);
+			sepOrigin.y = sepOrigin.y + 25;
+			TopMenu::DrawButton(&dc, sepOrigin, 55, 23, "Grid", 0);
+			sepOrigin.x += 55;
+			sepOrigin.y -= 25;
 
-			menuButton airspaceCov = { { menutopleft.x + 55, radarea.top + 6 }, "Airspace", 55, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+			menuButton airspaceCov = { { sepOrigin.x, sepOrigin.y }, "Airspace", 55, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 			TopMenu::DrawBut(&dc, airspaceCov);
 		}
 
@@ -450,8 +460,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
 		}
 
-		menutopleft.y -= 25;
-		menutopleft.x += 120;
+		menutopleft.x += 220;
 		string cid = "CJS - " + controllerID;
 
 		RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
@@ -477,7 +486,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			{0,0}
 		};
 
-		POINT modOrigin{};
+		
 		modOrigin.x = 620;
 		modOrigin.y = radarea.top + 6;
 

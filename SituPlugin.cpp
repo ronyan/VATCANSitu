@@ -83,7 +83,7 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
         if (ControllerMyself().GetFacility() >= 5) {
 
             if (strncmp(fp.GetControllerAssignedData().GetScratchPadString(), "RREQ", 4) == 0) {
-                fp.GetControllerAssignedData().SetScratchPadString("RREL");
+                fp.GetControllerAssignedData().SetScratchPadString("RREL");   
             }
         }
     }
