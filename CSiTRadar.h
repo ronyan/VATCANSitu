@@ -57,6 +57,10 @@ public:
     static double magvar;
     static buttonStates menuState;
 
+    double wxRadLat;
+    double wxRadLong;
+    int wxRadZL;
+
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
     inline virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);

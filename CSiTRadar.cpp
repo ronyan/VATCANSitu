@@ -60,7 +60,6 @@ unordered_map<string, int> CSiTRadar::tempTagData;
 map<string, menuButton> TopMenu::menuButtons;
 unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 buttonStates CSiTRadar::menuState = {};
-double CSiTRadar::magvar = 361;
 bool CSiTRadar::halfSecTick = FALSE;
 
 CSiTRadar::CSiTRadar()
@@ -142,11 +141,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 		{
-			// to pull the magvar value from a plane; since can't get it easily from .sct -- do this only once
-			if (magvar == 361) {
-				magvar = (double)radarTarget.GetPosition().GetReportedHeading() - (double)radarTarget.GetPosition().GetReportedHeadingTrueNorth();
-			}
-
 			string callSign = radarTarget.GetCallsign();
 			// altitude filtering 
 			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {

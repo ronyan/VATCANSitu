@@ -53,6 +53,9 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
             fclose(dlPNG);
         }
     }
+    else {
+        return;
+    }
 
     /* cleanup curl stuff */
     curl_easy_cleanup(pngDL);
