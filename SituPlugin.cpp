@@ -45,14 +45,17 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
          COLORREF c = C_PPS_ORANGE;
          *pRGB = c;
 
-        if (strcmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREQ") == 0) {
+        if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREQ", 4) == 0) {
             COLORREF c = C_PPS_ORANGE;
             strcpy_s(sItemString, 16, "¤");
             *pRGB = c;
         }
-        if (strcmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREL") == 0) {
+        if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREL", 4) == 0) {
+            if (ControllerMyself().GetFacility() < 5) {
+                FlightPlan.GetControllerAssignedData().SetScratchPadString("");
+                return;
+            }
             strcpy_s(sItemString, 16, "¤");
-
             COLORREF c = RGB(9, 171, 0);
             *pRGB = c;
         }
@@ -64,16 +67,19 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
 {
     CFlightPlan fp;
     fp = FlightPlanSelectASEL();
+    string spString = fp.GetControllerAssignedData().GetScratchPadString();
 
     if (FunctionId == TAG_FUNC_IFR_REL_REQ) {
-        if (strncmp(fp.GetControllerAssignedData().GetScratchPadString(), "RREQ", 4) == 0) {
+        if (strncmp(spString.c_str(), "RREQ", 4) == 0) {
             fp.GetControllerAssignedData().SetScratchPadString("");
+            if (spString.size() > 4) { fp.GetControllerAssignedData().SetScratchPadString(spString.substr(5).c_str()); }
         }
-        else if (strncmp(fp.GetControllerAssignedData().GetScratchPadString(), "RREL", 4) == 0) {
+        else if (strncmp(spString.c_str(), "RREL", 4) == 0) {
             fp.GetControllerAssignedData().SetScratchPadString("");
+            if (spString.size() > 4) { fp.GetControllerAssignedData().SetScratchPadString(spString.substr(5).c_str()); }
         }
         else {
-            fp.GetControllerAssignedData().SetScratchPadString("RREQ");
+            fp.GetControllerAssignedData().SetScratchPadString(("RREQ " + spString).c_str());
         }
 
     }
@@ -83,7 +89,13 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
         if (ControllerMyself().GetFacility() >= 5) {
 
             if (strncmp(fp.GetControllerAssignedData().GetScratchPadString(), "RREQ", 4) == 0) {
-                fp.GetControllerAssignedData().SetScratchPadString("RREL");
+
+                if (spString.size() > 4) {
+                    fp.GetControllerAssignedData().SetScratchPadString(("RREL " + spString.substr(5)).c_str());
+                }
+                else {
+                    fp.GetControllerAssignedData().SetScratchPadString("RREL");
+                }
             }
         }
     }
