@@ -516,6 +516,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		RECT bline2{};
 		RECT bline3{};
 
+		dc->SetTextColor(C_PPS_YELLOW);
+
 		bline1.top = p.y - 7;
 		bline1.left = p.x + 10;
 		dc->DrawText(altThreeDigit.c_str(), &bline1, DT_LEFT | DT_CALCRECT);
