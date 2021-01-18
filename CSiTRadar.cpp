@@ -106,9 +106,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	double pixnm = PixelsPerNM();
 
 	// Check if ASR is an IFR file
-	if (GetDataFromAsr("DisplayTypeName") == NULL) { return; }
+	if (GetDataFromAsr("DisplayTypeName") != NULL) {
 
-	else {
 		string DisplayType = GetDataFromAsr("DisplayTypeName");
 
 		// VFR asrs should show the NARDS displays
