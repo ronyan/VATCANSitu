@@ -206,7 +206,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// Draw PTL
 					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
-						HaloTool::drawPTL(&dc, radarTarget, this, p, 3);
+						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
 					}
 
 					// Get information about the Aircraft/Flightplan
@@ -406,212 +406,282 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				menutopleft.y += 6;
 				menutopleft.x += 10;
 
-				// screen range, dummy buttons, not really necessary in ES.
-				but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
-				ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
-				menutopleft.y += 25;
+				if (menuLayer == 0) {
 
-				TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0);
-				menutopleft.x += 35;
-				TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
-				menutopleft.y -= 25;
-				menutopleft.x += 55;
+					// screen range, dummy buttons, not really necessary in ES.
+					but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
+					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
+					menutopleft.y += 25;
 
-				// horizontal range calculation
-				int range = (int)round(RadRange());
-				string rng = to_string(range);
-				TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
-				menutopleft.y += 15;
-
-				// 109 pix per in on my monitor
-				int nmIn = (int)round(109 / pixnm);
-				string nmtext = "1\" = " + to_string(nmIn) + "nm";
-				TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
-				menutopleft.y += 17;
-
-				TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
-
-				menutopleft.x += 80;
-				menutopleft.y -= 32;
-
-				// altitude filters
-
-				but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
-				ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
-
-				menutopleft.y += 25;
-
-				string altFilterLowFL = to_string(altFilterLow);
-				if (altFilterLowFL.size() < 3) {
-					altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
-				}
-				string altFilterHighFL = to_string(altFilterHigh);
-				if (altFilterHighFL.size() < 3) {
-					altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
-				}
-
-				string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
-				but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
-				ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
-				menutopleft.y -= 25;
-				menutopleft.x += 65;
-
-				// separation tools
-				string haloText = "Halo " + halooptions[haloidx];
-				but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), halotool);
-				ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
-
-				menutopleft.y = menutopleft.y + 25;
-				but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
-				ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
-
-				menutopleft.y = menutopleft.y - 25;
-				menutopleft.x = menutopleft.x + 47;
-				TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
-
-				menutopleft.y = menutopleft.y + 25;
-				TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
-
-				menutopleft.y = menutopleft.y - 25;
-				menutopleft.x = menutopleft.x + 37;
-				TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
-
-				menutopleft.y = menutopleft.y + 25;
-				TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
-
-				// get the controller position ID and display it (aesthetics :) )
-				if (GetPlugIn()->ControllerMyself().IsValid())
-				{
-					controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
-				}
-
-				menutopleft.y -= 25;
-				menutopleft.x += 60;
-				string cid = "CJS - " + controllerID;
-
-				RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
-
-				menutopleft.y += 25;
-				but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
-				menutopleft.y -= 25;
-				ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
-
-				POINT psrPoor[13] = {
-					{0,0},
-					{0,-5},
-					{0,5},
-					{0,0},
-					{4,-4},
-					{-4,4},
-					{0,0},
-					{4,4},
-					{-4,-4},
-					{0,0},
-					{-5,0},
-					{5,0},
-					{0,0}
-				};
-
-				menuButton but_psrpoor = { {455, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-				TopMenu::DrawBut(&dc, but_psrpoor);
-				TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
-
-				menuButton but_ALL = { { 455, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
-				but = TopMenu::DrawBut(&dc, but_ALL);
-				ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
-
-				menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
-				but = TopMenu::DrawBut(&dc, but_EXT);
-				ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
-
-				menuButton but_EMode = { { 485, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-				TopMenu::DrawBut(&dc, but_EMode);
-
-				POINT plane[19] = {
-					{0,-5},
-					{-1,-4},
-					{-1,-2},
-					{-5,2},
-					{-5,3},
-					{-1,1},
-					{-1,4},
-					{-4,6},
-					{-4,7},
-					{0,6},
-					{4,7},
-					{4,6},
-					{1,4},
-					{1,1},
-					{5,3},
-					{5,2},
-					{1,-2},
-					{1,-4},
-					{0,-5}
-				};
-
-				menuButton but_FPE = { { 517, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
-				but = TopMenu::DrawBut(&dc, but_FPE);
-				TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane) / sizeof(plane[0]));
-				ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
-
-				menutopleft.x = menutopleft.x + 200;
-
-				// options for halo radius
-				if (halotool) {
-					TopMenu::DrawHaloRadOptions(dc, menutopleft, halorad, halooptions);
-					RECT rect;
-					RECT r;
-
-					r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
-					ButtonToScreen(this, r, "End", BUTTON_MENU_HALO_OPTIONS);
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0);
 					menutopleft.x += 35;
-
-					r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "All On", FALSE);
-					ButtonToScreen(this, r, "All On", BUTTON_MENU_HALO_OPTIONS);
-					menutopleft.x += 35;
-					r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Clr All", FALSE);
-					ButtonToScreen(this, r, "Clr All", BUTTON_MENU_HALO_OPTIONS);
-					menutopleft.x += 35;
-
-					for (int idx = 0; idx < 9; idx++) {
-
-						rect.left = menutopleft.x;
-						rect.top = menutopleft.y + 31;
-						rect.right = menutopleft.x + 127;
-						rect.bottom = menutopleft.y + 46;
-						string key = to_string(idx);
-						AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");
-						menutopleft.x += 22;
-					}
-					r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Mouse", mousehalo);
-					ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
-				}
-
-				// options for the altitude filter sub menu
-
-				if (altFilterOpts) {
-
-					r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
-					ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
-					menutopleft.x += 45;
-					menutopleft.y += 5;
-
-					r = TopMenu::MakeText(dc, menutopleft, 55, 15, "High Lim");
-					menutopleft.x += 55;
-					rHLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterHighFL.c_str());
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
-
-					menutopleft.x -= 55; menutopleft.y += 20;
-
-					TopMenu::MakeText(dc, menutopleft, 55, 15, "Low Lim");
-					menutopleft.x += 55;
-					rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
-
-					menutopleft.x += 75;
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
 					menutopleft.y -= 25;
-					r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Save", FALSE);
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
+					menutopleft.x += 55;
+
+					// horizontal range calculation
+					int range = (int)round(RadRange());
+					string rng = to_string(range);
+					TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
+					menutopleft.y += 15;
+
+					// 109 pix per in on my monitor
+					int nmIn = (int)round(109 / pixnm);
+					string nmtext = "1\" = " + to_string(nmIn) + "nm";
+					TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
+					menutopleft.y += 17;
+
+					TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
+
+					menutopleft.x += 80;
+					menutopleft.y -= 32;
+
+					// altitude filters
+
+					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
+					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
+
+					menutopleft.y += 25;
+
+					string altFilterLowFL = to_string(altFilterLow);
+					if (altFilterLowFL.size() < 3) {
+						altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+					}
+					string altFilterHighFL = to_string(altFilterHigh);
+					if (altFilterHighFL.size() < 3) {
+						altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+					}
+
+					string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
+					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
+					ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
+					menutopleft.y -= 25;
+					menutopleft.x += 65;
+
+					// separation tools
+					string haloText = "Halo " + halooptions[haloidx];
+					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), halotool);
+					ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
+
+					menutopleft.y = menutopleft.y + 25;
+					string ptlText = "PTL " + to_string(menuState.ptlLength);
+					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, ptlText.c_str(), CSiTRadar::menuState.ptlTool);
+					ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
+
+					menutopleft.y = menutopleft.y - 25;
+					menutopleft.x = menutopleft.x + 47;
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
+
+					menutopleft.y = menutopleft.y + 25;
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
+
+					menutopleft.y = menutopleft.y - 25;
+					menutopleft.x = menutopleft.x + 37;
+					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
+
+					menutopleft.y = menutopleft.y + 25;
+					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
+
+					// get the controller position ID and display it (aesthetics :) )
+					if (GetPlugIn()->ControllerMyself().IsValid())
+					{
+						controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
+					}
+
+					menutopleft.y -= 25;
+					menutopleft.x += 60;
+					string cid = "CJS - " + controllerID;
+
+					RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
+
+					menutopleft.y += 25;
+					but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
+					menutopleft.y -= 25;
+					ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
+
+					POINT psrPoor[13] = {
+						{0,0},
+						{0,-5},
+						{0,5},
+						{0,0},
+						{4,-4},
+						{-4,4},
+						{0,0},
+						{4,4},
+						{-4,-4},
+						{0,0},
+						{-5,0},
+						{5,0},
+						{0,0}
+					};
+
+					menuButton but_psrpoor = { {455, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_psrpoor);
+					TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
+
+					menuButton but_ALL = { { 455, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
+					but = TopMenu::DrawBut(&dc, but_ALL);
+					ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
+
+					menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
+					but = TopMenu::DrawBut(&dc, but_EXT);
+					ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
+
+					menuButton but_EMode = { { 485, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_EMode);
+
+					POINT plane[19] = {
+						{0,-5},
+						{-1,-4},
+						{-1,-2},
+						{-5,2},
+						{-5,3},
+						{-1,1},
+						{-1,4},
+						{-4,6},
+						{-4,7},
+						{0,6},
+						{4,7},
+						{4,6},
+						{1,4},
+						{1,1},
+						{5,3},
+						{5,2},
+						{1,-2},
+						{1,-4},
+						{0,-5}
+					};
+
+					menuButton but_FPE = { { 517, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
+					but = TopMenu::DrawBut(&dc, but_FPE);
+					TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane) / sizeof(plane[0]));
+					ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
+
+					menutopleft.x = menutopleft.x + 200;
+
+					// options for halo radius
+					if (halotool) {
+						TopMenu::DrawHaloRadOptions(dc, menutopleft, halorad, halooptions);
+						RECT rect;
+						RECT r;
+
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
+						ButtonToScreen(this, r, "End", BUTTON_MENU_HALO_OPTIONS);
+						menutopleft.x += 35;
+
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "All On", FALSE);
+						ButtonToScreen(this, r, "All On", BUTTON_MENU_HALO_OPTIONS);
+						menutopleft.x += 35;
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Clr All", FALSE);
+						ButtonToScreen(this, r, "Clr All", BUTTON_MENU_HALO_OPTIONS);
+						menutopleft.x += 35;
+
+						for (int idx = 0; idx < 9; idx++) {
+
+							rect.left = menutopleft.x;
+							rect.top = menutopleft.y + 31;
+							rect.right = menutopleft.x + 127;
+							rect.bottom = menutopleft.y + 46;
+							string key = to_string(idx);
+							AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");
+							menutopleft.x += 22;
+						}
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Mouse", mousehalo);
+						ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
+					}
+
+					// options for the altitude filter sub menu
+
+					if (altFilterOpts) {
+
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
+						ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
+						menutopleft.x += 45;
+						menutopleft.y += 5;
+
+						r = TopMenu::MakeText(dc, menutopleft, 55, 15, "High Lim");
+						menutopleft.x += 55;
+						rHLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterHighFL.c_str());
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
+
+						menutopleft.x -= 55; menutopleft.y += 20;
+
+						TopMenu::MakeText(dc, menutopleft, 55, 15, "Low Lim");
+						menutopleft.x += 55;
+						rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
+
+						menutopleft.x += 75;
+						menutopleft.y -= 25;
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Save", FALSE);
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
+
+					}
+				}
+
+				else if (menuLayer == 1) {
+
+				POINT elementOrigin = CPoint(radarea.left + 10, radarea.top + 6);
+				RECT r;
+				// Halo submenu
+
+				// PTL submenu
+				if (menuState.ptlTool) {
+					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 46, "Close", FALSE);
+					AddScreenObject(BUTTON_MENU_PTL_CLOSE, "Close", r, 0, "");
+
+					elementOrigin.x += 62;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 46, "", FALSE);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 60, 15, "Clear All");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 60, 15, "PTLs");
+					AddScreenObject(BUTTON_MENU_PTL_CLEAR_ALL, "Clear All PTLs", r, 0, "");
+
+					elementOrigin.x += 62;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 46, "PTL All", FALSE);
+					AddScreenObject(BUTTON_MENU_PTL_ALL_ON, "PTL All on", r, 0, "");
+
+					elementOrigin.x += 62;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 23, "Uncorr", FALSE);
+
+					r = TopMenu::DrawButton(&dc, { elementOrigin.x, elementOrigin.y + 23 }, 60, 23, "Timeout", FALSE);
+
+					elementOrigin.x += 62;
+					TopMenu::MakeText(dc, elementOrigin, 250, 15, "PTL Length - Minutes");
+
+					// PTL options loop
+
+					elementOrigin.y += 15;
+					elementOrigin.x += 15;
+
+					for (int idx = 0; idx < 20; idx++) {
+						bool pressed = FALSE;
+						if (ptlOptions[idx] == menuState.ptlLength) {
+							pressed = TRUE;
+						}
+						if (idx == 10) {
+							elementOrigin.y += 15;
+							elementOrigin.x -= 220;
+						}
+						RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(ptlOptions[idx]).c_str(), pressed);
+						AddScreenObject(BUTTON_MENU_PTL_OPTIONS, to_string(ptlOptions[idx]).c_str(), r, 0, "");
+						elementOrigin.x += 22;
+					}
+
+					elementOrigin.y = radarea.top + 6;
+					// End PTL options
+
+					elementOrigin.x = 510;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", FALSE);
+					elementOrigin.x = 547;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", FALSE);
+
+					elementOrigin.x = 570;
+					TopMenu::MakeText(dc, elementOrigin, 150, 15, "Click on targets to toggle");
+					elementOrigin.y += 18;
+					TopMenu::MakeText(dc, elementOrigin, 150, 15, "PTL ON-OFF.");
+				}
+
+				// Rigns submenu
 
 				}
 			}
@@ -673,10 +743,22 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "Halo")) { halotool = !halotool; menuState.ptlTool = FALSE; }
 	}
 
+	if (ObjectType == BUTTON_MENU_PTL_OPTIONS) {
+		menuState.ptlLength = stoi(sObjectId);
+	}
+
 	if (ObjectType == BUTTON_MENU_PTL_TOOL) {
 		if (halotool) { halotool = FALSE; }
-		menuState.ptlTool = !menuState.ptlTool;
+		menuState.ptlTool = true;
+		menuLayer = 1;
 	}
+
+	if (ObjectType == BUTTON_MENU_PTL_CLOSE) {
+		menuState.ptlTool = false;
+		menuLayer = 0;
+	}
+
+	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) { hasPTL.clear(); }
 
 	if (ObjectType == BUTTON_MENU_EXTRAP_FP) {
 		menuState.showExtrapFP = !menuState.showExtrapFP;
