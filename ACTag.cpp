@@ -182,9 +182,9 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	POINT line0 = { p.x + tagOffsetX, p.y + tagOffsetY - 12 };
 	POINT line1 = { p.x + tagOffsetX, p.y + tagOffsetY };
-	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 12 };
-	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 24 };
-	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 36 };
+	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 11 };
+	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 22 };
+	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 33 };
 
 	// save context
 	int sDC = dc->SaveDC();
