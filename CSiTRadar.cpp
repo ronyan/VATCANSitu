@@ -67,6 +67,7 @@ CSiTRadar::CSiTRadar()
 	halfSecTick = FALSE;
 
 	menuState.ptlLength = 3;
+	menuState.haloRad = 5;
 	menuState.ptlTool = FALSE;
 
 	CSiTRadar::mAcData.reserve(64);
@@ -178,7 +179,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				// Draw the mouse halo before menu, so it goes behind it
 				if (mousehalo == TRUE) {
-					HaloTool::drawHalo(&dc, p, halorad, pixnm);
+					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					RequestRefresh();
 				}
 
@@ -332,7 +333,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
 					if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
-						HaloTool::drawHalo(&dc, p, halorad, pixnm);
+						HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					}
 
 				}
@@ -459,9 +460,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menutopleft.x += 65;
 
 					// separation tools
-					string haloText = "Halo " + halooptions[haloidx];
-					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), halotool);
-					ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
+					string haloText = "Halo " + to_string(menuState.haloRad);
+					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), menuState.haloTool);
+					ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_TOOL);
 
 					menutopleft.y = menutopleft.y + 25;
 					string ptlText = "PTL " + to_string(menuState.ptlLength);
@@ -559,37 +560,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					menutopleft.x = menutopleft.x + 200;
 
-					// options for halo radius
-					if (halotool) {
-						TopMenu::DrawHaloRadOptions(dc, menutopleft, halorad, halooptions);
-						RECT rect;
-						RECT r;
-
-						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
-						ButtonToScreen(this, r, "End", BUTTON_MENU_HALO_OPTIONS);
-						menutopleft.x += 35;
-
-						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "All On", FALSE);
-						ButtonToScreen(this, r, "All On", BUTTON_MENU_HALO_OPTIONS);
-						menutopleft.x += 35;
-						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Clr All", FALSE);
-						ButtonToScreen(this, r, "Clr All", BUTTON_MENU_HALO_OPTIONS);
-						menutopleft.x += 35;
-
-						for (int idx = 0; idx < 9; idx++) {
-
-							rect.left = menutopleft.x;
-							rect.top = menutopleft.y + 31;
-							rect.right = menutopleft.x + 127;
-							rect.bottom = menutopleft.y + 46;
-							string key = to_string(idx);
-							AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");
-							menutopleft.x += 22;
-						}
-						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Mouse", mousehalo);
-						ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
-					}
-
 					// options for the altitude filter sub menu
 
 					if (altFilterOpts) {
@@ -625,33 +595,84 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				RECT r;
 				// Halo submenu
 
+				if (menuState.haloTool) {
+
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
+					AddScreenObject(BUTTON_MENU_HALO_CLOSE, "Close", r, 0, "");
+
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halos");
+					AddScreenObject(BUTTON_MENU_HALO_CLEAR_ALL, "Clear All Halos", r, 0, "");
+
+					elementOrigin.x += 72;
+					TopMenu::MakeText(dc, elementOrigin, 220, 13, "Halo Radius - nm");
+
+					// PTL options loop
+
+					elementOrigin.y += 13;
+					elementOrigin.x += 20;
+
+					
+					for (int idx = 0; idx < 6; idx++) {
+						bool pressed = FALSE;
+						if (haloOptions[idx] == menuState.haloRad) {
+							pressed = TRUE;
+						}
+						RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(haloOptions[idx]).c_str(), pressed);
+						AddScreenObject(BUTTON_MENU_HALO_OPTIONS, to_string(haloOptions[idx]).c_str(), r, 0, "");
+						elementOrigin.x += 22;
+					}
+					
+
+					elementOrigin.y = radarea.top + 6;
+					// End PTL options
+
+					elementOrigin.x = 370;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", mousehalo);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Display");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halo Cursor");
+					AddScreenObject(BUTTON_MENU_HALO_MOUSE, "Mouse", r, 0, "");
+
+					elementOrigin.x = 460;
+					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Toggle Halo cursor ON - OFF.");
+					elementOrigin.y += 16;
+					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Select a Halo Radius.");
+					elementOrigin.y += 16;
+					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Click on target to toggle Halo ON - OFF.");
+										
+				}
+
+
 				// PTL submenu
 				if (menuState.ptlTool) {
-					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 46, "Close", FALSE);
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
 					AddScreenObject(BUTTON_MENU_PTL_CLOSE, "Close", r, 0, "");
 
-					elementOrigin.x += 62;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 46, "", FALSE);
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 60, 15, "Clear All");
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 60, 15, "PTLs");
+					
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "PTLs");
 					AddScreenObject(BUTTON_MENU_PTL_CLEAR_ALL, "Clear All PTLs", r, 0, "");
 
-					elementOrigin.x += 62;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 46, "PTL All", FALSE);
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "PTL All", FALSE);
 					AddScreenObject(BUTTON_MENU_PTL_ALL_ON, "PTL All on", r, 0, "");
 
-					elementOrigin.x += 62;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 60, 23, "Uncorr", FALSE);
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 23, "Uncorr", FALSE);
 
-					r = TopMenu::DrawButton(&dc, { elementOrigin.x, elementOrigin.y + 23 }, 60, 23, "Timeout", FALSE);
+					r = TopMenu::DrawButton(&dc, { elementOrigin.x, elementOrigin.y + 23 }, 70, 23, "Timeout", FALSE);
 
-					elementOrigin.x += 62;
+					elementOrigin.x += 72;
 					TopMenu::MakeText(dc, elementOrigin, 250, 15, "PTL Length - Minutes");
 
 					// PTL options loop
 
 					elementOrigin.y += 15;
-					elementOrigin.x += 15;
+					elementOrigin.x += 12;
 
 					for (int idx = 0; idx < 20; idx++) {
 						bool pressed = FALSE;
@@ -670,18 +691,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					elementOrigin.y = radarea.top + 6;
 					// End PTL options
 
-					elementOrigin.x = 510;
+					elementOrigin.x = 540;
 					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", FALSE);
-					elementOrigin.x = 547;
+					elementOrigin.x = 577;
 					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", FALSE);
 
-					elementOrigin.x = 570;
+					elementOrigin.x = 610;
 					TopMenu::MakeText(dc, elementOrigin, 150, 15, "Click on targets to toggle");
-					elementOrigin.y += 18;
+					elementOrigin.y += 16;
 					TopMenu::MakeText(dc, elementOrigin, 150, 15, "PTL ON-OFF.");
+					
 				}
 
-				// Rigns submenu
+				// Rings submenu
 
 				}
 			}
@@ -699,7 +721,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 {
 	if (ObjectType == AIRCRAFT_SYMBOL) {
 		
-		if (halotool == TRUE) {
+		if (menuState.haloTool == TRUE) {
 
 			CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
 			string callsign = rt.GetCallsign();
@@ -726,21 +748,27 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 
 	}
+	
+	if (ObjectType == BUTTON_MENU_HALO_TOOL) {
+		menuState.haloTool = true;
+		menuLayer = 1;
+	}
 
 	if (ObjectType == BUTTON_MENU_HALO_OPTIONS) {
-		if (!strcmp(sObjectId, "0")) { halorad = 0.5; haloidx = 0; }
-		if (!strcmp(sObjectId, "1")) { halorad = 3; haloidx = 1; }
-		if (!strcmp(sObjectId, "2")) { halorad = 5; haloidx = 2; }
-		if (!strcmp(sObjectId, "3")) { halorad = 10; haloidx = 3; }
-		if (!strcmp(sObjectId, "4")) { halorad = 15; haloidx = 4; }
-		if (!strcmp(sObjectId, "5")) { halorad = 20; haloidx = 5; }
-		if (!strcmp(sObjectId, "6")) { halorad = 30; haloidx = 6; }
-		if (!strcmp(sObjectId, "7")) { halorad = 60; haloidx = 7; }
-		if (!strcmp(sObjectId, "8")) { halorad = 80; haloidx = 8; }
-		if (!strcmp(sObjectId, "Clr All")) { hashalo.clear(); }
-		if (!strcmp(sObjectId, "End")) { halotool = !halotool; }
-		if (!strcmp(sObjectId, "Mouse")) { mousehalo = !mousehalo; }
-		if (!strcmp(sObjectId, "Halo")) { halotool = !halotool; menuState.ptlTool = FALSE; }
+		menuState.haloRad = stoi(sObjectId);
+	}
+
+	if (ObjectType == BUTTON_MENU_HALO_CLOSE) {
+		menuState.haloTool = false;
+		menuLayer = 0;
+	}
+
+	if (ObjectType == BUTTON_MENU_HALO_CLEAR_ALL) {
+		hashalo.clear();
+	}
+
+	if (ObjectType == BUTTON_MENU_HALO_MOUSE) {
+		mousehalo = !mousehalo;
 	}
 
 	if (ObjectType == BUTTON_MENU_PTL_OPTIONS) {
@@ -748,7 +776,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_PTL_TOOL) {
-		if (halotool) { halotool = FALSE; }
 		menuState.ptlTool = true;
 		menuLayer = 1;
 	}

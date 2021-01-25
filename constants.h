@@ -54,6 +54,12 @@ const int BUTTON_MENU_PTL_CLOSE = 212;
 const int BUTTON_MENU_PTL_CLEAR_ALL = 213;
 const int BUTTON_MENU_PTL_ALL_ON = 214;
 const int BUTTON_MENU_PTL_OPTIONS = 215;
+const int BUTTON_MENU_HALO_CLOSE = 216;
+const int BUTTON_MENU_HALO_CLEAR_ALL = 217;
+const int BUTTON_MENU_HALO_MOUSE = 218;
+const int BUTTON_MENU_HALO_TOOL = 219;
+
+
 
 // Menu Modules
 const int MODULE_1_X = 0;
