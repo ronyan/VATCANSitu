@@ -422,8 +422,6 @@ public:
 
         int idx;
 
-        p.x += 105;
-
         p.y += 31;
         for (idx = 0; idx < 9; idx++) {
             bool pressed = FALSE;
@@ -436,6 +434,27 @@ public:
         }
 
         dc.Detach();
+    }
+
+    static RECT DrawWindow(CDC* dc, EuroScopePlugIn::CRadarScreen* radscr, POINT origin, int width, int height) {
+        int sDC = dc->SaveDC();
+
+        CFont font;
+        LOGFONT lgfont;
+
+        memset(&lgfont, 0, sizeof(LOGFONT));
+        lgfont.lfWeight = 700;
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        lgfont.lfHeight = 12;
+        font.CreateFontIndirect(&lgfont);
+
+        dc->SelectObject(font);
+        dc->SetTextColor(RGB(230, 230, 230));
+
+
+
+
+        dc->RestoreDC(sDC);
     }
 
 };

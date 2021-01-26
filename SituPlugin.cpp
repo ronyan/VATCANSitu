@@ -40,14 +40,14 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
 
     if (ItemCode == TAG_ITEM_IFR_REL) {
 
-        strcpy_s(sItemString, 16, "¬");
+        strcpy_s(sItemString, 16, "Â¬");
          *pColorCode = TAG_COLOR_RGB_DEFINED;
          COLORREF c = C_PPS_ORANGE;
          *pRGB = c;
 
         if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREQ", 4) == 0) {
             COLORREF c = C_PPS_ORANGE;
-            strcpy_s(sItemString, 16, "¤");
+            strcpy_s(sItemString, 16, "Â¤");
             *pRGB = c;
         }
         if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREL", 4) == 0) {
@@ -55,7 +55,7 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
                 FlightPlan.GetControllerAssignedData().SetScratchPadString("");
                 return;
             }
-            strcpy_s(sItemString, 16, "¤");
+            strcpy_s(sItemString, 16, "Â¤");
             COLORREF c = RGB(9, 171, 0);
             *pRGB = c;
         }

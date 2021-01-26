@@ -48,7 +48,9 @@
 #include "SituPlugin.h"
 #include "ACTag.h"
 #include "PPS.h"
+#include "wxRadar.h"
 #include <chrono>
+#include <future>
 
 using namespace Gdiplus;
 
@@ -58,7 +60,6 @@ unordered_map<string, int> CSiTRadar::tempTagData;
 map<string, menuButton> TopMenu::menuButtons;
 unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 buttonStates CSiTRadar::menuState = {};
-double CSiTRadar::magvar = 361;
 bool CSiTRadar::halfSecTick = FALSE;
 
 CSiTRadar::CSiTRadar()
@@ -69,6 +70,15 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlLength = 3;
 	menuState.haloRad = 5;
 	menuState.ptlTool = FALSE;
+
+	try {
+		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
+		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+		lastWxRefresh = clock();
+	}
+	catch (...) {
+		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "WX Parser", string("PNG Failed to Parse").c_str(), true, false, false, false, false);
+	}
 
 	CSiTRadar::mAcData.reserve(64);
 
@@ -98,6 +108,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		halfSecTick = !halfSecTick;
 	}
 
+	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
+
+		// autorefresh weather download every 10 minutes
+		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+		lastWxRefresh = clock();
+	}
+
 	// set up the drawing renderer
 	CDC dc;
 	dc.Attach(hdc);
@@ -108,7 +125,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	// Check if ASR is an IFR file
 	if (GetDataFromAsr("DisplayTypeName") != NULL) {
-
 		string DisplayType = GetDataFromAsr("DisplayTypeName");
 
 		// VFR asrs should show the NARDS displays
@@ -162,12 +178,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						DeleteObject(font);
 					}
+
 				}
 
 				// NARDS Menu
-
-
-
 			}
 		}
 
@@ -429,6 +443,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					ButtonToScreen(this, but, "SSR", 0);
 
 
+
 					menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_misc);
 
@@ -440,6 +455,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					but = TopMenu::DrawBut(&dc, but_tags);
 					ButtonToScreen(this, but, "Tags", 0);
 
+
 					menuButton but_flightPlan = { { modOrigin.x + 125, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_flightPlan);
 					ButtonToScreen(this, but, "Flight Plan", 0);
@@ -449,6 +465,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					ButtonToScreen(this, but, "Dest Airport", 0);
 
 					menutopleft.x = 300;
+
 
 					// screen range, dummy buttons, not really necessary in ES.
 					but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
@@ -765,6 +782,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 		}
 	}
+
+	if (phase == REFRESH_PHASE_BACK_BITMAP) {
+		if (menuState.wxAll || menuState.wxHigh) {
+			
+			std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
+			// wxRadar::renderRadar( &g, this, menuState.wxAll);
+		}
+	}
+
 	g.ReleaseHDC(hdc);
 	dc.Detach();
 }
@@ -910,6 +936,31 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 			tempTagData.clear();
 			menuState.quickLook = FALSE;
+		}
+	}
+
+	if (ObjectType == BUTTON_MENU_WX_HIGH) {
+		if (menuState.wxAll) { menuState.wxAll = false; }
+		
+		menuState.wxHigh = !menuState.wxHigh;
+		RefreshMapContent();
+		
+		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+			
+			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			lastWxRefresh = clock();
+		}
+	}
+
+	if (ObjectType == BUTTON_MENU_WX_ALL) {
+		if (menuState.wxHigh) { menuState.wxHigh = false; }
+		
+		menuState.wxAll = !menuState.wxAll;
+		RefreshMapContent();
+
+		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			lastWxRefresh = clock();
 		}
 	}
 	
@@ -1110,8 +1161,6 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 
 void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	const char* filt = nullptr;
-
-	// if (GetDataFromAsr("tagfamily")) { radtype = GetDataFromAsr("tagfamily"); }
 
 	// getting altitude filter information
 	if ((filt = GetDataFromAsr("altFilterHigh")) != NULL) {
