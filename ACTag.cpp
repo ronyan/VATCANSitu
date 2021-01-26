@@ -182,9 +182,9 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	POINT line0 = { p.x + tagOffsetX, p.y + tagOffsetY - 12 };
 	POINT line1 = { p.x + tagOffsetX, p.y + tagOffsetY };
-	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 12 };
-	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 24 };
-	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 36 };
+	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 11 };
+	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 22 };
+	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 33 };
 
 	// save context
 	int sDC = dc->SaveDC();
@@ -193,7 +193,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	CFont boldfont;
 	LOGFONT lgfont;
 	std::memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
+	lgfont.lfHeight = 12;
 	lgfont.lfWeight = 500;
 	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
 	font.CreateFontIndirect(&lgfont);
@@ -515,6 +515,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		RECT bline1{};
 		RECT bline2{};
 		RECT bline3{};
+
+		dc->SetTextColor(C_PPS_YELLOW);
 
 		bline1.top = p.y - 7;
 		bline1.left = p.x + 10;

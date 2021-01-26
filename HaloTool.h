@@ -40,7 +40,8 @@ public:
         return bearing;
     }
 
-    static void drawHalo(CDC* dc, POINT p, double r, double pixpernm) 
+    static void drawHalo(CDC* dc, POINT p, double r, double pixpernm)
+
     {
         int sDC = dc->SaveDC();
 
@@ -48,22 +49,22 @@ public:
 
         int pixoffset = (int)round(pixpernm * r);
 
-       // draw the halo around point p with radius r in NM
+        // draw the halo around point p with radius r in NM
         COLORREF targetPenColor = RGB(202, 205, 169);
         HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
         dc->SelectObject(targetPen);
         dc->SelectStockObject(HOLLOW_BRUSH);
-        dc->Ellipse(p.x - pixoffset, p.y - pixoffset, p.x + pixoffset, p.y + pixoffset); 
+        dc->Ellipse(p.x - pixoffset, p.y - pixoffset, p.x + pixoffset, p.y + pixoffset);
 
         DeleteObject(targetPen);
-        
+
         dc->RestoreDC(sDC);
     };
 
     static void drawPTL(CDC* dc, CRadarTarget radtar, CRadarScreen* radscr, POINT p, double ptlTime)
     {
         int sDC = dc->SaveDC();
-        
+
         CPosition pos1 = radtar.GetPreviousPosition(radtar.GetPosition()).GetPosition();
         CPosition pos2 = radtar.GetPosition().GetPosition();
         double theta = calcBearing(pos1, pos2);
@@ -82,4 +83,3 @@ public:
         dc->RestoreDC(sDC);
     };
 };
-

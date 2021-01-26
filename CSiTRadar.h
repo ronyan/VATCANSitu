@@ -33,7 +33,8 @@ struct buttonStates {
     bool ptlTool;
     bool showExtrapFP{ FALSE };
     bool filterBypassAll{ FALSE };
-    double ptlLength;
+    int ptlLength;
+    int haloRad;
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
     bool wxAll{ FALSE };
@@ -150,6 +151,7 @@ protected:
     // menu states
     bool halotool = FALSE;
     bool mousehalo = FALSE;
+    int menuLayer = 0;
     bool altFilterOpts = FALSE;
     bool altFilterOn = TRUE;
     bool autoRefresh = FALSE;
@@ -182,7 +184,8 @@ protected:
     int altFilterHigh = 0; 
 
     double halorad = 3;
-    string halooptions[9] = { "0.5", "3", "5", "10", "15", "20", "30", "60", "80" };
+    int haloOptions[6] = { 3,5,10,15,20,25 };
+    int ptlOptions[20] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,20,25,30,35,40 };
     string controllerID;
     string radtype;
 };

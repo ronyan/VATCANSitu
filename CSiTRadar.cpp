@@ -68,6 +68,7 @@ CSiTRadar::CSiTRadar()
 	halfSecTick = FALSE;
 
 	menuState.ptlLength = 3;
+	menuState.haloRad = 5;
 	menuState.ptlTool = FALSE;
 
 	try {
@@ -91,14 +92,6 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
-	
-	// Check if ASR is an IFR file
-	if (GetDataFromAsr("DisplayTypeName") == NULL) { return; }
-	else {
-		string DisplayType = GetDataFromAsr("DisplayTypeName");
-		if (strcmp(DisplayType.c_str(), "IFR") != 0) { return; }
-	}
-
 	// get cursor position and screen info
 	POINT p;
 
@@ -107,7 +100,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	RECT radarea = GetRadarArea();
-	
+
 	// time based functions
 	double time = ((double)clock() - (double)halfSec) / ((double)CLOCKS_PER_SEC);
 	if (time >= 0.5) {
@@ -130,475 +123,663 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	double pixnm = PixelsPerNM();
 
-	if (phase == REFRESH_PHASE_AFTER_TAGS) {
+	// Check if ASR is an IFR file
+	if (GetDataFromAsr("DisplayTypeName") != NULL) {
+		string DisplayType = GetDataFromAsr("DisplayTypeName");
 
-		// Draw the mouse halo before menu, so it goes behind it
-		if (mousehalo == TRUE) {
-			HaloTool::drawHalo(&dc, p, halorad, pixnm);
-			RequestRefresh();
-		}
+		// VFR asrs should show the NARDS displays
+		if (strcmp(DisplayType.c_str(), "VFR") == 0) {
+			if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
-		for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
-			radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
-		{
-			string callSign = radarTarget.GetCallsign();
-			// altitude filtering 
-			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
-				if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
-					continue;
+				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
+					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
+				{
+					
+					string callSign = radarTarget.GetCallsign();
+					bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
+
+					POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
+
+					// Altitude filters
+					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
+							continue;
+						}
+
+						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
+							continue;
+						}
+					}
+
+					// display CJS
+					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
+
+						CFont font;
+						LOGFONT lgfont;
+						COLORREF cjsColor = C_PPS_YELLOW;
+
+						memset(&lgfont, 0, sizeof(LOGFONT));
+						lgfont.lfWeight = 500;
+						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+						lgfont.lfHeight = 12;
+						font.CreateFontIndirect(&lgfont);
+
+						dc.SelectObject(font);
+						dc.SetTextColor(cjsColor);
+
+						RECT rectCJS;
+						rectCJS.left = p.x - 6;
+						rectCJS.right = p.x + 75;
+						rectCJS.top = p.y - 18;
+						rectCJS.bottom = p.y;
+
+						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
+
+						DeleteObject(font);
+					}
+
 				}
 
-				if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
-					continue;
+				// NARDS Menu
+			}
+		}
+
+
+		// IFR asrs should display the CAATS QAB
+		if (strcmp(DisplayType.c_str(), "IFR") == 0) {
+
+			if (phase == REFRESH_PHASE_AFTER_TAGS) {
+
+				// Draw the mouse halo before menu, so it goes behind it
+				if (mousehalo == TRUE) {
+					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
+					RequestRefresh();
+				}
+
+				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
+					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
+				{
+					// to pull the magvar value from a plane; since can't get it easily from .sct -- do this only once
+					if (magvar == 361) {
+						magvar = (double)radarTarget.GetPosition().GetReportedHeading() - (double)radarTarget.GetPosition().GetReportedHeadingTrueNorth();
+					}
+
+					string callSign = radarTarget.GetCallsign();
+					// altitude filtering 
+					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
+							continue;
+						}
+
+						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
+							continue;
+						}
+					}
+
+					POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
+
+					// Draw PTL
+					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
+						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+					}
+
+					// Get information about the Aircraft/Flightplan
+					bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
+					bool isVFR = mAcData[callSign].hasVFRFP;
+					bool isRVSM = mAcData[callSign].isRVSM;
+					bool isADSB = mAcData[callSign].isADSB;
+
+					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
+						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
+					}
+					else if (isCorrelated && mAcData[callSign].tagType == 3) { mAcData[callSign].tagType = 0; } // only sets once to go from uncorr to corr
+					// then allows it to be opened closed etc
+
+					COLORREF ppsColor;
+
+					// logic for the color of the PPS
+					if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
+					else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
+					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
+					else if (isVFR) { ppsColor = C_PPS_ORANGE; }
+					else { ppsColor = C_PPS_YELLOW; }
+
+					if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
+
+					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
+					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
+
+					if (radarTarget.GetPosition().GetRadarFlags() != 0) {
+						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+					}
+
+					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
+					if (radarTarget.GetPosition().GetRadarFlags() == 0
+						&& isADSB) {
+						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
+						CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
+						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
+
+					}
+
+					// Tag Level Logic
+					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // alpha tag if you have jurisdiction over the aircraft
+
+						// if you are handing off to someone
+						if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+							mAcData[callSign].isHandoff = TRUE;
+						}
+					}
+
+					// Once the handoff is complete, 
+					if (mAcData[callSign].isHandoff == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+						mAcData[callSign].isHandoff = FALSE;
+						// record the time of handoff acceptance
+						hoAcceptedTime[callSign] = clock();
+					}
+
+					// Post handoff blinking and then close the tag
+					if (hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 12) {
+						hoAcceptedTime.erase(callSign);
+
+						// if quick look is open, defer closing the tag until quicklook is off;
+						if (!menuState.quickLook) {
+							mAcData[callSign].tagType = 0;
+						}
+						if (menuState.quickLook) {
+							tempTagData[callSign] = 0;
+						}
+					}
+
+					// Once the handoff to me is completed,
+					if (mAcData[callSign].isHandoffToMe == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+						mAcData[callSign].isHandoffToMe = FALSE;
+					}
+
+					// Open a bravo tag, during a handoff to you
+					if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
+						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+						mAcData[callSign].isHandoffToMe = TRUE;
+					}
+
+					// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
+
+					COLORREF cjsColor = C_PPS_YELLOW;
+
+					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+						if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2
+							&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0
+							&& halfSecTick == TRUE
+							&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+							cjsColor = C_WHITE;
+						}
+					}
+
+					// show CJS for controller tracking aircraft
+					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
+
+						CFont font;
+						LOGFONT lgfont;
+
+						memset(&lgfont, 0, sizeof(LOGFONT));
+						lgfont.lfWeight = 500;
+						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+						lgfont.lfHeight = 12;
+						font.CreateFontIndirect(&lgfont);
+
+						dc.SelectObject(font);
+						dc.SetTextColor(cjsColor);
+
+						RECT rectCJS;
+						rectCJS.left = p.x - 6;
+						rectCJS.right = p.x + 75;
+						rectCJS.top = p.y - 18;
+						rectCJS.bottom = p.y;
+
+						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
+
+						DeleteObject(font);
+					}
+
+					// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
+					if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
+						HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
+					}
+
+				}
+
+				// Flight plan loop. Goes through flight plans, and if not correlated will display
+				for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
+					flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
+
+					if (flightPlan.GetCorrelatedRadarTarget().IsValid() || menuState.showExtrapFP == FALSE) { continue; }
+
+					// if the flightplan does not have a correlated radar target
+					if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
+						&& !mAcData[flightPlan.GetCallsign()].isADSB) {
+
+						CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
+						CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
+
+						POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
+
+						// draw the orange airplane symbol (credits andrewogden1678)
+						GraphicsContainer gCont;
+						gCont = g.BeginContainer();
+
+						// Airplane icon 
+
+						Point points[19] = {
+							Point(0,-6),
+							Point(-1,-5),
+							Point(-1,-2),
+							Point(-8,3),
+							Point(-8,4),
+							Point(-1,2),
+							Point(-1,6),
+							Point(-4,8),
+							Point(-4,9),
+							Point(0,8),
+							Point(4,9),
+							Point(4,8),
+							Point(1,6),
+							Point(1,2),
+							Point(8,4),
+							Point(8,3),
+							Point(1,-2),
+							Point(1,-5),
+							Point(0,-6)
+						};
+
+						g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
+						g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
+
+						SolidBrush orangeBrush(Color(255, 242, 120, 57));
+
+						g.FillPolygon(&orangeBrush, points, 19);
+						g.EndContainer(gCont);
+
+						DeleteObject(&orangeBrush);
+
+					}
+
+				}
+
+
+				// Draw the CSiT Tools Menu; starts at rad area top left then moves right
+				// this point moves to the origin of each subsequent area
+				POINT menutopleft = CPoint(radarea.left, radarea.top);
+
+				TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
+				RECT but;
+
+				// small amount of padding;
+				menutopleft.y += 6;
+				menutopleft.x += 10;
+
+				if (menuLayer == 0) {
+
+					POINT modOrigin;
+					modOrigin.x = 10;
+
+					menuButton but_tagHL = { { modOrigin.x+45, radarea.top + 6 }, "Tag HL", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_tagHL);
+					ButtonToScreen(this, but, "Tag HL", 0);
+
+					menuButton but_setup = { { modOrigin.x + 85, radarea.top + 6 }, "Setup", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_setup);
+					ButtonToScreen(this, but, "Setup", 0);
+
+					menuButton but_aircraftState = { { modOrigin.x + 125, radarea.top + 6 }, "Aircraft State", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_aircraftState);
+					ButtonToScreen(this, but, "Aircraft State", 0);
+
+					menuButton but_SSR = { { modOrigin.x + 195, radarea.top + 6 }, "SSR:", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_SSR);
+					ButtonToScreen(this, but, "SSR", 0);
+
+
+
+					menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_misc);
+
+					menuButton but_areas = { { modOrigin.x + 45, radarea.top + 31 }, "Areas", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_areas);
+					ButtonToScreen(this, but, "Areas", 0);
+
+					menuButton but_tags = { { modOrigin.x + 85, radarea.top + 31 }, "Tags", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_tags);
+					ButtonToScreen(this, but, "Tags", 0);
+
+
+					menuButton but_flightPlan = { { modOrigin.x + 125, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_flightPlan);
+					ButtonToScreen(this, but, "Flight Plan", 0);
+
+					menuButton but_destAirport = { { modOrigin.x + 195, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_destAirport);
+					ButtonToScreen(this, but, "Dest Airport", 0);
+
+					menutopleft.x = 300;
+
+
+					// screen range, dummy buttons, not really necessary in ES.
+					but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
+					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
+					menutopleft.y += 25;
+
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0);
+					menutopleft.x += 35;
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
+					menutopleft.y -= 25;
+					menutopleft.x += 55;
+
+					// horizontal range calculation
+					int range = (int)round(RadRange());
+					string rng = to_string(range);
+					TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
+					menutopleft.y += 15;
+
+					// 109 pix per in on my monitor
+					int nmIn = (int)round(109 / pixnm);
+					string nmtext = "1\" = " + to_string(nmIn) + "nm";
+					TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
+					menutopleft.y += 17;
+
+					TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
+
+					menutopleft.x += 80;
+					menutopleft.y -= 32;
+
+					// altitude filters
+
+					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
+					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
+
+					menutopleft.y += 25;
+
+					string altFilterLowFL = to_string(altFilterLow);
+					if (altFilterLowFL.size() < 3) {
+						altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+					}
+					string altFilterHighFL = to_string(altFilterHigh);
+					if (altFilterHighFL.size() < 3) {
+						altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+					}
+
+					string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
+					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
+					ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
+					menutopleft.y -= 25;
+					menutopleft.x += 65;
+
+					// separation tools
+					string haloText = "Halo " + to_string(menuState.haloRad);
+					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), menuState.haloTool);
+					ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_TOOL);
+
+					menutopleft.y = menutopleft.y + 25;
+					string ptlText = "PTL " + to_string(menuState.ptlLength);
+					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, ptlText.c_str(), CSiTRadar::menuState.ptlTool);
+					ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
+
+					menutopleft.y = menutopleft.y - 25;
+					menutopleft.x = menutopleft.x + 47;
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
+
+					menutopleft.y = menutopleft.y + 25;
+					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
+
+					menutopleft.y = menutopleft.y - 25;
+					menutopleft.x = menutopleft.x + 37;
+					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
+
+					menutopleft.y = menutopleft.y + 25;
+					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
+
+					// get the controller position ID and display it (aesthetics :) )
+					if (GetPlugIn()->ControllerMyself().IsValid())
+					{
+						controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
+					}
+
+					menutopleft.y -= 25;
+					menutopleft.x += 60;
+					string cid = "CJS - " + controllerID;
+
+					RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
+
+					menutopleft.y += 25;
+					but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
+					menutopleft.y -= 25;
+					ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
+
+					POINT psrPoor[13] = {
+						{0,0},
+						{0,-5},
+						{0,5},
+						{0,0},
+						{4,-4},
+						{-4,4},
+						{0,0},
+						{4,4},
+						{-4,-4},
+						{0,0},
+						{-5,0},
+						{5,0},
+						{0,0}
+					};
+
+					POINT targetModuleOrigin = { 745, radarea.top + 6 };
+
+					menuButton but_psrpoor = { {targetModuleOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_psrpoor);
+					TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
+
+					menuButton but_ALL = { { targetModuleOrigin.x, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
+					but = TopMenu::DrawBut(&dc, but_ALL);
+					ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
+
+					menuButton but_EXT = { { targetModuleOrigin.x + 30, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
+					but = TopMenu::DrawBut(&dc, but_EXT);
+					ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
+
+					menuButton but_EMode = { { targetModuleOrigin.x + 30, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_EMode);
+
+					POINT plane[19] = {
+						{0,-5},
+						{-1,-4},
+						{-1,-2},
+						{-5,2},
+						{-5,3},
+						{-1,1},
+						{-1,4},
+						{-4,6},
+						{-4,7},
+						{0,6},
+						{4,7},
+						{4,6},
+						{1,4},
+						{1,1},
+						{5,3},
+						{5,2},
+						{1,-2},
+						{1,-4},
+						{0,-5}
+					};
+
+					menuButton but_FPE = { { targetModuleOrigin.x + 60, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
+					but = TopMenu::DrawBut(&dc, but_FPE);
+					TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane) / sizeof(plane[0]));
+					ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
+
+					modOrigin.x = 950;
+
+					menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_highWx);
+					ButtonToScreen(this, but, "WxHigh", 0);
+
+					menuButton but_allWx = { { modOrigin.x + 30, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_allWx);
+					ButtonToScreen(this, but, "WxAll", 0);
+
+					menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_topsWx);
+
+					menutopleft.x = menutopleft.x + 200;
+
+					// options for the altitude filter sub menu
+
+					if (altFilterOpts) {
+
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
+						ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
+						menutopleft.x += 45;
+						menutopleft.y += 5;
+
+						r = TopMenu::MakeText(dc, menutopleft, 55, 15, "High Lim");
+						menutopleft.x += 55;
+						rHLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterHighFL.c_str());
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
+
+						menutopleft.x -= 55; menutopleft.y += 20;
+
+						TopMenu::MakeText(dc, menutopleft, 55, 15, "Low Lim");
+						menutopleft.x += 55;
+						rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
+
+						menutopleft.x += 75;
+						menutopleft.y -= 25;
+						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Save", FALSE);
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
+
+					}
+				}
+
+				else if (menuLayer == 1) {
+
+				POINT elementOrigin = CPoint(radarea.left + 10, radarea.top + 6);
+				RECT r;
+				// Halo submenu
+
+				if (menuState.haloTool) {
+
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
+					AddScreenObject(BUTTON_MENU_HALO_CLOSE, "Close", r, 0, "");
+
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halos");
+					AddScreenObject(BUTTON_MENU_HALO_CLEAR_ALL, "Clear All Halos", r, 0, "");
+
+					elementOrigin.x += 72;
+					TopMenu::MakeText(dc, elementOrigin, 220, 13, "Halo Radius - nm");
+
+					// PTL options loop
+
+					elementOrigin.y += 13;
+					elementOrigin.x += 20;
+
+					
+					for (int idx = 0; idx < 6; idx++) {
+						bool pressed = FALSE;
+						if (haloOptions[idx] == menuState.haloRad) {
+							pressed = TRUE;
+						}
+						RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(haloOptions[idx]).c_str(), pressed);
+						AddScreenObject(BUTTON_MENU_HALO_OPTIONS, to_string(haloOptions[idx]).c_str(), r, 0, "");
+						elementOrigin.x += 22;
+					}
+					
+
+					elementOrigin.y = radarea.top + 6;
+					// End PTL options
+
+					elementOrigin.x = 370;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", mousehalo);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Display");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halo Cursor");
+					AddScreenObject(BUTTON_MENU_HALO_MOUSE, "Mouse", r, 0, "");
+
+					elementOrigin.x = 460;
+					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Toggle Halo cursor ON - OFF.");
+					elementOrigin.y += 16;
+					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Select a Halo Radius.");
+					elementOrigin.y += 16;
+					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Click on target to toggle Halo ON - OFF.");
+										
+				}
+
+
+				// PTL submenu
+				if (menuState.ptlTool) {
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
+					AddScreenObject(BUTTON_MENU_PTL_CLOSE, "Close", r, 0, "");
+
+					
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "PTLs");
+					AddScreenObject(BUTTON_MENU_PTL_CLEAR_ALL, "Clear All PTLs", r, 0, "");
+
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "PTL All", FALSE);
+					AddScreenObject(BUTTON_MENU_PTL_ALL_ON, "PTL All on", r, 0, "");
+
+					elementOrigin.x += 72;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 23, "Uncorr", FALSE);
+
+					r = TopMenu::DrawButton(&dc, { elementOrigin.x, elementOrigin.y + 23 }, 70, 23, "Timeout", FALSE);
+
+					elementOrigin.x += 72;
+					TopMenu::MakeText(dc, elementOrigin, 250, 15, "PTL Length - Minutes");
+
+					// PTL options loop
+
+					elementOrigin.y += 15;
+					elementOrigin.x += 12;
+
+					for (int idx = 0; idx < 20; idx++) {
+						bool pressed = FALSE;
+						if (ptlOptions[idx] == menuState.ptlLength) {
+							pressed = TRUE;
+						}
+						if (idx == 10) {
+							elementOrigin.y += 15;
+							elementOrigin.x -= 220;
+						}
+						RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(ptlOptions[idx]).c_str(), pressed);
+						AddScreenObject(BUTTON_MENU_PTL_OPTIONS, to_string(ptlOptions[idx]).c_str(), r, 0, "");
+						elementOrigin.x += 22;
+					}
+
+					elementOrigin.y = radarea.top + 6;
+					// End PTL options
+
+					elementOrigin.x = 540;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", FALSE);
+					elementOrigin.x = 577;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", FALSE);
+
+					elementOrigin.x = 610;
+					TopMenu::MakeText(dc, elementOrigin, 150, 15, "Click on targets to toggle");
+					elementOrigin.y += 16;
+					TopMenu::MakeText(dc, elementOrigin, 150, 15, "PTL ON-OFF.");
+					
+				}
+
+				// Rings submenu
+
 				}
 			}
-
-			POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
-
-			// Draw PTL
-			if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
-				HaloTool::drawPTL(&dc, radarTarget, this, p, 3);
-			}
-
-			// Get information about the Aircraft/Flightplan
-			bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
-			bool isVFR = mAcData[callSign].hasVFRFP;
-			bool isRVSM = mAcData[callSign].isRVSM;
-			bool isADSB = mAcData[callSign].isADSB;
-
-			if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
-				mAcData[callSign].tagType = 3; // sets this if RT is uncorr
-			} 
-			else if (isCorrelated && mAcData[callSign].tagType == 3) { mAcData[callSign].tagType = 0; } // only sets once to go from uncorr to corr
-			// then allows it to be opened closed etc
-
-			COLORREF ppsColor;
-
-			// logic for the color of the PPS
-			if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
-			else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
-			else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
-			else if (isVFR) { ppsColor = C_PPS_ORANGE; }
-			else { ppsColor = C_PPS_YELLOW; }
-
-			if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
-
-			RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
-			AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
-
-			if (radarTarget.GetPosition().GetRadarFlags() != 0 ) {
-				CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-			}
-
-			// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
-			if (radarTarget.GetPosition().GetRadarFlags() == 0
-				&& isADSB) {
-				if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
-				CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
-				CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
-
-			}
-
-			// Tag Level Logic
-			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // alpha tag if you have jurisdiction over the aircraft
-
-				// if you are handing off to someone
-				if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
-					mAcData[callSign].isHandoff = TRUE;
-				}
-			}
-
-			// Once the handoff is complete, 
-			if (mAcData[callSign].isHandoff == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
-				mAcData[callSign].isHandoff = FALSE;
-				// record the time of handoff acceptance
-				hoAcceptedTime[callSign] = clock();
-			}
-
-			// Post handoff blinking and then close the tag
-			if ( hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 12) {
-				hoAcceptedTime.erase(callSign);
-				
-				// if quick look is open, defer closing the tag until quicklook is off;
-				if (!menuState.quickLook) {
-					mAcData[callSign].tagType = 0;
-				}
-				if (menuState.quickLook) {
-					tempTagData[callSign] = 0;
-				}
-			}
-
-			// Once the handoff to me is completed,
-			if (mAcData[callSign].isHandoffToMe == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
-				mAcData[callSign].isHandoffToMe = FALSE;
-			}
-
-			// Open a bravo tag, during a handoff to you
-			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
-				strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
-				CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
-				mAcData[callSign].isHandoffToMe = TRUE;
-			}
-
-			// Handoff warning system: if the plane is within 2 minutes of exiting your airspace, CJS will blink
-
-			COLORREF cjsColor = C_PPS_YELLOW;
-
-			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2
-					&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0
-					&& halfSecTick == TRUE
-					&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
-					cjsColor = C_WHITE;
-				}
-			}
-
-			// show CJS for controller tracking aircraft
-			if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
-				string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
-
-				CFont font;
-				LOGFONT lgfont;
-
-				memset(&lgfont, 0, sizeof(LOGFONT));
-				lgfont.lfWeight = 500;
-				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-				lgfont.lfHeight = 12;
-				font.CreateFontIndirect(&lgfont);
-
-				dc.SelectObject(font);
-				dc.SetTextColor(cjsColor);
-
-				RECT rectCJS;
-				rectCJS.left = p.x - 6;
-				rectCJS.right = p.x + 75;
-				rectCJS.top = p.y - 18;
-				rectCJS.bottom = p.y;
-
-				dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
-
-				DeleteObject(font);
-			}
-			
-			// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
-			if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
-				HaloTool::drawHalo(&dc, p, halorad, pixnm);
-			}
-
-		}
-
-		// Flight plan loop. Goes through flight plans, and if not correlated will display
-		for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
-			flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
-			
-			if (flightPlan.GetCorrelatedRadarTarget().IsValid() || menuState.showExtrapFP == FALSE) { continue; } 
-
-			// if the flightplan does not have a correlated radar target
-			if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
-				&& !mAcData[flightPlan.GetCallsign()].isADSB) {
-
-				CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
-				CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
-
-				POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
-
-				// draw the orange airplane symbol (credits andrewogden1678)
-				GraphicsContainer gCont;
-				gCont =  g.BeginContainer();
-
-				// Airplane icon 
-
-				Point points[19] = {
-					Point(0,-6),
-					Point(-1,-5),
-					Point(-1,-2),
-					Point(-8,3),
-					Point(-8,4),
-					Point(-1,2),
-					Point(-1,6),
-					Point(-4,8),
-					Point(-4,9),
-					Point(0,8),
-					Point(4,9),
-					Point(4,8),
-					Point(1,6),
-					Point(1,2),
-					Point(8,4),
-					Point(8,3),
-					Point(1,-2),
-					Point(1,-5),
-					Point(0,-6)
-				};
-
-				g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
-				g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
-
-				SolidBrush orangeBrush(Color(255, 242, 120, 57));
-
-				g.FillPolygon(&orangeBrush, points, 19);
-				g.EndContainer(gCont);
-
-				DeleteObject(&orangeBrush);
-								
-			}
-
-		}
-
-
-		// Draw the CSiT Tools Menu; starts at rad area top left then moves right
-		// this point moves to the origin of each subsequent area
-		POINT menutopleft = CPoint(radarea.left, radarea.top); 
-		POINT modOrigin{};
-		POINT sepOrigin{};
-
-		TopMenu::DrawBackground(dc, menutopleft, radarea.right, 60);
-		RECT but;
-
-		// small amount of padding;
-		menutopleft.y += 6;
-		menutopleft.x += 10;
-
-		// screen range, dummy buttons, not really necessary in ES.
-		but = TopMenu::DrawButton(&dc, menutopleft, 60, 23, "Setup", 0);
-		menutopleft.y += 25;
-
-		but = TopMenu::DrawButton(&dc, menutopleft, 60, 23, "Tags", 0);
-		menutopleft.x += 70;
-		menutopleft.y -= 25;
-
-		but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
-		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
-		menutopleft.y += 25;
-
-
-		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0); 
-		menutopleft.x += 35;
-		TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
-		menutopleft.y -= 25;
-		menutopleft.x += 55;
-		
-		// horizontal range calculation
-		int range = (int)round(RadRange());
-		string rng = to_string(range);
-		TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
-		menutopleft.y += 15;
-
-		// 109 pix per in on my monitor
-		int nmIn = (int)round(109 / pixnm);
-		string nmtext = "1\" = " + to_string(nmIn) + "nm";
-		TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
-		menutopleft.y += 17;
-
-		TopMenu::MakeDropDown(dc, menutopleft, 30, 15, rng.c_str());
-
-		menutopleft.x += 80;
-		menutopleft.y -= 32;
-
-		// altitude filters
-
-		but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
-		ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
-		
-		menutopleft.y += 25;
-
-		string altFilterLowFL = to_string(altFilterLow);
-		if (altFilterLowFL.size() < 3) {
-			altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
-		}
-		string altFilterHighFL = to_string(altFilterHigh);
-		if (altFilterHighFL.size() < 3) {
-			altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
-		}
-
-		string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
-		but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
-		ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
-		menutopleft.y -= 25;
-		menutopleft.x += 65; 
-
-		// separation tools
-		sepOrigin = { 315, menutopleft.y };
-		if (true) {
-			string haloText = "Halo " + halooptions[haloidx];
-			but = TopMenu::DrawButton(&dc, sepOrigin, 50, 23, haloText.c_str(), halotool);
-			ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_OPTIONS);
-
-			sepOrigin.y = sepOrigin.y + 25;
-			but = TopMenu::DrawButton(&dc, sepOrigin, 50, 23, "PTL 3", CSiTRadar::menuState.ptlTool);
-			ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
-
-			sepOrigin.y = sepOrigin.y - 25;
-			sepOrigin.x = sepOrigin.x + 50;
-			TopMenu::DrawButton(&dc, sepOrigin, 35, 23, "RBL", 0);
-
-			sepOrigin.y = sepOrigin.y + 25;
-			TopMenu::DrawButton(&dc, sepOrigin, 35, 23, "PIV", 0);
-
-			sepOrigin.y = sepOrigin.y - 25;
-			sepOrigin.x = sepOrigin.x + 35;
-			TopMenu::DrawButton(&dc, sepOrigin, 55, 23, "Rings 20", 0);
-
-			sepOrigin.y = sepOrigin.y + 25;
-			TopMenu::DrawButton(&dc, sepOrigin, 55, 23, "Grid", 0);
-			sepOrigin.x += 55;
-			sepOrigin.y -= 25;
-
-			menuButton airspaceCov = { { sepOrigin.x, sepOrigin.y }, "Airspace", 55, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-			TopMenu::DrawBut(&dc, airspaceCov);
-		}
-
-		// get the controller position ID and display it (aesthetics :) )
-		if (GetPlugIn()->ControllerMyself().IsValid())
-		{
-			controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
-		}
-
-		menutopleft.x += 220;
-		string cid = "CJS - " + controllerID;
-
-		RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
-
-		menutopleft.y += 25;
-		but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
-		menutopleft.y -= 25;
-		ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
-
-		POINT psrPoor[13] = {
-			{0,0},
-			{0,-5},
-			{0,5},
-			{0,0},
-			{4,-4},
-			{-4,4},
-			{0,0},
-			{4,4},
-			{-4,-4},
-			{0,0},
-			{-5,0},
-			{5,0},
-			{0,0}
-		};
-
-		
-		modOrigin.x = 620;
-		modOrigin.y = radarea.top + 6;
-
-		menuButton but_psrpoor = { {modOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-		TopMenu::DrawBut(&dc, but_psrpoor);
-		TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
-
-		menuButton but_ALL = { { modOrigin.x, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll};
-		but = TopMenu::DrawBut(&dc, but_ALL);
-		ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
-
-		menuButton but_EXT = { { modOrigin.x + 30, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
-		but = TopMenu::DrawBut(&dc, but_EXT);
-		ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
-
-		menuButton but_EMode = { { modOrigin.x + 30, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-		TopMenu::DrawBut(&dc, but_EMode);
-
-		POINT plane[19] = {
-			{0,-5},
-			{-1,-4},
-			{-1,-2},
-			{-5,2},
-			{-5,3},
-			{-1,1},
-			{-1,4},
-			{-4,6},
-			{-4,7},
-			{0,6},
-			{4,7},
-			{4,6},
-			{1,4},
-			{1,1},
-			{5,3},
-			{5,2},
-			{1,-2},
-			{1,-4},
-			{0,-5}
-		};
-
-		menuButton but_FPE = { { modOrigin.x + 62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
-		but = TopMenu::DrawBut(&dc, but_FPE);
-		TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane)/sizeof(plane[0]));
-		ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
-
-		modOrigin.x = 730;
-
-		menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
-		but = TopMenu::DrawBut(&dc, but_highWx);
-		ButtonToScreen(this, but, "WxHigh", BUTTON_MENU_WX_HIGH);
-
-		menuButton but_allWx = { { modOrigin.x + 30, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxAll };
-		but = TopMenu::DrawBut(&dc, but_allWx);
-		ButtonToScreen(this, but, "WxAll", BUTTON_MENU_WX_ALL);
-
-		menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, wxRadar::ts.c_str(), 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-		TopMenu::DrawBut(&dc, but_topsWx);
-
-		menutopleft.x = menutopleft.x + 300;
-
-		// options for halo radius
-		if (halotool) {
-			TopMenu::DrawHaloRadOptions(dc, menutopleft, halorad, halooptions);
-			RECT rect;
-			RECT r;
-
-			r = TopMenu::DrawButton(&dc, menutopleft, 48, 18, "End", FALSE);
-			ButtonToScreen(this, r, "End", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x += 50;
-
-			r = TopMenu::DrawButton(&dc, menutopleft, 50, 18, "All On", FALSE);
-			ButtonToScreen(this, r, "All On", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x += 50;
-			r = TopMenu::DrawButton(&dc, menutopleft, 50, 18, "Clr All", FALSE);
-			ButtonToScreen(this, r, "Clr All", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x += 50;
-			r = TopMenu::DrawButton(&dc, menutopleft, 48, 18, "Mouse", mousehalo);
-			ButtonToScreen(this, r, "Mouse", BUTTON_MENU_HALO_OPTIONS);
-			menutopleft.x -= 150;
-
-			for (int idx = 0; idx < 9; idx++) {
-
-				rect.left = menutopleft.x;
-				rect.top = menutopleft.y + 31;
-				rect.right = menutopleft.x + 22;
-				rect.bottom = menutopleft.y + 46;
-				string key = to_string(idx);
-				AddScreenObject(BUTTON_MENU_HALO_OPTIONS, key.c_str(), rect, 0, "");
-				menutopleft.x += 22;
-			}
-		}
-
-		// options for the altitude filter sub menu
-		
-		if (altFilterOpts) {
-			
-			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
-			ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
-			menutopleft.x += 45;
-			menutopleft.y += 5;
-			
-			r = TopMenu::MakeText(dc, menutopleft, 55, 15, "High Lim");
-			menutopleft.x += 55;
-			rHLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterHighFL.c_str());
-			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
-
-			menutopleft.x -= 55; menutopleft.y += 20;
-			
-			TopMenu::MakeText(dc, menutopleft, 55, 15, "Low Lim");
-			menutopleft.x += 55;
-			rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
-			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
-
-			menutopleft.x += 75;
-			menutopleft.y -= 25;
-			r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Save", FALSE);
-			AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
-
 		}
 	}
 
@@ -622,7 +803,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 {
 	if (ObjectType == AIRCRAFT_SYMBOL) {
 		
-		if (halotool == TRUE) {
+		if (menuState.haloTool == TRUE) {
 
 			CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
 			string callsign = rt.GetCallsign();
@@ -649,27 +830,44 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 
 	}
+	
+	if (ObjectType == BUTTON_MENU_HALO_TOOL) {
+		menuState.haloTool = true;
+		menuLayer = 1;
+	}
 
 	if (ObjectType == BUTTON_MENU_HALO_OPTIONS) {
-		if (!strcmp(sObjectId, "0")) { halorad = 0.5; haloidx = 0; }
-		if (!strcmp(sObjectId, "1")) { halorad = 3; haloidx = 1; }
-		if (!strcmp(sObjectId, "2")) { halorad = 5; haloidx = 2; }
-		if (!strcmp(sObjectId, "3")) { halorad = 10; haloidx = 3; }
-		if (!strcmp(sObjectId, "4")) { halorad = 15; haloidx = 4; }
-		if (!strcmp(sObjectId, "5")) { halorad = 20; haloidx = 5; }
-		if (!strcmp(sObjectId, "6")) { halorad = 30; haloidx = 6; }
-		if (!strcmp(sObjectId, "7")) { halorad = 60; haloidx = 7; }
-		if (!strcmp(sObjectId, "8")) { halorad = 80; haloidx = 8; }
-		if (!strcmp(sObjectId, "Clr All")) { hashalo.clear(); }
-		if (!strcmp(sObjectId, "End")) { halotool = !halotool; }
-		if (!strcmp(sObjectId, "Mouse")) { mousehalo = !mousehalo; }
-		if (!strcmp(sObjectId, "Halo")) { halotool = !halotool; menuState.ptlTool = FALSE; }
+		menuState.haloRad = stoi(sObjectId);
+	}
+
+	if (ObjectType == BUTTON_MENU_HALO_CLOSE) {
+		menuState.haloTool = false;
+		menuLayer = 0;
+	}
+
+	if (ObjectType == BUTTON_MENU_HALO_CLEAR_ALL) {
+		hashalo.clear();
+	}
+
+	if (ObjectType == BUTTON_MENU_HALO_MOUSE) {
+		mousehalo = !mousehalo;
+	}
+
+	if (ObjectType == BUTTON_MENU_PTL_OPTIONS) {
+		menuState.ptlLength = stoi(sObjectId);
 	}
 
 	if (ObjectType == BUTTON_MENU_PTL_TOOL) {
-		if (halotool) { halotool = FALSE; }
-		menuState.ptlTool = !menuState.ptlTool;
+		menuState.ptlTool = true;
+		menuLayer = 1;
 	}
+
+	if (ObjectType == BUTTON_MENU_PTL_CLOSE) {
+		menuState.ptlTool = false;
+		menuLayer = 0;
+	}
+
+	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) { hasPTL.clear(); }
 
 	if (ObjectType == BUTTON_MENU_EXTRAP_FP) {
 		menuState.showExtrapFP = !menuState.showExtrapFP;
