@@ -409,6 +409,47 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				if (menuLayer == 0) {
 
+					POINT modOrigin;
+					modOrigin.x = 10;
+
+					menuButton but_tagHL = { { modOrigin.x+45, radarea.top + 6 }, "Tag HL", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_tagHL);
+					ButtonToScreen(this, but, "Tag HL", 0);
+
+					menuButton but_setup = { { modOrigin.x + 85, radarea.top + 6 }, "Setup", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_setup);
+					ButtonToScreen(this, but, "Setup", 0);
+
+					menuButton but_aircraftState = { { modOrigin.x + 125, radarea.top + 6 }, "Aircraft State", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_aircraftState);
+					ButtonToScreen(this, but, "Aircraft State", 0);
+
+					menuButton but_SSR = { { modOrigin.x + 195, radarea.top + 6 }, "SSR:", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_SSR);
+					ButtonToScreen(this, but, "SSR", 0);
+
+
+					menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_misc);
+
+					menuButton but_areas = { { modOrigin.x + 45, radarea.top + 31 }, "Areas", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_areas);
+					ButtonToScreen(this, but, "Areas", 0);
+
+					menuButton but_tags = { { modOrigin.x + 85, radarea.top + 31 }, "Tags", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_tags);
+					ButtonToScreen(this, but, "Tags", 0);
+
+					menuButton but_flightPlan = { { modOrigin.x + 125, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_flightPlan);
+					ButtonToScreen(this, but, "Flight Plan", 0);
+
+					menuButton but_destAirport = { { modOrigin.x + 195, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_destAirport);
+					ButtonToScreen(this, but, "Dest Airport", 0);
+
+					menutopleft.x = 300;
+
 					// screen range, dummy buttons, not really necessary in ES.
 					but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
 					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
@@ -516,19 +557,21 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						{0,0}
 					};
 
-					menuButton but_psrpoor = { {455, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					POINT targetModuleOrigin = { 745, radarea.top + 6 };
+
+					menuButton but_psrpoor = { {targetModuleOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_psrpoor);
 					TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
 
-					menuButton but_ALL = { { 455, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
+					menuButton but_ALL = { { targetModuleOrigin.x, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
 					but = TopMenu::DrawBut(&dc, but_ALL);
 					ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
 
-					menuButton but_EXT = { { 485, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
+					menuButton but_EXT = { { targetModuleOrigin.x + 30, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
 					but = TopMenu::DrawBut(&dc, but_EXT);
 					ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
 
-					menuButton but_EMode = { { 485, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					menuButton but_EMode = { { targetModuleOrigin.x + 30, radarea.top + 31 }, "EMode", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_EMode);
 
 					POINT plane[19] = {
@@ -553,10 +596,23 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						{0,-5}
 					};
 
-					menuButton but_FPE = { { 517, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
+					menuButton but_FPE = { { targetModuleOrigin.x + 60, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
 					but = TopMenu::DrawBut(&dc, but_FPE);
 					TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane) / sizeof(plane[0]));
 					ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
+
+					modOrigin.x = 950;
+
+					menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_highWx);
+					ButtonToScreen(this, but, "WxHigh", 0);
+
+					menuButton but_allWx = { { modOrigin.x + 30, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_allWx);
+					ButtonToScreen(this, but, "WxAll", 0);
+
+					menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_topsWx);
 
 					menutopleft.x = menutopleft.x + 200;
 
