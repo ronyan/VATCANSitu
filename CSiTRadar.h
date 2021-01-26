@@ -55,7 +55,6 @@ public:
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
 
-    static double magvar;
     static buttonStates menuState;
 
     double wxRadLat;

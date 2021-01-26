@@ -200,10 +200,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
-					// to pull the magvar value from a plane; since can't get it easily from .sct -- do this only once
-					if (magvar == 361) {
-						magvar = (double)radarTarget.GetPosition().GetReportedHeading() - (double)radarTarget.GetPosition().GetReportedHeadingTrueNorth();
-					}
 
 					string callSign = radarTarget.GetCallsign();
 					// altitude filtering 
@@ -620,13 +616,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					modOrigin.x = 950;
 
-					menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
 					but = TopMenu::DrawBut(&dc, but_highWx);
-					ButtonToScreen(this, but, "WxHigh", 0);
+					ButtonToScreen(this, but, "WxHigh", BUTTON_MENU_WX_HIGH);
 
-					menuButton but_allWx = { { modOrigin.x + 30, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_allWx = { { modOrigin.x + 30, radarea.top + 6 }, "All", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxAll };
 					but = TopMenu::DrawBut(&dc, but_allWx);
-					ButtonToScreen(this, but, "WxAll", 0);
+					ButtonToScreen(this, but, "WxAll", BUTTON_MENU_WX_ALL);
 
 					menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_topsWx);
