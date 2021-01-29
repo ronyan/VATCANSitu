@@ -201,6 +201,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
 
+					if (menuState.quickLook) {
+						mAcData[radarTarget.GetCallsign()].tagType = 1;
+					}
+
 					string callSign = radarTarget.GetCallsign();
 					// altitude filtering 
 					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
