@@ -200,9 +200,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
-					// to pull the magvar value from a plane; since can't get it easily from .sct -- do this only once
-					if (magvar == 361) {
-						magvar = (double)radarTarget.GetPosition().GetReportedHeading() - (double)radarTarget.GetPosition().GetReportedHeadingTrueNorth();
+
+					if (menuState.quickLook) {
+						mAcData[radarTarget.GetCallsign()].tagType = 1;
 					}
 
 					string callSign = radarTarget.GetCallsign();
