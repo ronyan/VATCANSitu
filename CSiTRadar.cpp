@@ -616,39 +616,55 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					menutopleft.x = menutopleft.x + 200;
 
-					// options for the altitude filter sub menu
-
-					if (altFilterOpts) {
-
-						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "End", FALSE);
-						ButtonToScreen(this, r, "End", BUTTON_MENU_ALT_FILT_OPT);
-						menutopleft.x += 45;
-						menutopleft.y += 5;
-
-						r = TopMenu::MakeText(dc, menutopleft, 55, 15, "High Lim");
-						menutopleft.x += 55;
-						rHLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterHighFL.c_str());
-						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
-
-						menutopleft.x -= 55; menutopleft.y += 20;
-
-						TopMenu::MakeText(dc, menutopleft, 55, 15, "Low Lim");
-						menutopleft.x += 55;
-						rLLim = TopMenu::MakeField(dc, menutopleft, 55, 15, altFilterLowFL.c_str());
-						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
-
-						menutopleft.x += 75;
-						menutopleft.y -= 25;
-						r = TopMenu::DrawButton(&dc, menutopleft, 35, 46, "Save", FALSE);
-						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Save", r, 0, "");
-
-					}
 				}
 
 				else if (menuLayer == 1) {
 
 				POINT elementOrigin = CPoint(radarea.left + 10, radarea.top + 6);
 				RECT r;
+
+				// Alt Filter Submenu
+				if (altFilterOpts) {
+
+					string altFilterLowFL = to_string(altFilterLow);
+					if (altFilterLowFL.size() < 3) {
+						altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+					}
+					string altFilterHighFL = to_string(altFilterHigh);
+					if (altFilterHighFL.size() < 3) {
+						altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+					}
+
+
+					r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "Cancel", FALSE);
+					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Cancel", r, 0, "");
+
+					elementOrigin.x += 52;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "", FALSE);
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 50, 15, "Clear");
+					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 50, 15, "Filter");
+					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Clear Filter", r, 0, "");
+
+					elementOrigin.x += 52;
+					r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "OK", FALSE);
+					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "OK", r, 0, "");
+					elementOrigin.x += 40;
+					elementOrigin.y += 6;
+
+					r = TopMenu::MakeText(dc, elementOrigin, 55, 15, "Top:");
+					elementOrigin.x += 45;
+					rHLim = TopMenu::MakeField(dc, elementOrigin, 25, 15, altFilterHighFL.c_str());
+					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
+
+					elementOrigin.x -= 45; elementOrigin.y += 20;
+
+					TopMenu::MakeText(dc, elementOrigin, 55, 15, "Base:");
+					elementOrigin.x += 45;
+					rLLim = TopMenu::MakeField(dc, elementOrigin, 25, 15, altFilterLowFL.c_str());
+					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
+
+				}
+
 				// Halo submenu
 
 				if (menuState.haloTool) {
@@ -665,7 +681,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					elementOrigin.x += 72;
 					TopMenu::MakeText(dc, elementOrigin, 220, 13, "Halo Radius - nm");
 
-					// PTL options loop
+					// Halo options loop
 
 					elementOrigin.y += 13;
 					elementOrigin.x += 20;
@@ -857,8 +873,16 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	
 
 	if (ObjectType == BUTTON_MENU_ALT_FILT_OPT) {
-		if (!strcmp(sObjectId, "Alt Filt Opts")) { altFilterOpts = !altFilterOpts; }
-		if (!strcmp(sObjectId, "End")) { altFilterOpts = 0; }
+		if (!strcmp(sObjectId, "Alt Filt Opts")) { 
+			altFilterOpts = !altFilterOpts;
+			menuLayer = 1;
+		}
+
+		if (!strcmp(sObjectId, "Cancel")) {
+			altFilterOpts = false;
+			menuLayer = 0;
+		}
+
 		if (!strcmp(sObjectId, "LLim")) {
 			string altFilterLowFL = to_string(altFilterLow);
 			if (altFilterLowFL.size() < 3) {
@@ -873,12 +897,13 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 			GetPlugIn()->OpenPopupEdit(rHLim, FUNCTION_ALT_FILT_HIGH, altFilterHighFL.c_str());
 		}
-		if (!strcmp(sObjectId, "Save")) {
+		if (!strcmp(sObjectId, "OK")) {
 			string s = to_string(altFilterHigh);
 			SaveDataToAsr("altFilterHigh", "Alt Filter High Limit", s.c_str());
 			s = to_string(altFilterLow);
 			SaveDataToAsr("altFilterLow", "Alt Filter Low Limit", s.c_str());
-			altFilterOpts = 0;
+			altFilterOpts = false;
+			menuLayer = 0;
 		}
 	}
 
