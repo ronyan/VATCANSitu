@@ -135,6 +135,31 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
+					// draw PPS
+					bool isVFR = mAcData[callSign].hasVFRFP;
+					bool isRVSM = mAcData[callSign].isRVSM;
+					bool isADSB = mAcData[callSign].isADSB;
+
+					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
+						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
+					}
+					else if (isCorrelated && mAcData[callSign].tagType == 3) { mAcData[callSign].tagType = 0; } // only sets once to go from uncorr to corr
+					// then allows it to be opened closed etc
+
+					COLORREF ppsColor;
+
+					// logic for the color of the PPS
+					if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
+					else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
+					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
+					else if (isVFR) { ppsColor = C_PPS_ORANGE; }
+					else { ppsColor = C_PPS_YELLOW; }
+
+					if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
+
+					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
+					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
+
 					// display CJS
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
