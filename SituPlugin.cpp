@@ -11,7 +11,7 @@ const int TAG_FUNC_IFR_RELEASED = 5002;
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.4.1.0",
+		"0.4.1.1",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
@@ -51,10 +51,6 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
             *pRGB = c;
         }
         if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREL", 4) == 0) {
-            if (ControllerMyself().GetFacility() < 5) {
-                FlightPlan.GetControllerAssignedData().SetScratchPadString("");
-                return;
-            }
             strcpy_s(sItemString, 16, "¤");
             COLORREF c = RGB(9, 171, 0);
             *pRGB = c;
