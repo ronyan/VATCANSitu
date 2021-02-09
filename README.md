@@ -6,6 +6,14 @@ The author of this plugin has NO AFFILIATION with NavCanada. This tool is for si
 
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
 
+Features in the Nightly Build:
+
+Halo tool and PTL menus now implemented and match the real-world UI. 
+PTL length can be modified.
+Altitude filter menu UI now more closely resembles the real-world counterpart. 
+NARDS tags can now be displayed on tower screens (WIP as of FEB08)
+Fixes in the electronic radar release system
+
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
 ### Latest Version 0.4.0.1 02JAN2021
