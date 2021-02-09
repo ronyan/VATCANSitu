@@ -11,7 +11,7 @@ const int TAG_FUNC_IFR_RELEASED = 5002;
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.4.1.1",
+		"0.4.2.0",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

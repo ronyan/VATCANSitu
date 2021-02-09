@@ -120,6 +120,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				{
 					
 					string callSign = radarTarget.GetCallsign();
+					CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
 					bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
 
 					POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
@@ -186,6 +187,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
 						DeleteObject(font);
+					}
+
+					if (radarTarget.GetPosition().GetRadarFlags() != 0) {
+						CACTag::DrawNARDSTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
 					}
 				}
 

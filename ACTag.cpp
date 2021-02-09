@@ -582,6 +582,295 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	DeleteObject(boldfont);
 }
 
+void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
+	
+	POINT p{ 0,0 };
+	p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
+	int tagOffsetX = 0;
+	int tagOffsetY = 0;
+
+	bool blinking = FALSE;
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) { blinking = TRUE; }
+	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
+	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
+
+	// Line 0 Items
+	string ssr = rt->GetPosition().GetSquawk();
+
+	// Line 1 Items
+	string cs = rt->GetCallsign();
+	string wtSymbol = "";
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
+	cs = cs + wtSymbol;
+
+	char commTypeChar = tolower(fp->GetControllerAssignedData().GetCommunicationType());
+	if (commTypeChar == '\0') {
+		commTypeChar = tolower(fp->GetFlightPlanData().GetCommunicationType());
+	}
+	string commType = "";
+	if (commTypeChar != 'v') { commType = "/"; commType += commTypeChar; }
+
+	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
+
+	// Line 2 Items
+	string altThreeDigit;
+	if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+		altThreeDigit = to_string((rt->GetPosition().GetFlightLevel() + 50) / 100); // +50 to force rounding up
+	}
+	else {
+		altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100);
+	}
+	if (altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
+	string vmi;
+	if (rt->GetVerticalSpeed() > 400) { vmi = "^"; }
+	if (rt->GetVerticalSpeed() < -400) { vmi = "|"; }; // up arrow "??!" = downarrow
+	
+	string groundSpeed = to_string((rt->GetPosition().GetReportedGS() + 5) / 10);
+
+	// Initiate the default tag location, if no location is set already or find it in the map
+
+	if (tOffset->find(rt->GetCallsign()) == tOffset->end()) {
+		POINT pTag{ 20, -20 };
+		tOffset->insert(pair<string, POINT>(rt->GetCallsign(), pTag));
+
+		tagOffsetX = pTag.x;
+		tagOffsetY = pTag.y;
+	}
+	else {
+		POINT pTag = tOffset->find(rt->GetCallsign())->second;
+
+		tagOffsetX = pTag.x;
+		tagOffsetY = pTag.y;
+	}
+
+	POINT line0 = { p.x + tagOffsetX, p.y + tagOffsetY - 11 };
+	POINT line1 = { p.x + tagOffsetX, p.y + tagOffsetY };
+	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 11 };
+	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 22 };
+	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 33 };
+
+	// save context
+	int sDC = dc->SaveDC();
+
+	CFont font;
+	CFont boldfont;
+	LOGFONT lgfont;
+	std::memset(&lgfont, 0, sizeof(LOGFONT));
+	lgfont.lfHeight = 12;
+	lgfont.lfWeight = 500;
+	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+	font.CreateFontIndirect(&lgfont);
+	lgfont.lfWeight = 1200;
+	boldfont.CreateFontIndirect(&lgfont);
+	dc->SelectObject(font);
+
+	// Draw Connector
+
+	int doglegX = 0;
+	int doglegY = 0;
+
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
+		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2) {
+
+		POINT connector{ 0,0 };
+		int tagOffsetX = 0;
+		int tagOffsetY = 0;
+
+		// get the tag off set from the TagOffset<map>
+		POINT pTag = tOffset->find(rt->GetCallsign())->second;
+
+		tagOffsetX = pTag.x;
+		tagOffsetY = pTag.y;
+
+		bool blinking = FALSE;
+		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
+			&& strcmp(fp->GetHandoffTargetControllerId(), "") != 0) {
+			blinking = TRUE;
+		}
+		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
+
+		if (rt->IsValid()) {
+			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
+		}
+
+		// determine if the tag is to the left or the right of the PPS
+
+		if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
+		if (pTag.x < 0) { connector.x = (int)p.x + tagOffsetX - 3 + CSiTRadar::mAcData[rt->GetCallsign()].tagWidth; }
+		connector.y = p.y + tagOffsetY + 7;
+
+		// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
+		// get the angle between the line between the PPS and connector and horizontal
+
+		// if vertical (don't divide by 0!)
+		double theta = 30;
+		double phi = 0;
+
+		if (connector.x - p.x != 0) {
+
+			double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
+			double y = abs(p.y - connector.y); // also cast as double for atan
+
+			phi = atan(y / x);
+
+			// logic for if phi is a certain value; unit circle! (with fudge factor)
+			if (phi >= 0 && phi < PI / 6) { theta = 30; }
+			else if (phi >= PI / 6 && phi < PI / 4) { theta = 45; }
+			else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
+
+			theta = theta * PI / 180; // to radians
+			doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
+
+			// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
+			doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
+
+			if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
+			if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); }
+			if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
+			if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
+		}
+		else {
+			doglegX = p.x; // if direction on top or below
+			doglegY = p.y + tagOffsetY + 7;
+		}
+
+		// Draw the angled line and draw the horizontal line
+		HPEN targetPen;
+		COLORREF conColor = C_PPS_YELLOW;
+		if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+		targetPen = CreatePen(PS_SOLID, 1, conColor);
+		dc->SelectObject(targetPen);
+		dc->SelectStockObject(NULL_BRUSH);
+
+		dc->MoveTo(p.x, p.y);
+		dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
+		dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
+
+		DeleteObject(targetPen);
+
+	}
+
+	// Draw Connector Ends
+
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
+		(CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1)) {
+		// Tag formatting
+		RECT tagCallsign;
+		tagCallsign.left = p.x + tagOffsetX;
+		tagCallsign.top = p.y + tagOffsetY;
+
+		dc->SetTextColor(C_PPS_YELLOW);
+		if (blinking && CSiTRadar::halfSecTick) {
+			dc->SetTextColor(C_WHITE);
+		}
+
+		// Line 0 
+		RECT rline0;
+		rline0.top = line0.y;
+		rline0.left = line0.x;
+		rline0.bottom = line1.y;
+
+		dc->DrawText(ssr.c_str(), &rline0, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(ssr.c_str(), &rline0, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_SQUAWK, fp->GetCallsign(), rline0, TRUE, rt->GetPosition().GetSquawk());
+
+		// Line 1
+		RECT rline1;
+		rline1.top = line1.y;
+		rline1.left = line1.x;
+		rline1.bottom = line2.y;
+
+		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac) {
+			dc->SetTextColor(C_PPS_RED);
+			if (blinking && CSiTRadar::halfSecTick) {
+				dc->SetTextColor(C_WHITE);
+			}
+
+			dc->SelectObject(boldfont);
+
+			dc->DrawText("+", &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText("+", &rline1, DT_LEFT);
+			dc->SetTextColor(C_PPS_YELLOW);
+
+			dc->SelectObject(font);
+
+			rline1.left = rline1.right;
+			rline1.right = rline1.left;
+		}
+
+		dc->DrawText(cs.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
+		rline1.left = rline1.right;
+		rline1.right = rline1.left + 8;
+
+		// Show Communication Type if not Voice
+		if (commType.size() > 0) {
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
+		}
+		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+		rline1.left = rline1.right;
+
+		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+
+		// draw extension if tag is to the left of the PPS
+		if (rline1.right < (int)doglegX) {
+			HPEN targetPen;
+			COLORREF conColor = C_PPS_YELLOW;
+			if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+			targetPen = CreatePen(PS_SOLID, 1, conColor);
+			dc->SelectObject(targetPen);
+
+			dc->MoveTo(rline1.right + 5, rline1.top + 7);
+			dc->LineTo((int)doglegX, (int)doglegY);
+
+			DeleteObject(targetPen);
+		}
+
+		// Line 2
+		RECT rline2;
+		rline2.top = line2.y;
+		rline2.left = line2.x;
+		rline2.bottom = line3.y;
+		dc->DrawText(altThreeDigit.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(altThreeDigit.c_str(), &rline2, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), rline2, TRUE, "");
+
+		if (abs(rt->GetVerticalSpeed()) > 400) {
+			rline2.left = rline2.right;
+			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT);
+		}
+		rline2.left = rline2.right + 8;
+
+		double alt;
+
+		if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+			alt = rt->GetPosition().GetFlightLevel(); // +50 to force rounding up
+		}
+		else {
+			alt = rt->GetPosition().GetPressureAltitude();
+		}
+
+		if (blinking && CSiTRadar::halfSecTick) {
+			dc->SetTextColor(C_WHITE);
+		}
+		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT);
+		rad->AddScreenObject(TAG_ITEM_TYPE_GROUND_SPEED_WITH_N, fp->GetCallsign(), rline2, TRUE, "");
+	}
+
+	// restore context
+	dc->RestoreDC(sDC);
+
+	// cleanup
+	DeleteObject(font);
+	DeleteObject(boldfont);
+}
+
+
 void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)
 {
 	
