@@ -6,6 +6,14 @@ The author of this plugin has NO AFFILIATION with NavCanada. This tool is for si
 
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
 
+Additional Features in the Nightly Build:
+
+1. Halo tool and PTL menus now implemented and match the real-world UI. 
+2. PTL length can be modified.
+3. Altitude filter menu UI now more closely resembles the real-world counterpart. 
+4. NARDS style tags can now be displayed on tower screens (WIP as of FEB08)
+5. Fixes in the electronic radar release system
+
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
 ### Latest Version 0.4.0.1 02JAN2021
@@ -25,8 +33,6 @@ WIP features for the next update:
 2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
 under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
 3. Weather radar
-4. Changable PTL lengths
-
 
 Installation notes: Disable the default ES symbology for correlated targets in the symbology settings by replacing with the line "MOVETO 0 0", use the Tag Editor to change ES default tags to "Static Line" as the only entry to avoid double tags.
 
