@@ -442,6 +442,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					POINT modOrigin;
 					modOrigin.x = 10;
 
+					string numCJSAC = to_string(menuState.numJurisdictionAC);
+					TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
+
 					menuButton but_tagHL = { { modOrigin.x+45, radarea.top + 6 }, "Tag HL", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_tagHL);
 					ButtonToScreen(this, but, "Tag HL", 0);
@@ -903,6 +906,31 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_OVRD_ALL) {
 		menuState.filterBypassAll = !menuState.filterBypassAll;
+
+		if (menuState.quickLook == FALSE) {
+			menuState.quickLook = TRUE;
+
+			for (auto& p : CSiTRadar::mAcData) {
+				CSiTRadar::tempTagData[p.first] = p.second.tagType;
+				// Do not open uncorrelated tags
+				if (p.second.tagType == 0) {
+					p.second.tagType = 1;
+				}
+			}
+
+		}
+		else if (menuState.quickLook == TRUE) {
+
+			for (auto& p : CSiTRadar::tempTagData) {
+				// prevents closing of tags that became under your jurisdiction during quicklook
+				if (!GetPlugIn()->FlightPlanSelect(p.first.c_str()).GetTrackingControllerIsMe()) {
+					CSiTRadar::mAcData[p.first].tagType = p.second;
+				}
+			}
+
+			tempTagData.clear();
+			menuState.quickLook = FALSE;
+		}
 	}
 
 	if (ObjectType == BUTTON_MENU_EXT_ALT) {
@@ -950,30 +978,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_QUICK_LOOK) {
-		if (menuState.quickLook == FALSE) {
-			menuState.quickLook = TRUE;
 
-			for (auto& p : CSiTRadar::mAcData) {
-				CSiTRadar::tempTagData[p.first] = p.second.tagType;
-				// Do not open uncorrelated tags
-				if (p.second.tagType == 0) {
-					p.second.tagType = 1;
-				}
-			}
-
-		}
-		else if (menuState.quickLook == TRUE) {
-
-			for (auto& p : CSiTRadar::tempTagData) {
-				// prevents closing of tags that became under your jurisdiction during quicklook
-				if (!GetPlugIn()->FlightPlanSelect(p.first.c_str()).GetTrackingControllerIsMe()) { 
-					CSiTRadar::mAcData[p.first].tagType = p.second;
-				}
-			}
-
-			tempTagData.clear();
-			menuState.quickLook = FALSE;
-		}
 	}
 	
 	/* if (Button == BUTTON_MIDDLE) {
@@ -1001,6 +1006,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (Button == BUTTON_LEFT) {
 			if (mAcData[sObjectId].isHandoffToMe == TRUE) {
 				GetPlugIn()->FlightPlanSelect(sObjectId).AcceptHandoff();
+			}
+			else {
+				StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_TOGGLE_ROUTE_DRAW, Pt, Area);
 			}
 		}
 
@@ -1045,10 +1053,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == TAG_ITEM_TYPE_PLANE_TYPE) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 		if (Button == BUTTON_LEFT) {
-			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_TOGGLE_ROUTE_DRAW, Pt, Area);
+			
 		}
 		if (Button == BUTTON_RIGHT) {
+
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
+			
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, Pt, Area);
+			
 		}
 	}
 
@@ -1196,6 +1208,15 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
+	int count = 0;
+	for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
+		radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
+	{
+		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) { count++; }
+	}
+	
+	menuState.numJurisdictionAC = count;
+
 	// These items don't need to be updated each loop, save loop type by storing data in a map
 	string callSign = FlightPlan.GetCallsign();
 	bool isVFR = !strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V");
@@ -1221,6 +1242,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	mAcData[callSign] = acdata;
+
+
+
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
@@ -1232,16 +1256,7 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 
 void CSiTRadar::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	if (Button == BUTTON_LEFT) {
-		if (ObjectType == TAG_ITEM_TYPE_ALTITUDE) {
-			if (CSiTRadar::mAcData[sObjectId].tagType == 0) { CSiTRadar::mAcData[sObjectId].tagType = 1; }
-		}
-		if (ObjectType == TAG_ITEM_TYPE_CALLSIGN) {
-			if (CSiTRadar::mAcData[sObjectId].tagType == 1 &&
-				!GetPlugIn()->FlightPlanSelect(sObjectId).GetTrackingControllerIsMe() &&
-				!menuState.quickLook) { CSiTRadar::mAcData[sObjectId].tagType = 0; } // can't make bravo tag if you are tracking or if quick look is on
-		}
-	}
+	
 }
 
 void CSiTRadar::OnAsrContentToBeSaved() {

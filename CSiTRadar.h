@@ -37,6 +37,7 @@ struct buttonStates {
     int haloRad;
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
+    int numJurisdictionAC{ 0 };
 };
 
 class CSiTRadar :
