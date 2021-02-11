@@ -905,10 +905,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_OVRD_ALL) {
-		menuState.filterBypassAll = !menuState.filterBypassAll;
 
-		if (menuState.quickLook == FALSE) {
-			menuState.quickLook = TRUE;
+		if (menuState.filterBypassAll == FALSE) {
+			menuState.filterBypassAll = TRUE;
 
 			for (auto& p : CSiTRadar::mAcData) {
 				CSiTRadar::tempTagData[p.first] = p.second.tagType;
@@ -919,7 +918,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 
 		}
-		else if (menuState.quickLook == TRUE) {
+		else if (menuState.filterBypassAll == TRUE) {
 
 			for (auto& p : CSiTRadar::tempTagData) {
 				// prevents closing of tags that became under your jurisdiction during quicklook
@@ -929,7 +928,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 
 			tempTagData.clear();
-			menuState.quickLook = FALSE;
+			menuState.filterBypassAll = FALSE;
 		}
 	}
 

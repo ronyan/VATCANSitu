@@ -163,7 +163,19 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	// Line 3 Items
 	string acType = fp->GetFlightPlanData().GetAircraftFPType();
 	string destination = fp->GetFlightPlanData().GetDestination();
+	CPosition dest;
 
+	rad->GetPlugIn()->SelectActiveSectorfile();
+	for (CSectorElement sectorElement = rad->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); sectorElement.IsValid();
+		sectorElement = rad->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_AIRPORT)) {
+		if (!strcmp(sectorElement.GetName(), destination.c_str())) {
+			sectorElement.GetPosition(&dest, 0);
+		}
+	}
+
+	string destinationDist = to_string(rt->GetPosition().GetPosition().DistanceTo(dest));
+	string destinationTime = to_string((int)rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS());
+	
 	// Initiate the default tag location, if no location is set already or find it in the map
 
 	if (tOffset->find(rt->GetCallsign()) == tOffset->end()) {
