@@ -174,7 +174,9 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	}
 
 	string destinationDist = to_string(rt->GetPosition().GetPosition().DistanceTo(dest));
-	string destinationTime = to_string((int)rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS());
+	if (rt->GetGS() > 0) {
+		string destinationTime = to_string((int)rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS());
+	}
 	
 	// Initiate the default tag location, if no location is set already or find it in the map
 
