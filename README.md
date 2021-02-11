@@ -8,11 +8,16 @@ The latest nightly build is available at appveyor (click the badge below, then "
 
 Additional Features in the Nightly Build:
 
-1. Halo tool and PTL menus now implemented and match the real-world UI. 
-2. PTL length can be modified.
-3. Altitude filter menu UI now more closely resembles the real-world counterpart. 
-4. NARDS style tags can now be displayed on tower screens (WIP as of FEB08)
-5. Fixes in the electronic radar release system
+1. (CHANGED) Halo tool and PTL menus now implemented and match the real-world UI. 
+2. (CHANGED) PTL length can be modified.
+3. (CHANGED) Altitude filter menu UI now more closely resembles the real-world counterpart. 
+4. (NEW) NARDS style tags can now be displayed on tower screens (WIP as of FEB08)
+5. (FIXED) Fixes in the electronic radar release system
+6. (CHANGED) Left-clicking the PPS opens and closes tags (previously double clicking ACID or bravo-tag altitude)
+7. (CHANGED) Left-licking the ACID displays the aircafts route. (previously left clicking the AC Type)
+8. (CHANGED) "All" button behaviour has changed: shows alpha tags for all aircraft and ignores alt filters.
+9. (CHANGED) RVSM PPS now show middle line regardless of PSR/SSR status (updated to match r/w symbology).
+10. (NEW) Jurisdictional aircraft counter on the top-left of the QAB.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
