@@ -829,6 +829,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
 		string callsign = rt.GetCallsign();
 
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+
 		if (Button == BUTTON_LEFT) {
 			if (!menuState.haloTool && !menuState.ptlTool) {
 				if (CSiTRadar::mAcData[sObjectId].tagType == 0) { CSiTRadar::mAcData[sObjectId].tagType = 1; }
