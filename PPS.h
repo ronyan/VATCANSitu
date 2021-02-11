@@ -83,6 +83,10 @@ public:
 					dc->LineTo(p.x, p.y + 5);
 					dc->LineTo(p.x - 5, p.y);
 					dc->LineTo(p.x, p.y - 5);
+
+					dc->MoveTo(p.x, p.y - 5);
+					dc->LineTo(p.x, p.y + 5);
+
 				}
 				if (isCorrelated && isVFR) {
 					dc->SelectStockObject(NULL_BRUSH);
