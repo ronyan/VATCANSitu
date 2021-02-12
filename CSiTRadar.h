@@ -38,6 +38,9 @@ struct buttonStates {
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
+    bool wxAll{ FALSE };
+    bool wxHigh{ FALSE };
+    bool wxOn{ FALSE };
 };
 
 class CSiTRadar :
@@ -53,8 +56,11 @@ public:
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
 
-    static double magvar;
     static buttonStates menuState;
+
+    double wxRadLat;
+    double wxRadLong;
+    int wxRadZL;
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
@@ -140,6 +146,7 @@ protected:
     // helper functions
     clock_t time = clock();
     clock_t oldTime = clock();
+    clock_t lastWxRefresh = 0;
 
     // menu states
     bool halotool = FALSE;
