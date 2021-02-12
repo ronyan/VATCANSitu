@@ -41,6 +41,7 @@ public:
     }
 
     static void drawHalo(CDC* dc, POINT p, double r, double pixpernm)
+
     {
         int sDC = dc->SaveDC();
 

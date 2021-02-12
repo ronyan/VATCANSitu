@@ -20,6 +20,7 @@ const COLORREF C_MENU_GREY4 = RGB(140, 140, 140);
 const COLORREF C_MENU_NARDS_GREY = RGB(240, 240, 24);
 const COLORREF C_MENU_TEXT_WHITE = RGB(230, 230, 230);
 const COLORREF C_PTL_GREEN = RGB(3, 102, 0);
+const COLORREF C_WX_BLUE = RGB(0, 32, 120);
 
 // Math
 const double PI = 3.14159;
@@ -50,6 +51,7 @@ const int BUTTON_MENU_EXTRAP_FP = 208;
 const int BUTTON_MENU_OVRD_ALL = 209;
 const int BUTTON_MENU_QUICK_LOOK = 210;
 const int BUTTON_MENU_EXT_ALT = 211;
+
 const int BUTTON_MENU_PTL_CLOSE = 212;
 const int BUTTON_MENU_PTL_CLEAR_ALL = 213;
 const int BUTTON_MENU_PTL_ALL_ON = 214;
@@ -58,8 +60,8 @@ const int BUTTON_MENU_HALO_CLOSE = 216;
 const int BUTTON_MENU_HALO_CLEAR_ALL = 217;
 const int BUTTON_MENU_HALO_MOUSE = 218;
 const int BUTTON_MENU_HALO_TOOL = 219;
-
-
+const int BUTTON_MENU_WX_HIGH = 220;
+const int BUTTON_MENU_WX_ALL = 221;
 
 // Menu Modules
 const int MODULE_1_X = 0;
