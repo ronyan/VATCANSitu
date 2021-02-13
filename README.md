@@ -18,6 +18,7 @@ Additional Features in the Nightly Build:
 8. (CHANGED) "All" button behaviour has changed: shows alpha tags for all aircraft and ignores alt filters.
 9. (CHANGED) RVSM PPS now show middle line regardless of PSR/SSR status (updated to match r/w symbology).
 10. (NEW) Jurisdictional aircraft counter on the top-left of the QAB.
+11. (NEW) Weather radar -- weather currently only displays in CZYZ sectors
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
