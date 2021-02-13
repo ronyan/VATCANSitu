@@ -252,6 +252,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
 						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
 					}
+					else if (menuState.ptlAll) {
+						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+					}
 
 					// Get information about the Aircraft/Flightplan
 					bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
@@ -314,10 +317,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						hoAcceptedTime.erase(callSign);
 
 						// if quick look is open, defer closing the tag until quicklook is off;
-						if (!menuState.quickLook) {
+						if (!menuState.filterBypassAll) {
 							mAcData[callSign].tagType = 0;
 						}
-						if (menuState.quickLook) {
+						if (menuState.filterBypassAll) {
 							tempTagData[callSign] = 0;
 						}
 					}
@@ -926,6 +929,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) { hasPTL.clear(); }
+
+	if (ObjectType == BUTTON_MENU_PTL_ALL_ON) { menuState.ptlAll = !menuState.ptlAll; }
 
 	if (ObjectType == BUTTON_MENU_EXTRAP_FP) {
 		menuState.showExtrapFP = !menuState.showExtrapFP;

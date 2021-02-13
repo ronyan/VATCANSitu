@@ -34,6 +34,7 @@ struct buttonStates {
     bool showExtrapFP{ FALSE };
     bool filterBypassAll{ FALSE };
     int ptlLength;
+    bool ptlAll{ FALSE };
     int haloRad;
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
