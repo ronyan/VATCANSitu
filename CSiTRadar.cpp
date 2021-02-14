@@ -252,7 +252,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
 						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
 					}
-					else if (menuState.ptlAll) {
+					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
 						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
 					}
 
@@ -782,7 +782,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					AddScreenObject(BUTTON_MENU_PTL_CLEAR_ALL, "Clear All PTLs", r, 0, "");
 
 					elementOrigin.x += 72;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "PTL All", FALSE);
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "PTL All", menuState.ptlAll);
 					AddScreenObject(BUTTON_MENU_PTL_ALL_ON, "PTL All on", r, 0, "");
 
 					elementOrigin.x += 72;
@@ -928,7 +928,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		menuLayer = 0;
 	}
 
-	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) { hasPTL.clear(); }
+	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) { 
+		hasPTL.clear();
+		menuState.ptlAll = false;
+	}
 
 	if (ObjectType == BUTTON_MENU_PTL_ALL_ON) { menuState.ptlAll = !menuState.ptlAll; }
 
