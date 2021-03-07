@@ -451,12 +451,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				// small amount of padding;
 				menutopleft.y += 6;
-				menutopleft.x += 10;
+				menutopleft.x += 6;
 
 				if (menuLayer == 0) {
 
 					POINT modOrigin;
-					modOrigin.x = 10;
+					modOrigin.x = 8;
 
 					string numCJSAC = to_string(menuState.numJurisdictionAC);
 					TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
@@ -499,7 +499,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					but = TopMenu::DrawBut(&dc, but_destAirport);
 					ButtonToScreen(this, but, "Dest Airport", 0);
 
-					menutopleft.x = 300;
+					menutopleft.x = 295;
 
 
 					// screen range, dummy buttons, not really necessary in ES.
@@ -527,11 +527,27 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					POINT downArrow[3] = {
 						{-2,-2},
-						{2,-2},
-						{0, 2}
+						{3,-2},
+						{1, 3}
 					};
 
-					TopMenu::MakeDropDown(dc, menutopleft, 40, 15, rng.c_str());
+					POINT downArrow1[3] = {
+						{-2,-2},
+						{3,-2},
+						{1, 3}
+					};
+
+					POINT downArrow2[3] = {
+						{-2,-2},
+						{3,-2},
+						{1, 3}
+					};
+
+					TopMenu::MakeDropDown(dc, menutopleft, 35, 15, rng.c_str());
+
+					menuButton but_rngdropdown = { { menutopleft.x + 35, radarea.top + 38 }, "", 15, 15, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_rngdropdown);
+					TopMenu::DrawIconBut(&dc, but_rngdropdown, downArrow, 3);
 
 					menutopleft.x += 65;
 					menutopleft.y -= 32;
@@ -539,7 +555,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menutopleft.y += 8;
 					TopMenu::MakeText(dc, { menutopleft.x - 8, menutopleft.y-3 }, 35, 15, "Map");
 					menutopleft.y += 18;
-					TopMenu::MakeDropDown(dc, menutopleft, 75, 18, "map");
+
+					TopMenu::MakeDropDown(dc, menutopleft, 75, 18, GetPlugIn()->ControllerMyself().GetSectorFileName());
+					menuButton but_mapdropdown = { { menutopleft.x + 73, radarea.top + 32 }, "", 18, 18, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_mapdropdown);
+					TopMenu::DrawIconBut(&dc, but_mapdropdown, downArrow1, 3);
 
 					menutopleft.y -= 26;
 					menutopleft.x += 35;
@@ -549,9 +569,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menutopleft.y += 8;
 					menuButton but_preset = { {menutopleft.x, radarea.top + 6 }, "Preset", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_preset);
-				
+
 					menutopleft.y += 18;
-					TopMenu::MakeDropDown(dc, menutopleft, 75, 18, "preset");
+					TopMenu::MakeDropDown(dc, menutopleft, 73, 18, "preset");
+					menuButton but_presetdropdown = { { menutopleft.x + 73, radarea.top + 32 }, "", 18, 18, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_presetdropdown);
+					TopMenu::DrawIconBut(&dc, but_presetdropdown, downArrow2, 3);
 
 					menutopleft.y -= 26;
 					menutopleft.x += 47;
@@ -617,7 +640,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
 					}
 
-					menutopleft.x += 60;
+					menutopleft.x += 58;
 					string cid = "CJS - " + controllerID;
 
 					RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
@@ -643,7 +666,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						{0,0}
 					};
 
-					POINT targetModuleOrigin = { 987, radarea.top + 6 };
+					POINT targetModuleOrigin = { 980, radarea.top + 6 };
 
 					menuButton but_psrpoor = { {targetModuleOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_psrpoor);
@@ -692,7 +715,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					menuButton but_CRDA = { { targetModuleOrigin.x + 92, radarea.top + 31 }, "CRDA", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_CRDA);
-				
+
+					menuButton but_ins1 = { { targetModuleOrigin.x + 162, radarea.top + 6 }, "Ins1", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_ins1);
+
+					menuButton but_ins2 = { { targetModuleOrigin.x + 162, radarea.top + 31 }, "Ins2", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_ins2);
+
 					modOrigin.x = 1180;
 
 					menuButton but_highWx = { { modOrigin.x, radarea.top + 6 }, "High", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.wxHigh };
@@ -705,6 +734,23 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					menuButton but_topsWx = { { modOrigin.x, radarea.top + 31 }, "TOPS", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_topsWx);
+
+					POINT icon_bolt[7] = {
+						{2,-5},
+						{5,-5},
+						{1, 0},
+						{4,0},
+						{-3,5},
+						{0,0},
+						{-2,0}
+					};
+
+					menuButton but_lightning = { { modOrigin.x+62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_lightning);
+					TopMenu::DrawIconBut(&dc, but_lightning, icon_bolt, 7);
+
+					menuButton but_hist = { { modOrigin.x+62, radarea.top + 31 }, "Hist", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					TopMenu::DrawBut(&dc, but_hist);
 
 					menutopleft.x = menutopleft.x + 200;
 
