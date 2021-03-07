@@ -582,7 +582,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menuButton but_presetback = { {menutopleft.x, radarea.top + 6 }, "Back", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_presetback);
 
-					menutopleft.x += 55;
+					menutopleft.x += 58;
 
 					// altitude filters
 
@@ -604,7 +604,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
 					ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
 					menutopleft.y -= 25;
-					menutopleft.x += 65;
+					menutopleft.x += 64;
 
 					// separation tools
 					string haloText = "Halo " + to_string(menuState.haloRad);
