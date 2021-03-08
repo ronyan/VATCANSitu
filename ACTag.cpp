@@ -113,7 +113,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	// Line 0 Items
 	string ssr = rt->GetPosition().GetSquawk();
-	
+
 	// Line 1 Items
 	string cs = rt->GetCallsign();
 	string wtSymbol = "";
@@ -139,19 +139,19 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	else {
 		altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100);
 	}
-	if(altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
+	if (altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
 	string vmi;
 	if (rt->GetVerticalSpeed() > 400) { vmi = "^"; }
 	if (rt->GetVerticalSpeed() < -400) { vmi = "|"; }; // up arrow "??!" = downarrow
-	string vmr = to_string(abs(rt->GetVerticalSpeed()/200));
+	string vmr = to_string(abs(rt->GetVerticalSpeed() / 200));
 	if (vmr.size() <= 2) { vmr.insert(vmr.begin(), 2 - vmr.size(), '0'); }
-	string clrdAlt = to_string(fp->GetControllerAssignedData().GetClearedAltitude()/100);
+	string clrdAlt = to_string(fp->GetControllerAssignedData().GetClearedAltitude() / 100);
 	if (clrdAlt.size() <= 3) { clrdAlt.insert(clrdAlt.begin(), 3 - clrdAlt.size(), '0'); }
 	if (fp->GetControllerAssignedData().GetClearedAltitude() == 0) { clrdAlt = "clr"; }
 	if (fp->GetControllerAssignedData().GetClearedAltitude() == 1) { clrdAlt = "APR"; }
 	if (fp->GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }
 	string fpAlt = to_string(fp->GetFlightPlanData().GetFinalAltitude() / 100);
-	if (fpAlt.size() <=3) { fpAlt.insert(fpAlt.begin(), 3 - fpAlt.size(), '0'); }
+	if (fpAlt.size() <= 3) { fpAlt.insert(fpAlt.begin(), 3 - fpAlt.size(), '0'); }
 	if (fp->GetFlightPlanData().GetFinalAltitude() == 0) { fpAlt = "fld"; }
 	string handoffCJS = fp->GetHandoffTargetControllerId();
 	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
@@ -173,10 +173,21 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			sectorElement.GetPosition(&dest, 0);
 		}
 	}
-
-	string destinationDist = to_string(rt->GetPosition().GetPosition().DistanceTo(dest));
+	string destinationDist;
+	// if the destination airport is not in the sector file, have to use Euroscope's FP calculated distance and not a direct distance
+	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0) {
+		destinationDist = to_string((long)rt->GetCorrelatedFlightPlan().GetDistanceToDestination());
+	}
+	// otherwise, the display should be direct distance which can be more accurate calculated if in the SCT file.
+	else {
+		destinationDist = to_string((long)rt->GetPosition().GetPosition().DistanceTo(dest));
+	}
 	if (rt->GetGS() > 0) {
 		string destinationTime = to_string((int)rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS());
+	}
+
+	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1) {
+		destination = destination + "-" + destinationDist;
 	}
 	
 	// Initiate the default tag location, if no location is set already or find it in the map

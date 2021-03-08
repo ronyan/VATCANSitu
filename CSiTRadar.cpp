@@ -1224,6 +1224,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (Button == BUTTON_RIGHT) {
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_DESTINATION, sObjectId, NULL, TAG_ITEM_FUNCTION_ASSIGNED_HEADING_POPUP, Pt, Area);
 		}
+		if (Button == BUTTON_LEFT) {
+			if(mAcData[sObjectId].destLabelType == 0) {
+				mAcData[sObjectId].destLabelType = 1;
+			}
+			else if (mAcData[sObjectId].destLabelType == 1) {
+				mAcData[sObjectId].destLabelType = 0;
+			}
+		}
 	}
 }
 

@@ -26,6 +26,7 @@ struct ACData {
     int tagWidth{ 65 }; 
     string CID;
     bool extAlt{ FALSE };
+    int destLabelType{ 0 };
 };
 
 struct buttonStates {
