@@ -346,12 +346,15 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 			dc->DrawText("+", &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText("+", &rline1, DT_LEFT);
-			dc->SetTextColor(C_PPS_YELLOW);
-
-			dc->SelectObject(font);
 
 			rline1.left = rline1.right;
 			rline1.right = rline1.left;
+		}
+
+		dc->SetTextColor(C_PPS_YELLOW);
+		dc->SelectObject(font);
+		if (blinking && CSiTRadar::halfSecTick) {
+			dc->SetTextColor(C_WHITE);
 		}
 
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
