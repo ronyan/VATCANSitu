@@ -364,12 +364,12 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline1.right = rline1.left + 8;
 
 		// Show Communication Type if not Voice
+		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		if (commType.size() > 0) {
 			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);			
 		}
-		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
-		rline1.left = rline1.right + 8;
+		rline1.left = rline1.right;
 		
 		if (sfi.size() >1 && sfi.find(" ", 2) != sfi.npos && sfi.find(" ", 2) < 3 && sfi.at(0) == ' ') {
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT | DT_CALCRECT);

@@ -230,7 +230,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
 
-					if (menuState.quickLook) {
+					if (menuState.filterBypassAll) {
 						mAcData[radarTarget.GetCallsign()].tagType = 1;
 					}
 
