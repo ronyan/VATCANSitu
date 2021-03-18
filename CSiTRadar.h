@@ -57,6 +57,7 @@ public:
     static unordered_map<string, ACData> mAcData;
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
+    static map<string, bool> destAirportList;
 
     static buttonStates menuState;
 

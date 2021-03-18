@@ -59,6 +59,7 @@ unordered_map<string, ACData> CSiTRadar::mAcData;
 unordered_map<string, int> CSiTRadar::tempTagData;
 map<string, menuButton> TopMenu::menuButtons;
 unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
+map<string, bool> CSiTRadar::destAirportList;
 buttonStates CSiTRadar::menuState = {};
 bool CSiTRadar::halfSecTick = FALSE;
 
@@ -236,7 +237,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					string callSign = radarTarget.GetCallsign();
 					// altitude filtering 
-					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() || strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+
+					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() ||  // Do not filter aircraft being tracked by me
+						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 || // Do not filter aircraft being handed off to me
+						CSiTRadar::destAirportList.find(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination()) != CSiTRadar::destAirportList.end() // Do not filter aircraft on Dest Aiport List
+						) {
 						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
 							continue;
 						}
