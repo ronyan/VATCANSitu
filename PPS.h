@@ -58,6 +58,18 @@ public:
 				dc->Polygon(vertices, 3);
 				DeleteObject(targetBrush);
 			}
+
+
+			else if (!strcmp(squawk.c_str(), "1200") && !isCorrelated && radFlag != 1) { // Eventually change to block squawk codes
+				targetPen = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+				dc->SelectStockObject(NULL_BRUSH);
+				dc->SelectObject(targetPen);
+
+				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
+				dc->Polygon(vertices, 3);
+				DeleteObject(targetPen);
+			}
+
 			else if (radFlag == 1) {
 
 				dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
