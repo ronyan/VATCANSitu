@@ -100,6 +100,9 @@ public:
 					dc->LineTo(p.x + 4, p.y - 2);
 				}
 				if (!isCorrelated) {
+					targetPen = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+					dc->SelectObject(targetPen);
+
 					dc->MoveTo(p.x - 4, p.y - 4);
 					dc->LineTo(p.x + 5, p.y + 5);
 					dc->MoveTo(p.x, p.y - 5);
@@ -148,6 +151,9 @@ public:
 					dc->LineTo(p.x + 4, p.y - 2);
 				}
 				if (!isCorrelated) {
+					targetPen = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+					dc->SelectObject(targetPen);
+
 					dc->MoveTo(p.x - 4, p.y - 4);
 					dc->LineTo(p.x + 5, p.y + 5);
 					dc->MoveTo(p.x, p.y - 5);
