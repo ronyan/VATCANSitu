@@ -106,19 +106,6 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
-	// save context
-	int sDC = dc->SaveDC();
-
-	// Destination airport highlighting
-	if (CSiTRadar::destAirportList.find(fp->GetFlightPlanData().GetDestination()) != CSiTRadar::destAirportList.end()) {
-		HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
-		dc->SelectObject(targetPen);
-		dc->SelectStockObject(HOLLOW_BRUSH);
-		dc->Ellipse(p.x - 7, p.y - 7, p.x + 7, p.y + 7);
-
-		DeleteObject(targetPen);
-	}
-
 	bool blinking = FALSE;
 	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) { blinking = TRUE; }
 	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
@@ -224,6 +211,19 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 11 };
 	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 22 };
 	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 33 };
+
+	// save context
+	int sDC = dc->SaveDC();
+
+	// Destination airport highlighting
+	if (CSiTRadar::destAirportList.find(fp->GetFlightPlanData().GetDestination()) != CSiTRadar::destAirportList.end()) {
+		HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+		dc->SelectObject(targetPen);
+		dc->SelectStockObject(HOLLOW_BRUSH);
+		dc->Ellipse(p.x - 7, p.y - 7, p.x + 7, p.y + 7);
+
+		DeleteObject(targetPen);
+	}
 
 	CFont font;
 	CFont boldfont;
@@ -612,13 +612,12 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		uline1.left = uline1.right + 5;
 	}
 
-
-	// restore context
-	dc->RestoreDC(sDC);
-
 	// cleanup
 	DeleteObject(font);
 	DeleteObject(boldfont);
+
+	// restore context
+	dc->RestoreDC(sDC);
 }
 
 void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
