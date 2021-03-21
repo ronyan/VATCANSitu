@@ -8,6 +8,27 @@ const int TAG_ITEM_IFR_REL = 5000;
 const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
 
+HHOOK appHook;
+
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+
+
+
+    switch (wParam)
+    {
+    case VK_F3:
+    {
+        if (lParam & 0x40000000) {
+            CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
+            CSiTRadar::m_pRadScr->RequestRefresh();
+            return -1;
+        }
+    }
+    }
+
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
@@ -18,10 +39,14 @@ SituPlugin::SituPlugin()
     RegisterTagItemType("IFR Release", TAG_ITEM_IFR_REL);
     RegisterTagItemFunction("Request IFR Release", TAG_FUNC_IFR_REL_REQ);
     RegisterTagItemFunction("Grant IFR Release", TAG_FUNC_IFR_RELEASED);
+
+    DWORD appProc = GetCurrentThreadId();
+    appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
 }
 
 SituPlugin::~SituPlugin()
 {
+    UnhookWindowsHookEx(appHook);
 }
 
 EuroScopePlugIn::CRadarScreen* SituPlugin::OnRadarScreenCreated(const char* sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)

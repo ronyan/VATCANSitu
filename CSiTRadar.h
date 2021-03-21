@@ -54,6 +54,9 @@ public:
     CSiTRadar(void);
     virtual ~CSiTRadar(void);
 
+    // Pointer back at screen
+    static CRadarScreen* m_pRadScr;
+
     static unordered_map<string, ACData> mAcData;
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;

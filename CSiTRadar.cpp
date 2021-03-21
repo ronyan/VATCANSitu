@@ -62,9 +62,12 @@ unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 map<string, bool> CSiTRadar::destAirportList;
 buttonStates CSiTRadar::menuState = {};
 bool CSiTRadar::halfSecTick = FALSE;
+CRadarScreen* CSiTRadar::m_pRadScr;
 
 CSiTRadar::CSiTRadar()
 {
+	m_pRadScr = this;
+
 	halfSec = clock();
 	halfSecTick = FALSE;
 
