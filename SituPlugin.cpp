@@ -12,15 +12,23 @@ HHOOK appHook;
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
-
-
     switch (wParam)
     {
     case VK_F3:
     {
-        if (lParam & 0x40000000) {
+        if (lParam & 0x40000000) { // on button down
             CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
             CSiTRadar::m_pRadScr->RequestRefresh();
+            return -1;
+        }
+    }
+
+    case VK_F9:
+    {
+        if (lParam & 0x40000000) {
+            CSiTRadar::menuState.filterBypassAll = !CSiTRadar::menuState.filterBypassAll;
+            CSiTRadar::m_pRadScr->RequestRefresh();
+
             return -1;
         }
     }
