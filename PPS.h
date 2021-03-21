@@ -61,13 +61,13 @@ public:
 
 
 			else if (!strcmp(squawk.c_str(), "1200") && !isCorrelated && radFlag != 1) { // Eventually change to block squawk codes
-				targetPen = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+				HPEN targetPen1 = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
 				dc->SelectStockObject(NULL_BRUSH);
-				dc->SelectObject(targetPen);
+				dc->SelectObject(targetPen1);
 
 				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
 				dc->Polygon(vertices, 3);
-				DeleteObject(targetPen);
+				DeleteObject(targetPen1);
 			}
 
 			else if (radFlag == 1) {
@@ -112,8 +112,8 @@ public:
 					dc->LineTo(p.x + 4, p.y - 2);
 				}
 				if (!isCorrelated) {
-					targetPen = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
-					dc->SelectObject(targetPen);
+					HPEN targetPen1 = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+					dc->SelectObject(targetPen1);
 
 					dc->MoveTo(p.x - 4, p.y - 4);
 					dc->LineTo(p.x + 5, p.y + 5);
@@ -123,6 +123,8 @@ public:
 					dc->LineTo(p.x - 5, p.y + 5);
 					dc->MoveTo(p.x - 5, p.y);
 					dc->LineTo(p.x + 6, p.y);
+
+					DeleteObject(targetPen1);
 				}
 
 			}
@@ -163,8 +165,8 @@ public:
 					dc->LineTo(p.x + 4, p.y - 2);
 				}
 				if (!isCorrelated) {
-					targetPen = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
-					dc->SelectObject(targetPen);
+					HPEN targetPen1 = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+					dc->SelectObject(targetPen1);
 
 					dc->MoveTo(p.x - 4, p.y - 4);
 					dc->LineTo(p.x + 5, p.y + 5);
@@ -174,6 +176,8 @@ public:
 					dc->LineTo(p.x - 5, p.y + 5);
 					dc->MoveTo(p.x - 5, p.y);
 					dc->LineTo(p.x + 6, p.y);
+
+					DeleteObject(targetPen1);
 				}
 			}
 		}
