@@ -26,7 +26,31 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     case VK_F9:
     {
         if (lParam & 0x40000000) {
-            CSiTRadar::menuState.filterBypassAll = !CSiTRadar::menuState.filterBypassAll;
+            if (CSiTRadar::menuState.filterBypassAll == FALSE) {
+                CSiTRadar::menuState.filterBypassAll = TRUE;
+
+                for (auto& p : CSiTRadar::mAcData) {
+                    CSiTRadar::tempTagData[p.first] = p.second.tagType;
+                    // Do not open uncorrelated tags
+                    if (p.second.tagType == 0) {
+                        p.second.tagType = 1;
+                    }
+                }
+
+            }
+            else if (CSiTRadar::menuState.filterBypassAll == TRUE) {
+
+                for (auto& p : CSiTRadar::tempTagData) {
+                    // prevents closing of tags that became under your jurisdiction during quicklook
+                    if (!CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(p.first.c_str()).GetTrackingControllerIsMe()) {
+                        CSiTRadar::mAcData[p.first].tagType = p.second;
+                    }
+                }
+
+                CSiTRadar::tempTagData.clear();
+                CSiTRadar::menuState.filterBypassAll = FALSE;
+            }
+
             CSiTRadar::m_pRadScr->RequestRefresh();
 
             return -1;
