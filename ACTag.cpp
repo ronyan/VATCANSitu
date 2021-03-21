@@ -215,6 +215,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	// save context
 	int sDC = dc->SaveDC();
 
+	/*
 	// Destination airport highlighting
 	if (CSiTRadar::destAirportList.find(fp->GetFlightPlanData().GetDestination()) != CSiTRadar::destAirportList.end()) {
 		HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
@@ -224,6 +225,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		DeleteObject(targetPen);
 	}
+	*/
 
 	CFont font;
 	CFont boldfont;
