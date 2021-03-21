@@ -14,11 +14,12 @@ Additional Features in the Nightly Build:
 4. (NEW) NARDS style tags can now be displayed on tower screens (WIP as of FEB08)
 5. (FIXED) Fixes in the electronic radar release system
 6. (CHANGED) Left-clicking the PPS opens and closes tags (previously double clicking ACID or bravo-tag altitude)
-7. (CHANGED) Left-licking the ACID displays the aircafts route. (previously left clicking the AC Type)
+7. (CHANGED) Left-clicking the ACID displays the aircafts route. (previously left clicking the AC Type)
 8. (CHANGED) "All" button behaviour has changed: shows alpha tags for all aircraft and ignores alt filters.
 9. (CHANGED) RVSM PPS now show middle line regardless of PSR/SSR status (updated to match r/w symbology).
 10. (NEW) Jurisdictional aircraft counter on the top-left of the QAB.
-11. (NEW) Weather radar -- weather currently only displays in CZYZ sectors
+11. (NEW) Weather radar -- can customize center point of radar image by editing settings.json in folder situWx in ES folder.
+12. (NEW) Added symbology for block SSR (currently only set to 1200: will display as a hollow triangle) -- plan to be able to customize the SSR range ini the future.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
