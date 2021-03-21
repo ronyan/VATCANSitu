@@ -545,8 +545,8 @@ public:
     }
 
     static cell wxReturn[256][256];
-    static double wxLatCtr; 
-    static double wxLongCtr;
+    static string wxLatCtr; 
+    static string wxLongCtr;
     static int zoomLevel;
     static string ts; 
 

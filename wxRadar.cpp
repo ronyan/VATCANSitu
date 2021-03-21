@@ -2,8 +2,8 @@
 #include "wxRadar.h"
 
 cell wxRadar::wxReturn[256][256];
-double wxRadar::wxLatCtr;
-double wxRadar::wxLongCtr;
+string wxRadar::wxLatCtr = { "0.0" };
+string wxRadar::wxLongCtr = { "0.0" };
 int wxRadar::zoomLevel;
 string wxRadar::ts;
 
@@ -34,7 +34,7 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     CURL* pngDL = curl_easy_init();
     FILE* dlPNG;
     errno_t err;
-    string tileCacheurl = "https://tilecache.rainviewer.com/v2/radar/" + wxRadar::ts + "/256/4/46.5/-80.2/0/0_0.png";
+    string tileCacheurl = "https://tilecache.rainviewer.com/v2/radar/" + wxRadar::ts + "/256/4/" + wxRadar::wxLatCtr + "/" + wxRadar::wxLongCtr + "/0/0_0.png";
 
     const char* filename = ".\\situWx\\0_0.png";
     curl_easy_setopt(pngDL, CURLOPT_URL, tileCacheurl.c_str());
@@ -74,8 +74,8 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     // png starts as RGBARGBARGBA... etc. 
     CPosition radReturnTL;
 
-    radReturnTL.m_Longitude = -80.2 - 11.25000;
-    radReturnTL.m_Latitude = 46.5; 
+    radReturnTL.m_Longitude = stod(wxRadar::wxLongCtr) - 11.25000;
+    radReturnTL.m_Latitude = stod(wxRadar::wxLatCtr);
 
     // get the pixel coord of the latitude.
     int yCoord = lat2pixel(radReturnTL.m_Latitude, 4);

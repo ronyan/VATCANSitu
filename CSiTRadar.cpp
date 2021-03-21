@@ -72,6 +72,31 @@ CSiTRadar::CSiTRadar()
 	menuState.haloRad = 5;
 	menuState.ptlTool = FALSE;
 
+	// load settings file
+	try {
+
+		std::ifstream settings_file(".\\situWx\\settings.json");
+		if (settings_file.is_open()) {
+			json j = json::parse(settings_file);
+
+			wxRadar::wxLatCtr = j["wxlat"];
+			wxRadar::wxLongCtr = j["wxlong"];
+		}
+		else {
+			std::ofstream settings_file(".\\situWx\\settings.json");
+
+			json j;
+			j["wxlat"] = wxRadar::wxLatCtr;
+			j["wxlong"] = wxRadar::wxLongCtr;
+
+			settings_file << j;
+		}
+	}
+	catch (std::ifstream::failure e) {
+
+	};
+
+
 	try {
 		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
