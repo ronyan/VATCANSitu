@@ -121,6 +121,9 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+	if (m_pRadScr != this) {
+		m_pRadScr = this;
+	}
 	// get cursor position and screen info
 	POINT p;
 
