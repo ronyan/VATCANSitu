@@ -68,9 +68,9 @@ CSiTRadar::CSiTRadar()
 	halfSec = clock();
 	halfSecTick = FALSE;
 
-	menuState.ptlLength = 3;
 	menuState.haloRad = 5;
 	menuState.ptlTool = FALSE;
+	menuLayer = 0;
 
 	// load settings file
 	try {
