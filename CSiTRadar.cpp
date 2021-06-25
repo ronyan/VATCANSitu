@@ -62,9 +62,12 @@ unordered_map<string, clock_t> CSiTRadar::hoAcceptedTime;
 map<string, bool> CSiTRadar::destAirportList;
 buttonStates CSiTRadar::menuState = {};
 bool CSiTRadar::halfSecTick = FALSE;
+CRadarScreen* CSiTRadar::m_pRadScr;
 
 CSiTRadar::CSiTRadar()
 {
+	m_pRadScr = this;
+
 	halfSec = clock();
 	halfSecTick = FALSE;
 
@@ -118,6 +121,9 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+	if (m_pRadScr != this) {
+		m_pRadScr = this;
+	}
 	// get cursor position and screen info
 	POINT p;
 
