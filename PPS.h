@@ -165,7 +165,7 @@ public:
 					dc->LineTo(p.x + 4, p.y - 2);
 				}
 				if (!isCorrelated) {
-					HPEN targetPen1 = CreatePen(PS_SOLID, 1, C_PPS_YELLOW);
+					HPEN targetPen1 = CreatePen(PS_SOLID, 1, ppsColor);
 					dc->SelectObject(targetPen1);
 
 					dc->MoveTo(p.x - 4, p.y - 4);
