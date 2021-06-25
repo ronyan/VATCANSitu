@@ -68,31 +68,33 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
 
     if (error != 0) {
         rad->GetPlugIn()->DisplayUserMessage("VATCAN Situ", "WX Parser", string("PNG Failed to Parse").c_str(), true, false, false, false, false);
-    };
+    }
+    else {
 
-    // convert vector into 2d array with dBa values only;
-    // png starts as RGBARGBARGBA... etc. 
-    CPosition radReturnTL;
+        // convert vector into 2d array with dBa values only;
+        // png starts as RGBARGBARGBA... etc. 
+        CPosition radReturnTL;
 
-    radReturnTL.m_Longitude = stod(wxRadar::wxLongCtr) - 11.25000;
-    radReturnTL.m_Latitude = stod(wxRadar::wxLatCtr);
+        radReturnTL.m_Longitude = stod(wxRadar::wxLongCtr) - 11.25000;
+        radReturnTL.m_Latitude = stod(wxRadar::wxLatCtr);
 
-    // get the pixel coord of the latitude.
-    int yCoord = lat2pixel(radReturnTL.m_Latitude, 4);
+        // get the pixel coord of the latitude.
+        int yCoord = lat2pixel(radReturnTL.m_Latitude, 4);
 
-    // get coord of the top of the image
-    yCoord = yCoord - 128; 
+        // get coord of the top of the image
+        yCoord = yCoord - 128;
 
-    for (int i = 0; i < 256; i++) {
+        for (int i = 0; i < 256; i++) {
 
-        double pixLat = pixel2lat(yCoord + i, 4);
-        // calculate latitdue for each row, use the pixel coordinate
+            double pixLat = pixel2lat(yCoord + i, 4);
+            // calculate latitdue for each row, use the pixel coordinate
 
-        for (int j = 0; j < 256; j++) {
-            
-            wxReturn[j][i].dbz = (int)image[(i * 256 * 4)  + (j*4)];
-            wxReturn[j][i].cellPos.m_Longitude = radReturnTL.m_Longitude + (double)(j * (22.5 / 256.0));
-            wxReturn[j][i].cellPos.m_Latitude = pixLat;
+            for (int j = 0; j < 256; j++) {
+
+                wxReturn[j][i].dbz = (int)image[(i * 256 * 4) + (j * 4)];
+                wxReturn[j][i].cellPos.m_Longitude = radReturnTL.m_Longitude + (double)(j * (22.5 / 256.0));
+                wxReturn[j][i].cellPos.m_Latitude = pixLat;
+            }
         }
     }
 }

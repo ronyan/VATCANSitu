@@ -64,7 +64,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.4.5.0",
+		"0.4.4.6",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

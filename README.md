@@ -7,7 +7,17 @@ The author of this plugin has NO AFFILIATION with NavCanada. This tool is for si
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
 
 Additional Features in the Nightly Build:
+Nothing at the moment.
 
+Planned features for future updates:
+1. Configuration for tags and H/O Persist and H/O warn.
+2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
+under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
+3. Keyboard commands (F commands)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
+
+### Latest Version 0.4.5.0 03APR2021
 1. (CHANGED) Halo tool and PTL menus now implemented and match the real-world UI. 
 2. (CHANGED) PTL length can be modified.
 3. (CHANGED) Altitude filter menu UI now more closely resembles the real-world counterpart. 
@@ -21,9 +31,10 @@ Additional Features in the Nightly Build:
 11. (NEW) Weather radar -- can customize center point of radar image by editing settings.json in folder situWx in ES folder.
 12. (NEW) Added symbology for block SSR (currently only set to 1200: will display as a hollow triangle) -- plan to be able to customize the SSR range ini the future.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
+Installation notes: Disable the default ES symbology for correlated targets in the symbology settings by replacing with the line "MOVETO 0 0", use the Tag Editor to change ES default tags to "Static Line" as the only entry to avoid double tags.
 
-### Latest Version 0.4.0.1 02JAN2021
+# CHANGELOG
+### 0.4.0.1 02JAN2021
 1. (NEW)ADSB capable aircraft outside of radar coverage display as an ADS-B PPS with modifiable datatags.
 2. (NEW)SFI and controller remark handling (see wiki)
 3. Assigned speed and mach now displayed in data tag and assignable by right or left clicking the ground speed.
@@ -35,15 +46,6 @@ Additional Features in the Nightly Build:
 9. (FIXED) PTL direction was not accurate when not using mag north. Now working regardless of scope rotation.
 10. (UPDATED) Altitude filters are ignored for aircraft tracked by the controller
 
-WIP features for the next update:
-1. Configuration for tags and H/O Persist and H/O warn.
-2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
-under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
-3. Weather radar
-
-Installation notes: Disable the default ES symbology for correlated targets in the symbology settings by replacing with the line "MOVETO 0 0", use the Tag Editor to change ES default tags to "Static Line" as the only entry to avoid double tags.
-
-# CHANGELOG
 ### 0.3.1.2 NOV23-2020
 1. (NEW) Radar target tags are now drawn by the plugin. Tag functions remain in click spots from stock Canscope installs to facilitate an easier transition. Please note, I cannot find examples of direct-to and temp headings displayed in the tags of reference material I have access to, as such these are not shown (but you can assign them using the click spot or scractpad box to label for other controllers).
   * Tag connectors are now drawn with a dogleg in a similar style to the real scope. ADSB capable aircraft will display a small circle at the elbow.
