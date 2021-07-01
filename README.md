@@ -7,7 +7,8 @@ The author of this plugin has NO AFFILIATION with NavCanada. This tool is for si
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
 
 Additional Features in the Nightly Build:
-Nothing at the moment.
+
+1. Keyboard command for PTL all (F3) and Bypass all filters (F9)
 
 Planned features for future updates:
 1. Configuration for tags and H/O Persist and H/O warn.
