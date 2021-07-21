@@ -8,7 +8,15 @@ const int TAG_ITEM_IFR_REL = 5000;
 const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
 
+bool held = false;
+
 HHOOK appHook;
+
+int ParseKeyBoardPress(LPARAM lParam) {
+
+        return -1;
+
+}
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
@@ -19,6 +27,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     ip.ki.dwExtraInfo = 0;
     ip.ki.dwFlags = KEYEVENTF_SCANCODE;
     ip.ki.wVk = 0;
+
 
     switch (wParam)
     {
@@ -36,31 +45,46 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     case VK_F1:
     {
-        if (!(lParam & 0x40000000)) { // on button down
-            ip.ki.wScan = 0x4E; //  scancode for numpad plus http://www.philipstorr.id.au/pcbook/book3/scancode.htm
-
-            SendInput(1, &ip, sizeof(INPUT));
-            ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-            SendInput(1, &ip, sizeof(INPUT));
+        if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
             return -1;
-        } // reset timer for highlighting an aircraft
+        }
+        else { // if key was previously down
+            if (!(lParam & 0x80000000)) { // if bit 31 is 0 this will evaluate true, which means key is being pressed
+                if (!(lParam & 0x0000ffff)) {  // if no repeats
+                    return -1;
+                }
+                else {
+                    held = true;
+                    return 0;
+                }
+            }
+            else { // when the key is released
+                if (held == false) {
 
-        // if kb_commmand is inactive make it active
+                    ip.ki.wScan = 0x4E; //  scancode for numpad plus http://www.philipstorr.id.au/pcbook/book3/scancode.htm
 
-
-        // set the highlight string to "H/O"
-        
-        // send the ASEL key 
-
-        
+                    SendInput(1, &ip, sizeof(INPUT));
+                    ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+                    SendInput(1, &ip, sizeof(INPUT));
+                    return -1;
+                    
+                }
+                held = false;
+                return -1;
+            }
+  
+        }
     }
 
     case VK_F3:
     {
-        if(!(lParam & 0x40000000)) { // on button down
-            CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
-            CSiTRadar::m_pRadScr->RequestRefresh();
-            return -1;
+        if (!(lParam & 0x40000000)) { // on button down
+
+            if (!(lParam & 0x80000000)){
+                CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
         }
     }
 
