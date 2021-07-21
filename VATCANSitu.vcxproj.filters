@@ -30,13 +30,16 @@
     <ClCompile Include="CSiTRadar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TopMenu.cpp">
+    <ClCompile Include="ACTag.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GndRadar.cpp">
+    <ClCompile Include="PPS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tagRender.cpp">
+    <ClCompile Include="wxRadar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="picopng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,10 +85,16 @@
     <ClInclude Include="constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GndRadar.h">
+    <ClInclude Include="ACTag.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tagRender.h">
+    <ClInclude Include="PPS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wxRadar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

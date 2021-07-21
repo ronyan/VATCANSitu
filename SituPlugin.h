@@ -5,6 +5,7 @@ class SituPlugin :
     public EuroScopePlugIn::CPlugIn
 {
 public:
+
     SituPlugin();
     virtual ~SituPlugin();
     EuroScopePlugIn::CRadarScreen* OnRadarScreenCreated(const char* sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
@@ -17,4 +18,9 @@ public:
         int* pColorCode,
         COLORREF* pRGB,
         double* pFontSize);
+
+    inline virtual void OnFunctionCall(int FunctionId,
+        const char* sItemString,
+        POINT Pt,
+        RECT Area);
 };

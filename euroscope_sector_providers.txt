@@ -44,7 +44,7 @@ PROVIDER_NAME:Alaska ARTCC Control File
 PROVIDER_URL:http://vzanartcc.net/downloads/euroscope/vZAN_sectorfiles.txt
 
 PROVIDER_NAME:VATSIM-UK Euroscope Sector File Provider
-PROVIDER_URL:http://www.vatsim-uk.co.uk/files/sector/esad/VATUK_Euroscope_files.txt
+PROVIDER_URL:http://www.vatsim.uk/VATSIM_UK_Sector_Provider.txt
 
 PROVIDER_NAME:VATSIM UAE Sector File Provider
 PROVIDER_URL:http://vatme.net/FILES/VATUAE/sector/VATUAE_ES_sector_files.txt

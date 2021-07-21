@@ -11,28 +11,113 @@
 
 using namespace std;
 
+struct menuButton {
+    POINT location;
+    string butText;
+    int width;
+    int height;
+    COLORREF pressedColor;
+    COLORREF unpressedColor;
+    COLORREF textColor = RGB(230, 230, 230);
+    bool pressed;
+};
+
+struct module {
+    int level;
+    int width;
+};
+
 class TopMenu :
     public EuroScopePlugIn::CRadarScreen
 {
-protected:
-    static CONST int padding = 2;
-    static CONST int margin = 3;
-
 
 public:
 
-    static map<int, string> ButtonData() {
+    static map<string, menuButton> menuButtons;
 
-    };
+    static void DrawIconBut(CDC* dc, menuButton mbut, POINT icon[], int iconSize) {
 
-    TopMenu(void);
-    virtual ~TopMenu(void);
+        int sDC = dc->SaveDC();
 
-    static RECT DrawButton(HDC hdc, POINT p, int width, int height, const char* btext, bool pressed) 
-    {        
-        CDC dc;
-        dc.Attach(hdc);
+        POINT x = { mbut.location.x + (mbut.width / 2), mbut.location.y + (mbut.height / 2) };
+
+        // shift the icon to the centre of the button
+        for (int idx = 0; idx < iconSize ; idx++) {
+            icon[idx].x += x.x-1;
+            icon[idx].y += x.y;
+        }
+        HPEN hPen = CreatePen(PS_SOLID, 1, mbut.textColor);
+        HBRUSH iconBrush = CreateSolidBrush(mbut.textColor);
+        dc->SelectObject(iconBrush);
+        dc->SelectObject(hPen);
+
+        dc->Polygon(icon, iconSize);
         
+        DeleteObject(iconBrush);
+        DeleteObject(hPen);
+        dc->RestoreDC(sDC);
+    }
+
+    static RECT DrawBut(CDC* dc, menuButton mbut) {
+        int sDC = dc->SaveDC();
+
+        CFont font;
+        LOGFONT lgfont;
+
+        memset(&lgfont, 0, sizeof(LOGFONT));
+        lgfont.lfWeight = 700;
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        lgfont.lfHeight = 12;
+        font.CreateFontIndirect(&lgfont);
+
+        dc->SelectObject(font);
+        dc->SetTextColor(mbut.textColor);
+
+        //default is unpressed state
+        COLORREF pressedcolor = C_MENU_GREY3;
+        COLORREF pcolortl = C_MENU_GREY4;
+        COLORREF pcolorbr = C_MENU_GREY2;
+
+        if (mbut.pressed == TRUE) {
+            pressedcolor = RGB(40, 40, 40);
+            pcolortl = RGB(55, 55, 55);
+            pcolorbr = RGB(140, 140, 140);
+        }
+
+        COLORREF targetPenColor = RGB(140, 140, 140);
+        HPEN targetPen = CreatePen(PS_SOLID, 2, targetPenColor);
+        HBRUSH targetBrush = CreateSolidBrush(pressedcolor);
+
+        dc->SelectObject(targetPen);
+        dc->SelectObject(targetBrush);
+
+        // button rectangle
+        RECT rect1;
+        rect1.left = mbut.location.x;
+        rect1.right = mbut.location.x + mbut.width;
+        rect1.top = mbut.location.y;
+        rect1.bottom = mbut.location.y + mbut.height;
+
+        // 3d apperance calls
+        dc->Rectangle(&rect1);
+        dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
+        InflateRect(&rect1, -1, -1);
+        dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
+        dc->DrawText(mbut.butText.c_str(), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+
+        DeleteObject(targetPen);
+        DeleteObject(targetBrush);
+        DeleteObject(font);
+
+        dc->RestoreDC(sDC);
+
+        return rect1;
+    }
+
+    static RECT DrawButton(CDC* dc, POINT p, int width, int height, const char* btext, bool pressed) 
+    {        
+        int sDC = dc->SaveDC();
+
         CFont font;
         LOGFONT lgfont;
 
@@ -42,8 +127,8 @@ public:
         lgfont.lfHeight = 12;
         font.CreateFontIndirect(&lgfont);
 
-        dc.SelectObject(font);
-        dc.SetTextColor(RGB(230, 230, 230));
+        dc->SelectObject(font);
+        dc->SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state
         COLORREF pressedcolor = RGB(66, 66, 66); 
@@ -60,8 +145,8 @@ public:
         HPEN targetPen = CreatePen(PS_SOLID, 2, targetPenColor);
         HBRUSH targetBrush = CreateSolidBrush(pressedcolor);
 
-        dc.SelectObject(targetPen);
-        dc.SelectObject(targetBrush);
+        dc->SelectObject(targetPen);
+        dc->SelectObject(targetBrush);
 
         // button rectangle
         RECT rect1;
@@ -71,17 +156,17 @@ public:
         rect1.bottom = p.y + height;
 
         // 3d apperance calls
-        dc.Rectangle(&rect1);
-        dc.Draw3dRect(&rect1, pcolortl, pcolorbr);
+        dc->Rectangle(&rect1);
+        dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
         InflateRect(&rect1, -1, -1);
-        dc.Draw3dRect(&rect1, pcolortl, pcolorbr);
-        dc.DrawText(CString(btext), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+        dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
+        dc->DrawText(CString(btext), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
         DeleteObject(font);
 
-        dc.Detach();
+        dc->RestoreDC(sDC);
 
         return rect1;
     };
@@ -313,21 +398,21 @@ public:
 
         // draw button loop
         menutopleft.y = menutopleft.y + 25;
-        TopMenu::DrawButton(dc, menutopleft, 45, 23, "PTL 3", 0);
+        TopMenu::DrawButton(&dc, menutopleft, 45, 23, "PTL 3", 0);
 
         menutopleft.y = menutopleft.y - 25;
         menutopleft.x = menutopleft.x + 55;
-        TopMenu::DrawButton(dc, menutopleft, 35, 23, "RBL", 0);
+        TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
 
         menutopleft.y = menutopleft.y + 25;
-        TopMenu::DrawButton(dc, menutopleft, 35, 23, "PIV", 0);
+        TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
 
         menutopleft.y = menutopleft.y - 25;
         menutopleft.x = menutopleft.x + 45;
-        TopMenu::DrawButton(dc, menutopleft, 45, 23, "Rings 20", 0);
+        TopMenu::DrawButton(&dc, menutopleft, 45, 23, "Rings 20", 0);
 
         menutopleft.y = menutopleft.y + 25;
-        TopMenu::DrawButton(dc, menutopleft, 45, 23, "Grid", 0);
+        TopMenu::DrawButton(&dc, menutopleft, 45, 23, "Grid", 0);
 
     }
 
@@ -337,8 +422,6 @@ public:
 
         int idx;
 
-        p.x += 105;
-
         p.y += 31;
         for (idx = 0; idx < 9; idx++) {
             bool pressed = FALSE;
@@ -346,12 +429,32 @@ public:
                 pressed = TRUE;
             }
  
-            TopMenu::DrawButton(dc, p, 20, 15, hoptions[idx].c_str(), pressed);
+            TopMenu::DrawButton(&dc, p, 20, 15, hoptions[idx].c_str(), pressed);
             p.x += 22;
         }
 
         dc.Detach();
     }
 
-};
+    static RECT DrawWindow(CDC* dc, EuroScopePlugIn::CRadarScreen* radscr, POINT origin, int width, int height) {
+        int sDC = dc->SaveDC();
 
+        CFont font;
+        LOGFONT lgfont;
+
+        memset(&lgfont, 0, sizeof(LOGFONT));
+        lgfont.lfWeight = 700;
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        lgfont.lfHeight = 12;
+        font.CreateFontIndirect(&lgfont);
+
+        dc->SelectObject(font);
+        dc->SetTextColor(RGB(230, 230, 230));
+
+
+
+
+        dc->RestoreDC(sDC);
+    }
+
+};

@@ -1,102 +1,102 @@
 NAME:EuroScope main sector file provider
 URL:http://www.euroscope.hu/sectorfile/euroscope_sector_providers.txt
 LOCALFILE:./euroscope_sector_providers.txt
-LASTDOWNLOAD:202008081021
-NEXTDOWNLOAD:202008101021
+LASTDOWNLOAD:202103211327
+NEXTDOWNLOAD:202103231327
 AUTODOWNLOAD:1
 NAME:VATSIM Bulgarian Sector File Provider
 URL:http://vaccbul.avsim-bg.org/ES/VACCBUL_sector_provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VACCBUL_sector_provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\VACCBUL_sector_provider.txt
 AUTODOWNLOAD:0
 NAME:EuroCenter vACC Sector File Provider
 URL:http://www.euc-vacc.org/es/EUROCEN_sector_file.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\EUROCEN_sector_file.txt
+LOCALFILE:D:\Documents\VATCANSitu\EUROCEN_sector_file.txt
 AUTODOWNLOAD:0
 NAME:LHCC - VACCHUN Sector Files
 URL:http://www.vacchun.hu/es/vacchun_sector_files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\vacchun_sector_files.txt
+LOCALFILE:D:\Documents\VATCANSitu\vacchun_sector_files.txt
 AUTODOWNLOAD:0
 NAME:Shanwick & Gander Oceanic
 URL:http://idisk.mac.com/boerner-Public/EuroScope/EGGX-CZQX_sector_file.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\EGGX-CZQX_sector_file.txt
+LOCALFILE:D:\Documents\VATCANSitu\EGGX-CZQX_sector_file.txt
 AUTODOWNLOAD:0
 NAME:VATSIM Germany Sector File Provider
 URL:http://nav.vatsim-germany.org/files/VATGER_sector_provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATGER_sector_provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATGER_sector_provider.txt
 AUTODOWNLOAD:0
 NAME:VATSIM CZQM Sector File Provider
 URL:http://czqm.ca/files/VATCAN_CZQM_Sector_Provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATCAN_CZQM_Sector_Provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATCAN_CZQM_Sector_Provider.txt
 AUTODOWNLOAD:0
 NAME:Central & North Africa sector files
 URL:http://vatcaf.flyvatsimafrica.org/euroscopeupdate/VATCAF_Sector_Provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATCAF_Sector_Provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATCAF_Sector_Provider.txt
 AUTODOWNLOAD:0
 NAME:vACC Italy Sector Files
 URL:http://www.vatita.net/es/vatita_sector_files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\vatita_sector_files.txt
+LOCALFILE:D:\Documents\VATCANSitu\vatita_sector_files.txt
 AUTODOWNLOAD:0
 NAME:LRBB - ROvACC Sector Files
 URL:http://rovacc.ro/downloads/ROvACC_sector_stuff.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\ROvACC_sector_stuff.txt
+LOCALFILE:D:\Documents\VATCANSitu\ROvACC_sector_stuff.txt
 AUTODOWNLOAD:0
 NAME:Ukraine vACC Sector Files
 URL:http://www.vacc-ua.aero/information/controllers/sectors/VACCUKR_sectors.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VACCUKR_sectors.txt
+LOCALFILE:D:\Documents\VATCANSitu\VACCUKR_sectors.txt
 AUTODOWNLOAD:0
 NAME:vZAU Chicago - Beta
 URL:http://zausector.webbhq.net/vZAU_Sector_Files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\vZAU_Sector_Files.txt
+LOCALFILE:D:\Documents\VATCANSitu\vZAU_Sector_Files.txt
 AUTODOWNLOAD:0
 NAME:Alaska ARTCC Control File
 URL:http://vzanartcc.net/downloads/euroscope/vZAN_sectorfiles.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\vZAN_sectorfiles.txt
+LOCALFILE:D:\Documents\VATCANSitu\vZAN_sectorfiles.txt
 AUTODOWNLOAD:0
 NAME:VATSIM-UK Euroscope Sector File Provider
 URL:http://www.vatsim-uk.co.uk/files/sector/esad/VATUK_Euroscope_files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATUK_Euroscope_files.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATUK_Euroscope_files.txt
 AUTODOWNLOAD:0
 NAME:VATSIM UAE Sector File Provider
 URL:http://vatme.net/FILES/VATUAE/sector/VATUAE_ES_sector_files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATUAE_ES_sector_files.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATUAE_ES_sector_files.txt
 AUTODOWNLOAD:0
 NAME:Latvia vACC Sector File Provider
 URL:http://www.lv-vacc.org/es/EVRR_FIR_sector_file.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\EVRR_FIR_sector_file.txt
+LOCALFILE:D:\Documents\VATCANSitu\EVRR_FIR_sector_file.txt
 AUTODOWNLOAD:0
 NAME:TRvACC.Org Turkish Virtual Area Control Center
 URL:http://trvacc.org/es/TRvACC_es_provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\TRvACC_es_provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\TRvACC_es_provider.txt
 AUTODOWNLOAD:0
 NAME:Vatsim-Scandinavia - Denmark
 URL:http://www.vatsim-scandinavia.org/euroscope/sectorfiles/denmark/EKDK_sector_file.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\EKDK_sector_file.txt
+LOCALFILE:D:\Documents\VATCANSitu\EKDK_sector_file.txt
 AUTODOWNLOAD:0
 NAME:Vatsim-Scandinavia - Norway
 URL:http://www.vatsim-scandinavia.org/euroscope/sectorfiles/norway/ENOR_sector_files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\ENOR_sector_files.txt
+LOCALFILE:D:\Documents\VATCANSitu\ENOR_sector_files.txt
 AUTODOWNLOAD:0
 NAME:Vatsim-Scandinavia - Sweden
 URL:http://www.vatsim-scandinavia.org/euroscope/sectorfiles/sweden/ESAA_sector_file.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\ESAA_sector_file.txt
+LOCALFILE:D:\Documents\VATCANSitu\ESAA_sector_file.txt
 AUTODOWNLOAD:0
 NAME:VATSIM MIDDLE EAST Euroscope Sector File Provider
 URL:http://vatme.net/files/Sectors/VATME_sector_Provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATME_sector_Provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATME_sector_Provider.txt
 AUTODOWNLOAD:0
 NAME:AeroNav GNG Sector File Provider
 URL:http://files.aero-nav.com/AeroNav_sector_provider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\AeroNav_sector_provider.txt
+LOCALFILE:D:\Documents\VATCANSitu\AeroNav_sector_provider.txt
 AUTODOWNLOAD:0
 NAME:Cuba vACC Sector Files Provider
 URL:http://havana.vatcar.org/es/mufh_sector_files.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\mufh_sector_files.txt
+LOCALFILE:D:\Documents\VATCANSitu\mufh_sector_files.txt
 AUTODOWNLOAD:0
 NAME:VATNZ Sector File Provider
 URL:http://www.vatnz.net/airspace/sector_files/euroscope/VATNZ_SectorFileProvider.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\VATNZ_SectorFileProvider.txt
+LOCALFILE:D:\Documents\VATCANSitu\VATNZ_SectorFileProvider.txt
 AUTODOWNLOAD:0
 NAME:Polish vACC Sector Provider
 URL:http://pl-vacc.org.pl/files/soft_atc/ES_sectorfiles/sectors.txt
-LOCALFILE:D:\Documents\EXCDS Development\VATCANSitu\VATCANSitu\sectors.txt
+LOCALFILE:D:\Documents\VATCANSitu\sectors.txt
 AUTODOWNLOAD:0
