@@ -1428,6 +1428,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isADSB = isADSB;
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
+	if (remarks.find("EQPT/LB1") != remarks.npos) { acdata.isADSB = true; }
 	mAcData[callSign] = acdata;
 
 
