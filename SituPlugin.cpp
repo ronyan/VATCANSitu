@@ -12,8 +12,49 @@ HHOOK appHook;
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
+    // initialize a keyboard event to send back to ES
+    INPUT ip{};
+    ip.type = INPUT_KEYBOARD;
+    ip.ki.time = 0;
+    ip.ki.dwExtraInfo = 0;
+    ip.ki.dwFlags = KEYEVENTF_SCANCODE;
+    ip.ki.wVk = 0;
+
     switch (wParam)
     {
+        // capture the enter key if a keyboard command is in progress
+    case VK_RETURN:
+    {
+        // if kb_command active
+
+
+        // send the ASEL key
+
+
+        // set kb_command to inactive
+    }
+
+    case VK_F1:
+    {
+        if (!(lParam & 0x40000000)) { // on button down
+            ip.ki.wScan = 0x4E; //  scancode for numpad plus http://www.philipstorr.id.au/pcbook/book3/scancode.htm
+
+            SendInput(1, &ip, sizeof(INPUT));
+            ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+            SendInput(1, &ip, sizeof(INPUT));
+            return -1;
+        } // reset timer for highlighting an aircraft
+
+        // if kb_commmand is inactive make it active
+
+
+        // set the highlight string to "H/O"
+        
+        // send the ASEL key 
+
+        
+    }
+
     case VK_F3:
     {
         if(!(lParam & 0x40000000)) { // on button down
