@@ -8,56 +8,114 @@ const int TAG_ITEM_IFR_REL = 5000;
 const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
 
+bool held = false;
+
 HHOOK appHook;
+
+int ParseKeyBoardPress(LPARAM lParam) {
+
+        return -1;
+
+}
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
-    switch (wParam)
-    {
-    case VK_F3:
-    {
-        if(!(lParam & 0x40000000)) { // on button down
-            CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
-            CSiTRadar::m_pRadScr->RequestRefresh();
+    // initialize a keyboard event to send back to ES
+    INPUT ip{};
+    ip.type = INPUT_KEYBOARD;
+    ip.ki.time = 0;
+    ip.ki.dwExtraInfo = 0;
+    ip.ki.dwFlags = KEYEVENTF_SCANCODE;
+    ip.ki.wVk = 0;
+
+    if (
+        wParam == VK_F1 ||
+        wParam == VK_F3 ||
+        wParam == VK_F9
+        ) {
+
+        if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
             return -1;
         }
-    }
-
-    case VK_F9:
-    {
-        if (!(lParam & 0x40000000)) {
-            if (CSiTRadar::menuState.filterBypassAll == FALSE) {
-                CSiTRadar::menuState.filterBypassAll = TRUE;
-
-                for (auto& p : CSiTRadar::mAcData) {
-                    CSiTRadar::tempTagData[p.first] = p.second.tagType;
-                    // Do not open uncorrelated tags
-                    if (p.second.tagType == 0) {
-                        p.second.tagType = 1;
-                    }
+        else { // if key was previously down
+            if (!(lParam & 0x80000000)) { // if bit 31 is 0 this will evaluate true, which means key is being pressed
+                if (!(lParam & 0x0000ffff)) {  // if no repeats
+                    return -1;
                 }
+                else {
+                    held = true;
+                    // Long Press Keyboard Commands will send the function direct to ES
 
-            }
-            else if (CSiTRadar::menuState.filterBypassAll == TRUE) {
 
-                for (auto& p : CSiTRadar::tempTagData) {
-                    // prevents closing of tags that became under your jurisdiction during quicklook
-                    if (!CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(p.first.c_str()).GetTrackingControllerIsMe()) {
-                        CSiTRadar::mAcData[p.first].tagType = p.second;
-                    }
+
+                    // *** END LONG PRESS COMMANDS ***
+                    return 0;
                 }
-
-                CSiTRadar::tempTagData.clear();
-                CSiTRadar::menuState.filterBypassAll = FALSE;
             }
+            else {
+                if (held == false) {
+                    // START OF SHORT PRESS KEYBOARD COMMANDS ***
+                    switch (wParam) {
+                    case VK_F1: {
 
-            CSiTRadar::m_pRadScr->RequestRefresh();
+                        ip.ki.wScan = 0x4E; //  scancode for numpad plus http://www.philipstorr.id.au/pcbook/book3/scancode.htm
 
-            return -1;
+                        SendInput(1, &ip, sizeof(INPUT));
+                        ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+                        SendInput(1, &ip, sizeof(INPUT));
+
+                        held = false;
+                        return -1;
+                    }
+
+                    case VK_F3:
+                    {
+                        CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+
+                        held = false;
+                        return -1;
+                    }
+                    case VK_F9:
+                    {
+
+                        if (CSiTRadar::menuState.filterBypassAll == FALSE) {
+                            CSiTRadar::menuState.filterBypassAll = TRUE;
+
+                            for (auto& p : CSiTRadar::mAcData) {
+                                CSiTRadar::tempTagData[p.first] = p.second.tagType;
+                                // Do not open uncorrelated tags
+                                if (p.second.tagType == 0) {
+                                    p.second.tagType = 1;
+                                }
+                            }
+
+                        }
+                        else if (CSiTRadar::menuState.filterBypassAll == TRUE) {
+
+                            for (auto& p : CSiTRadar::tempTagData) {
+                                // prevents closing of tags that became under your jurisdiction during quicklook
+                                if (!CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(p.first.c_str()).GetTrackingControllerIsMe()) {
+                                    CSiTRadar::mAcData[p.first].tagType = p.second;
+                                }
+                            }
+
+                            CSiTRadar::tempTagData.clear();
+                            CSiTRadar::menuState.filterBypassAll = FALSE;
+                        }
+
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+
+                        held = false;
+                        return -1;
+                    }
+                    // *** END OF SHORT KEYBOARD PRESS COMMANDS ***
+                    }          
+                }
+                held = false;
+            }
         }
     }
-    }
-
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
