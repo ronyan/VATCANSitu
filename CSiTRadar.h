@@ -9,6 +9,7 @@
 #include <regex>
 #include <math.h>
 #include <gdiplus.h>
+#include <deque>
 #include "constants.h"
 #include "pch.h"
 
@@ -43,6 +44,8 @@ struct buttonStates {
     bool wxAll{ FALSE };
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
+    bool handoffMode{ TRUE };
+    deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
 };
 
 class CSiTRadar :

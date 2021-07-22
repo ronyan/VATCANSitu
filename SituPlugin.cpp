@@ -9,6 +9,7 @@ const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
 
 bool held = false;
+size_t jurisdictionIndex = 0;
 
 HHOOK appHook;
 
@@ -31,7 +32,8 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (
         wParam == VK_F1 ||
         wParam == VK_F3 ||
-        wParam == VK_F9
+        wParam == VK_F9 ||
+        wParam == VK_RETURN
         ) {
 
         if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
@@ -57,6 +59,23 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     // START OF SHORT PRESS KEYBOARD COMMANDS ***
                     switch (wParam) {
                     case VK_F1: {
+
+                        // Toggle on hand-off mode
+                        CSiTRadar::menuState.handoffMode = TRUE;
+
+                        // ASEL the next aircraft in the handoff priority list
+                        if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
+                            CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()));
+                            
+                            // loop through the jurisdictional aircraft
+                            if (jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()-1) {
+                                jurisdictionIndex++;
+                            }
+                            else { jurisdictionIndex = 0; }
+                        }
+
+                        // For the active aircraft toggle on the box drawing
+
 
                         ip.ki.wScan = 0x4E; //  scancode for numpad plus http://www.philipstorr.id.au/pcbook/book3/scancode.htm
 
