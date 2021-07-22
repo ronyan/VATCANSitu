@@ -9,7 +9,9 @@ const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
 
 bool held = false;
+bool bypassKey = false;
 size_t jurisdictionIndex = 0;
+size_t oldJurisdictionSize = 0;
 
 HHOOK appHook;
 
@@ -37,14 +39,6 @@ void SituPlugin::SendKeyboardPresses(vector<WORD> message)
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
-    // initialize a keyboard event to send back to ES
-    INPUT ip{};
-    ip.type = INPUT_KEYBOARD;
-    ip.ki.time = 0;
-    ip.ki.dwExtraInfo = 0;
-    ip.ki.dwFlags = KEYEVENTF_SCANCODE;
-    ip.ki.wVk = 0;
-
     if (
         wParam == VK_F1 ||
         wParam == VK_F3 ||
@@ -53,9 +47,9 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         ) {
 
         if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
-
-            SituPlugin::SendKeyboardPresses({ 0x01 }); // send escape to clear out the command line on first press
-
+            if (!bypassKey){
+                SituPlugin::SendKeyboardPresses({ 0x01 }); // send escape to clear out the command line on first press
+            }
             return -1;
         }
         else { // if key was previously down
@@ -78,11 +72,13 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     // START OF SHORT PRESS KEYBOARD COMMANDS ***
                     switch (wParam) {
                     case VK_F1: {
-
                         // Toggle on hand-off mode
-                        if (CSiTRadar::menuState.handoffMode == FALSE) {
+                        if (CSiTRadar::menuState.handoffMode == FALSE ||
+                            CSiTRadar::menuState.jurisdictionalAC.size() != oldJurisdictionSize) {
                             jurisdictionIndex = 0;
+                            oldJurisdictionSize = CSiTRadar::menuState.jurisdictionalAC.size();
                         }
+
                         CSiTRadar::menuState.handoffMode = TRUE;
                         CSiTRadar::menuState.handoffModeStartTime = clock();
 
@@ -97,6 +93,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                                            CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
                                     )
                                     {
+                                    bypassKey = true;
                                     SituPlugin::SendKeyboardPresses({ 0x3D });
                                 }
                                 else {
@@ -119,11 +116,17 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                     case VK_F3:
                     {
-                        CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
-                        CSiTRadar::m_pRadScr->RequestRefresh();
+                        
+                        if (!bypassKey) {
+                            CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
+                            CSiTRadar::m_pRadScr->RequestRefresh();
 
+                            return -1;
+                        }
+
+                        bypassKey = false;
                         held = false;
-                        return -1;
+                        return 0;
                     }
                     case VK_F9:
                     {

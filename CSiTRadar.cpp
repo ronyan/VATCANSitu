@@ -1465,30 +1465,24 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 				CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
 			}
+			else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
+			{
+				CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
+			}
 		}
 		else if (isInJurisdictionalList) {
-			// Handoffs initiated by controller take 2nd priority
-			if (radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerCallsign() != "" && radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				CSiTRadar::menuState.jurisdictionalAC.erase(find(CSiTRadar::menuState.jurisdictionalAC.begin(), CSiTRadar::menuState.jurisdictionalAC.end(), radarTarget.GetCorrelatedFlightPlan().GetCallsign()));
-				CSiTRadar::menuState.jurisdictionalAC.emplace_front(radarTarget.GetCorrelatedFlightPlan().GetCallsign());
-			}
-			// Handoffs to controller take top priority
-			if (radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerCallsign() == CSiTRadar::GetPlugIn()->ControllerMyself().GetCallsign())
-			{
-				CSiTRadar::menuState.jurisdictionalAC.erase(find(CSiTRadar::menuState.jurisdictionalAC.begin(), CSiTRadar::menuState.jurisdictionalAC.end(), radarTarget.GetCorrelatedFlightPlan().GetCallsign()));
-				CSiTRadar::menuState.jurisdictionalAC.emplace_front(radarTarget.GetCorrelatedFlightPlan().GetCallsign());
-			}
-
 			// Clean up jurisdictional list if no longer under CJS
-			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				CSiTRadar::menuState.jurisdictionalAC.erase(find(CSiTRadar::menuState.jurisdictionalAC.begin(), CSiTRadar::menuState.jurisdictionalAC.end(), radarTarget.GetCorrelatedFlightPlan().GetCallsign()));
+			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() &&
+				strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0				
+				) {
+				CSiTRadar::menuState.jurisdictionalAC.erase(remove(CSiTRadar::menuState.jurisdictionalAC.begin(), CSiTRadar::menuState.jurisdictionalAC.end(), radarTarget.GetCallsign()), CSiTRadar::menuState.jurisdictionalAC.end());
 			}
 		}
 
 
 	}
 	
-	menuState.numJurisdictionAC = count;
+	menuState.numJurisdictionAC = CSiTRadar::menuState.jurisdictionalAC.size();
 
 	// These items don't need to be updated each loop, save loop type by storing data in a map
 	string callSign = FlightPlan.GetCallsign();
