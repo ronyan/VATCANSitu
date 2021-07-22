@@ -1451,35 +1451,21 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
 	int count = 0;
+	CSiTRadar::menuState.jurisdictionalAC.clear();
+
 	for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 		radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 	{
 		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) { count++; }
-
 		// Maintain the aircrafts under controller CJS in hand-off priority order
-		bool isInJurisdictionalList{};
-		isInJurisdictionalList = find(CSiTRadar::menuState.jurisdictionalAC.begin(), CSiTRadar::menuState.jurisdictionalAC.end(), radarTarget.GetCallsign()) != CSiTRadar::menuState.jurisdictionalAC.end();
 
-		if (!isInJurisdictionalList) {
-			// all other aircrafts are at the back of the list if not already in list
-			if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-				CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
-			}
-			else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
-			{
-				CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
-			}
+		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+			CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
 		}
-		else if (isInJurisdictionalList) {
-			// Clean up jurisdictional list if no longer under CJS
-			if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() &&
-				strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0				
-				) {
-				CSiTRadar::menuState.jurisdictionalAC.erase(remove(CSiTRadar::menuState.jurisdictionalAC.begin(), CSiTRadar::menuState.jurisdictionalAC.end(), radarTarget.GetCallsign()), CSiTRadar::menuState.jurisdictionalAC.end());
-			}
+		else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
+		{
+			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
 		}
-
-
 	}
 	
 	menuState.numJurisdictionAC = CSiTRadar::menuState.jurisdictionalAC.size();

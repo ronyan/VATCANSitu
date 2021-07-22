@@ -36,6 +36,23 @@ void SituPlugin::SendKeyboardPresses(vector<WORD> message)
     SendInput(vec.size(), &vec[0], sizeof(INPUT));
 }
 
+void SendLongPress(WORD message)
+{
+        INPUT input = { 0 };
+        input.type = INPUT_KEYBOARD;
+        input.ki.dwFlags = KEYEVENTF_SCANCODE;
+        input.ki.time = 0;
+        input.ki.wVk = 0;
+        input.ki.wScan = message;
+
+        SendInput(1, &input, sizeof(INPUT));
+
+        Sleep(500);
+
+        input.ki.dwFlags |= KEYEVENTF_KEYUP;
+        SendInput(1, &input, sizeof(INPUT));
+}
+
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
@@ -94,7 +111,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                                     )
                                     {
                                     bypassKey = true;
-                                    SituPlugin::SendKeyboardPresses({ 0x3D });
+                                    SituPlugin::SendKeyboardPresses({ 0x3D }); // Long F3 press
                                 }
                                 else {
                                     SituPlugin::SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
@@ -104,7 +121,6 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                             else {
                                 jurisdictionIndex = 0;
                                 CSiTRadar::menuState.handoffMode = FALSE;
-                                SituPlugin::SendKeyboardPresses({ 0x01 });
                             }
                         }
 
@@ -187,7 +203,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.4.4.6",
+		"0.4.5.1",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
