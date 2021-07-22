@@ -418,6 +418,49 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					}
 
+
+					// Draw the Selected Aircraft Box
+					if (CSiTRadar::menuState.handoffMode) {
+						if (radarTarget.GetCallsign() == GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) {
+							HPEN targetPen;
+							RECT selectBox{};
+							selectBox.left = p.x - 6;
+							selectBox.right = p.x + 7;
+							selectBox.top = p.y - 6;
+							selectBox.bottom = p.y + 7;
+
+							targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+							dc.SelectObject(targetPen);
+							dc.SelectStockObject(NULL_BRUSH);
+
+							dc.Rectangle(&selectBox);
+
+							CFont font;
+							LOGFONT lgfont;
+
+							memset(&lgfont, 0, sizeof(LOGFONT));
+							lgfont.lfWeight = 500;
+							strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+							lgfont.lfHeight = 12;
+							font.CreateFontIndirect(&lgfont);
+
+							dc.SelectObject(font);
+							dc.SetTextColor(C_WHITE);
+
+							RECT rectHO;
+							rectHO.left = p.x - 16;
+							rectHO.right = p.x + 20;
+							rectHO.top = p.y + 8;
+							rectHO.bottom = p.y + 28;
+
+							dc.DrawText("H/O", &rectHO, DT_CENTER);
+
+							DeleteObject(font);
+							DeleteObject(targetPen);
+						}
+					}
+
+
 				}
 
 				// Flight plan loop. Goes through flight plans, and if not correlated will display

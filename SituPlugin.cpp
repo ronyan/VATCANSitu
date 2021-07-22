@@ -71,7 +71,10 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                             if (jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()-1) {
                                 jurisdictionIndex++;
                             }
-                            else { jurisdictionIndex = 0; }
+                            else { 
+                                jurisdictionIndex = 0; 
+                                CSiTRadar::menuState.handoffMode = FALSE;
+                            }
                         }
 
                         // For the active aircraft toggle on the box drawing

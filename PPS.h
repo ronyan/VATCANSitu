@@ -184,29 +184,6 @@ public:
 
 		DeleteObject(targetPen);
 
-		/// END DRAWING SYMBOLS ///
-
-		// Draw halo
-
-		// Draw the PTL
-
-		// Draw the Selected Aircraft Box
-		if (CSiTRadar::menuState.handoffMode) {
-			HPEN targetPen;
-
-			/// DRAWING SYMBOLS ///
-
-			targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
-			dc->SelectObject(targetPen);
-			dc->SelectStockObject(NULL_BRUSH);
-
-
-
-			DeleteObject(targetPen);
-		}
-
-
-
 		dc->RestoreDC(sDC);
 		return prect;
 	};
