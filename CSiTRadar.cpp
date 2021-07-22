@@ -147,6 +147,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		lastWxRefresh = clock();
 	}
 
+	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
+		menuState.handoffMode = FALSE;
+	}
+
 	// set up the drawing renderer
 	CDC dc;
 	dc.Attach(hdc);
@@ -386,9 +390,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-					// show CJS for controller tracking aircraft
+					// show CJS for controller tracking aircraft // or if in handoff mode, show the target controller's CJS
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
-						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
 						CFont font;
 						LOGFONT lgfont;
@@ -408,6 +411,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						rectCJS.top = p.y - 18;
 						rectCJS.bottom = p.y;
 
+						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
+
+						if (menuState.handoffMode &&
+							strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+							CJS = GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetCoordinatedNextController()).GetPositionId();
+							dc.SetTextColor(C_WHITE);
+						}
+
 						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
 						DeleteObject(font);
@@ -421,7 +432,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// Draw the Selected Aircraft Box
 					if (CSiTRadar::menuState.handoffMode) {
-						if (radarTarget.GetCallsign() == GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) {
+						if (strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
 							HPEN targetPen;
 							RECT selectBox{};
 							selectBox.left = p.x - 6;

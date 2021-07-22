@@ -19,6 +19,28 @@ int ParseKeyBoardPress(LPARAM lParam) {
 
 }
 
+
+// Takes a vector of keycodes and sends as keyboard commands
+void SendKeyboardPresses(vector<WORD> message) {
+
+    std::vector<INPUT> vec;
+    for (auto ch : message)
+    {
+        INPUT input = { 0 };
+        input.type = INPUT_KEYBOARD;
+        input.ki.dwFlags = KEYEVENTF_SCANCODE;
+        input.ki.time = 0;
+        input.ki.wVk = 0;
+        input.ki.wScan = ch;
+        vec.push_back(input);
+
+        input.ki.dwFlags |= KEYEVENTF_KEYUP;
+        vec.push_back(input);
+    }
+
+    SendInput(vec.size(), &vec[0], sizeof(INPUT));
+}
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     // initialize a keyboard event to send back to ES
@@ -37,6 +59,9 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         ) {
 
         if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
+
+            SendKeyboardPresses({ 0x01 }); // send escape to clear out the command line on first press
+
             return -1;
         }
         else { // if key was previously down
@@ -61,30 +86,28 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     case VK_F1: {
 
                         // Toggle on hand-off mode
+                        if (CSiTRadar::menuState.handoffMode == FALSE) {
+                            jurisdictionIndex = 0;
+                        }
                         CSiTRadar::menuState.handoffMode = TRUE;
+                        CSiTRadar::menuState.handoffModeStartTime = clock();
 
                         // ASEL the next aircraft in the handoff priority list
                         if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
-                            CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()));
-                            
-                            // loop through the jurisdictional aircraft
-                            if (jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()-1) {
+                            if (jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
+                                CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()));
+                                //CSiTRadar::m_pRadScr->StartTagFunction("", NULL, TAG_ITEM_TYPE_STATIC_STRING, "", NULL, TAG_ITEM_FUNCTION_NO, { 0,0 }, { 0,0,0,0 }); //dummy function to undo the ASEL to allow F4 without initiating handoff
+                                SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
                                 jurisdictionIndex++;
                             }
-                            else { 
-                                jurisdictionIndex = 0; 
+                            else {
+                                jurisdictionIndex = 0;
                                 CSiTRadar::menuState.handoffMode = FALSE;
+                                SendKeyboardPresses({ 0x01 });
                             }
                         }
 
-                        // For the active aircraft toggle on the box drawing
-
-
-                        ip.ki.wScan = 0x4E; //  scancode for numpad plus http://www.philipstorr.id.au/pcbook/book3/scancode.htm
-
-                        SendInput(1, &ip, sizeof(INPUT));
-                        ip.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-                        SendInput(1, &ip, sizeof(INPUT));
+                        CSiTRadar::m_pRadScr->RequestRefresh();
 
                         held = false;
                         return -1;
@@ -131,6 +154,19 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                         held = false;
                         return -1;
                     }
+
+                    case VK_RETURN:
+                    {
+                        if (CSiTRadar::menuState.handoffMode) {
+
+                            SendKeyboardPresses({ 0x4E, 0x01 });
+
+                            CSiTRadar::menuState.handoffMode = FALSE;
+                        }
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+                        return 0;
+                    }
+
                     // *** END OF SHORT KEYBOARD PRESS COMMANDS ***
                     }          
                 }

@@ -44,8 +44,12 @@ struct buttonStates {
     bool wxAll{ FALSE };
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
-    bool handoffMode{ TRUE };
+
+
+
+    bool handoffMode{};
     deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
+    clock_t handoffModeStartTime{};
 };
 
 class CSiTRadar :

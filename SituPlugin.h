@@ -1,5 +1,7 @@
 #pragma once
 #include <EuroScopePlugIn.h>
+#include <vector>
+
 
 class SituPlugin :
     public EuroScopePlugIn::CPlugIn
