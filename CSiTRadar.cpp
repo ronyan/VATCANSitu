@@ -149,6 +149,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
 		menuState.handoffMode = FALSE;
+		SituPlugin::SendKeyboardPresses({ 0x01 });
 	}
 
 	// set up the drawing renderer

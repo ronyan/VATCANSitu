@@ -13,16 +13,9 @@ size_t jurisdictionIndex = 0;
 
 HHOOK appHook;
 
-int ParseKeyBoardPress(LPARAM lParam) {
-
-        return -1;
-
-}
-
-
 // Takes a vector of keycodes and sends as keyboard commands
-void SendKeyboardPresses(vector<WORD> message) {
-
+void SituPlugin::SendKeyboardPresses(vector<WORD> message)
+{
     std::vector<INPUT> vec;
     for (auto ch : message)
     {
@@ -40,6 +33,7 @@ void SendKeyboardPresses(vector<WORD> message) {
 
     SendInput(vec.size(), &vec[0], sizeof(INPUT));
 }
+
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
@@ -60,7 +54,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
         if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
 
-            SendKeyboardPresses({ 0x01 }); // send escape to clear out the command line on first press
+            SituPlugin::SendKeyboardPresses({ 0x01 }); // send escape to clear out the command line on first press
 
             return -1;
         }
@@ -96,14 +90,24 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                         if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
                             if (jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
                                 CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()));
-                                //CSiTRadar::m_pRadScr->StartTagFunction("", NULL, TAG_ITEM_TYPE_STATIC_STRING, "", NULL, TAG_ITEM_FUNCTION_NO, { 0,0 }, { 0,0,0,0 }); //dummy function to undo the ASEL to allow F4 without initiating handoff
-                                SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
+                                // if plane is being handed off to me, use F3 to accept handoff instead of F4 to deny
+                                if (
+                                    strcmp(
+                                        CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()).GetHandoffTargetControllerId(),
+                                           CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
+                                    )
+                                    {
+                                    SituPlugin::SendKeyboardPresses({ 0x3D });
+                                }
+                                else {
+                                    SituPlugin::SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
+                                }
                                 jurisdictionIndex++;
                             }
                             else {
                                 jurisdictionIndex = 0;
                                 CSiTRadar::menuState.handoffMode = FALSE;
-                                SendKeyboardPresses({ 0x01 });
+                                SituPlugin::SendKeyboardPresses({ 0x01 });
                             }
                         }
 
@@ -159,7 +163,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     {
                         if (CSiTRadar::menuState.handoffMode) {
 
-                            SendKeyboardPresses({ 0x4E, 0x01 });
+                            SituPlugin::SendKeyboardPresses({ 0x4E, 0x01 });
 
                             CSiTRadar::menuState.handoffMode = FALSE;
                         }
@@ -269,3 +273,4 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
         }
     }
 }
+

@@ -2,7 +2,6 @@
 #include <EuroScopePlugIn.h>
 #include <vector>
 
-
 class SituPlugin :
     public EuroScopePlugIn::CPlugIn
 {
@@ -25,4 +24,6 @@ public:
         const char* sItemString,
         POINT Pt,
         RECT Area);
+
+    static void SendKeyboardPresses(std::vector<WORD> message);
 };
