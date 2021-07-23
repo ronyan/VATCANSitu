@@ -41,9 +41,12 @@ struct buttonStates {
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
+
+
     bool wxAll{ FALSE };
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
+    bool mvaDisp{ false };
 
 
     bool SFIMode{};

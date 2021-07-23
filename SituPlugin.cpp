@@ -11,6 +11,7 @@ const int TAG_FUNC_IFR_RELEASED = 5002;
 bool held = false;
 bool injected = false;
 bool kbF3 = false;
+bool kbF4 = false;
 size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
 
@@ -29,26 +30,6 @@ void SituPlugin::SendKeyboardPresses(vector<WORD> message)
         input.ki.wVk = 0;
         input.ki.wScan = ch;
         input.ki.dwExtraInfo = 1;
-        vec.push_back(input);
-
-        input.ki.dwFlags |= KEYEVENTF_KEYUP;
-        vec.push_back(input);
-    }
-
-    SendInput(vec.size(), &vec[0], sizeof(INPUT));
-}
-
-void SendLongPress(vector<WORD> message)
-{
-    std::vector<INPUT> vec;
-    for (auto ch : message)
-    {
-        INPUT input = { 0 };
-        input.type = INPUT_KEYBOARD;
-        input.ki.dwFlags = KEYEVENTF_SCANCODE;
-        input.ki.time = 0;
-        input.ki.wVk = 0;
-        input.ki.wScan = ch;
         vec.push_back(input);
 
         input.ki.dwFlags |= KEYEVENTF_KEYUP;
@@ -103,7 +84,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
             case VK_F4: {
                 if (GetAsyncKeyState(VK_F4) & 0x8000) {
-                    kbF3 = true;
+                    kbF4 = true;
                     return -1;
                 }
             }
@@ -126,15 +107,6 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     CSiTRadar::m_pRadScr->RequestRefresh();
                     return 0;
                 }
-            }
-
-            case VK_SNAPSHOT: {
-
-                // 
-
-                // 
-                return -1;
-
             }
 
             }
@@ -261,6 +233,28 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                         held = false;
                         return -1;
+                    }
+
+                    case VK_SNAPSHOT: {
+
+                        CSiTRadar::menuState.mvaDisp = !CSiTRadar::menuState.mvaDisp;
+
+                        CSiTRadar::m_pRadScr->GetPlugIn()->SelectActiveSectorfile();
+                        for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_FREE_TEXT); sectorElement.IsValid();
+                            sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_FREE_TEXT)) {
+
+                            string name = sectorElement.GetName();
+                            if(name.find("VFR Call-Up") != string::npos) {
+
+                                    CSiTRadar::m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), CSiTRadar::menuState.mvaDisp);
+
+                            }
+                        }
+
+                        CSiTRadar::m_pRadScr->RefreshMapContent();
+
+                        return -1;
+
                     }
 
                     // *** END OF SHORT KEYBOARD PRESS COMMANDS ***
