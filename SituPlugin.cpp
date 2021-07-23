@@ -63,9 +63,11 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (
         wParam == VK_F1 ||
         wParam == VK_F3 ||
+        wParam == VK_F4 ||
         wParam == VK_F9 ||
         wParam == VK_RETURN ||
-        wParam == VK_ESCAPE 
+        wParam == VK_ESCAPE ||
+        wParam == VK_SNAPSHOT
         ) {
 
         if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
@@ -99,6 +101,13 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 }
             }
 
+            case VK_F4: {
+                if (GetAsyncKeyState(VK_F4) & 0x8000) {
+                    kbF3 = true;
+                    return -1;
+                }
+            }
+
             case VK_ESCAPE: {
                 
                 if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
@@ -117,6 +126,15 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     CSiTRadar::m_pRadScr->RequestRefresh();
                     return 0;
                 }
+            }
+
+            case VK_SNAPSHOT: {
+
+                // 
+
+                // 
+                return -1;
+
             }
 
             }
@@ -205,6 +223,12 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                         }
                         return 0;
                     }
+
+                    case VK_F4:
+                    {
+
+                    }
+
                     case VK_F9:
                     {
 

@@ -46,7 +46,7 @@ struct buttonStates {
     bool wxOn{ FALSE };
 
 
-
+    bool SFIMode{};
     bool handoffMode{};
     deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
     clock_t handoffModeStartTime{};

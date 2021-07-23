@@ -369,6 +369,13 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->SetTextColor(C_WHITE);
 		}
 
+		// SFI mode changes the ASEL aircraft ACID to white
+
+		if (CSiTRadar::menuState.SFIMode &&
+			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+			dc->SetTextColor(C_WHITE);
+		}
+
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
