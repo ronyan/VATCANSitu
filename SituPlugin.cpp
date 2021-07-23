@@ -84,7 +84,9 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             case VK_F1: {
 
                 if (GetAsyncKeyState(VK_F1) & 0x8000) {
-                    SituPlugin::SendKeyboardPresses({ 0x01 });
+                    if (CSiTRadar::m_pRadScr->GetPlugIn()->RadarTargetSelectASEL().IsValid()) {
+                        SituPlugin::SendKeyboardPresses({ 0x01 });
+                    }
                     return -1;
                 }
 
