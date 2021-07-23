@@ -10,6 +10,7 @@ const int TAG_FUNC_IFR_RELEASED = 5002;
 
 bool held = false;
 bool injected = false;
+bool kbF3 = false;
 size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
 
@@ -82,16 +83,23 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
             case VK_F1: {
 
-                if ((GetAsyncKeyState(VK_F1) & 0x8000)) {
+                if (GetAsyncKeyState(VK_F1) & 0x8000) {
                     SituPlugin::SendKeyboardPresses({ 0x01 });
                     return -1;
                 }
 
             }
 
+            case VK_F3: {
+                if (GetAsyncKeyState(VK_F3) & 0x8000) {
+                    kbF3 = true;
+                    return -1;
+                }
+            }
+
             case VK_ESCAPE: {
                 
-                if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
+                if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
                     if (CSiTRadar::menuState.handoffMode == TRUE) {
                         
                         CSiTRadar::menuState.handoffMode = FALSE;
@@ -180,15 +188,18 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     case VK_F3:
                     {
                         
-                        if ((GetAsyncKeyState(VK_F1) & 0x8000)) {
-                            return 0;
-                        }
-                        else {
-                            
+                        if (kbF3) {
+
                             CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
                             CSiTRadar::m_pRadScr->RequestRefresh();
 
+                            kbF3 = false;
                             held = false;
+                            return -1;
+                        }
+                        else {
+                            
+
                         }
                         return 0;
                     }

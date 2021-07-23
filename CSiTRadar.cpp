@@ -1457,28 +1457,28 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 		radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 	{
-		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) { count++; }
-		// Maintain the aircrafts under controller CJS in hand-off priority order
-		// 3rd priority is jurisdictional aircraft
-		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() &&
-			strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
-			CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
-		}
-		// 2nd priority is aircraft being handed off
-		else if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()
-			&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
-			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
-			menuState.jurisdictionIndex = 0;
+		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) { 
+			
+			count++; 
+		
+			// 3rd priority is jurisdictional aircraft
+			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+				CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
+			}
+			// 2nd priority is aircraft being handed off
+			else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+				CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
+			}
+		
 		}
 		// 1st priority is aircraft being handed off to you
 		else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
 		{
 			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
-			menuState.jurisdictionIndex = 0;
 		}
 	}
 	
-	menuState.numJurisdictionAC = CSiTRadar::menuState.jurisdictionalAC.size();
+	menuState.numJurisdictionAC = count;
 
 	// These items don't need to be updated each loop, save loop type by storing data in a map
 	string callSign = FlightPlan.GetCallsign();
