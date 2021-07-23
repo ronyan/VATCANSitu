@@ -9,7 +9,7 @@ const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
 
 bool held = false;
-bool bypassKey = false;
+bool injected = false;
 size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
 
@@ -17,6 +17,27 @@ HHOOK appHook;
 
 // Takes a vector of keycodes and sends as keyboard commands
 void SituPlugin::SendKeyboardPresses(vector<WORD> message)
+{
+    std::vector<INPUT> vec;
+    for (auto ch : message)
+    {
+        INPUT input = { 0 };
+        input.type = INPUT_KEYBOARD;
+        input.ki.dwFlags = KEYEVENTF_SCANCODE;
+        input.ki.time = 0;
+        input.ki.wVk = 0;
+        input.ki.wScan = ch;
+        input.ki.dwExtraInfo = 1;
+        vec.push_back(input);
+
+        input.ki.dwFlags |= KEYEVENTF_KEYUP;
+        vec.push_back(input);
+    }
+
+    SendInput(vec.size(), &vec[0], sizeof(INPUT));
+}
+
+void SendLongPress(vector<WORD> message)
 {
     std::vector<INPUT> vec;
     for (auto ch : message)
@@ -36,37 +57,61 @@ void SituPlugin::SendKeyboardPresses(vector<WORD> message)
     SendInput(vec.size(), &vec[0], sizeof(INPUT));
 }
 
-void SendLongPress(WORD message)
-{
-        INPUT input = { 0 };
-        input.type = INPUT_KEYBOARD;
-        input.ki.dwFlags = KEYEVENTF_SCANCODE;
-        input.ki.time = 0;
-        input.ki.wVk = 0;
-        input.ki.wScan = message;
-
-        SendInput(1, &input, sizeof(INPUT));
-
-        Sleep(500);
-
-        input.ki.dwFlags |= KEYEVENTF_KEYUP;
-        SendInput(1, &input, sizeof(INPUT));
-}
-
-
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     if (
         wParam == VK_F1 ||
         wParam == VK_F3 ||
         wParam == VK_F9 ||
-        wParam == VK_RETURN
+        wParam == VK_RETURN ||
+        wParam == VK_ESCAPE 
         ) {
 
         if (!(lParam & 0x40000000)) { // if bit 30 is 0 this will evaluate true means key was previously up
-            if (!bypassKey){
-                SituPlugin::SendKeyboardPresses({ 0x01 }); // send escape to clear out the command line on first press
+
+            switch (wParam) {
+            case VK_RETURN:
+            {
+                if (CSiTRadar::menuState.handoffMode) {
+                    SituPlugin::SendKeyboardPresses({ 0x4E, 0x01 });
+                    CSiTRadar::menuState.handoffMode = FALSE;
+                }
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return 0;
             }
+
+            case VK_F1: {
+
+                if ((GetAsyncKeyState(VK_F1) & 0x8000)) {
+                    SituPlugin::SendKeyboardPresses({ 0x01 });
+                    return -1;
+                }
+
+            }
+
+            case VK_ESCAPE: {
+                
+                if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
+                    if (CSiTRadar::menuState.handoffMode == TRUE) {
+                        
+                        CSiTRadar::menuState.handoffMode = FALSE;
+                        CSiTRadar::menuState.jurisdictionIndex = 0;
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+
+                        return 0;
+                    }
+                    else { return 0; }
+                }
+                
+                else {
+                    CSiTRadar::m_pRadScr->RequestRefresh();
+                    return 0;
+                }
+            }
+
+            }
+
+
             return -1;
         }
         else { // if key was previously down
@@ -92,8 +137,8 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                         // Toggle on hand-off mode
                         if (CSiTRadar::menuState.handoffMode == FALSE ||
                             CSiTRadar::menuState.jurisdictionalAC.size() != oldJurisdictionSize) {
-                            jurisdictionIndex = 0;
                             oldJurisdictionSize = CSiTRadar::menuState.jurisdictionalAC.size();
+                            CSiTRadar::menuState.jurisdictionIndex = 0;
                         }
 
                         CSiTRadar::menuState.handoffMode = TRUE;
@@ -101,26 +146,28 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                         // ASEL the next aircraft in the handoff priority list
                         if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
-                            if (jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
-                                CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()));
+                            if (CSiTRadar::menuState.jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
+                                CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()));
                                 // if plane is being handed off to me, use F3 to accept handoff instead of F4 to deny
                                 if (
                                     strcmp(
-                                        CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(jurisdictionIndex).c_str()).GetHandoffTargetControllerId(),
+                                        CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()).GetHandoffTargetControllerId(),
                                            CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
                                     )
                                     {
-                                    bypassKey = true;
-                                    SituPlugin::SendKeyboardPresses({ 0x3D }); // Long F3 press
+
+                                    SituPlugin::SendKeyboardPresses({ 0x3D }); // send F3
                                 }
                                 else {
+
                                     SituPlugin::SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
                                 }
-                                jurisdictionIndex++;
+                                CSiTRadar::menuState.jurisdictionIndex++;
                             }
                             else {
-                                jurisdictionIndex = 0;
+                                CSiTRadar::menuState.jurisdictionIndex = 0;
                                 CSiTRadar::menuState.handoffMode = FALSE;
+                                SituPlugin::SendKeyboardPresses({ 0x01 });
                             }
                         }
 
@@ -133,15 +180,16 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     case VK_F3:
                     {
                         
-                        if (!bypassKey) {
+                        if ((GetAsyncKeyState(VK_F1) & 0x8000)) {
+                            return 0;
+                        }
+                        else {
+                            
                             CSiTRadar::menuState.ptlAll = !CSiTRadar::menuState.ptlAll;
                             CSiTRadar::m_pRadScr->RequestRefresh();
 
-                            return -1;
+                            held = false;
                         }
-
-                        bypassKey = false;
-                        held = false;
                         return 0;
                     }
                     case VK_F9:
@@ -176,18 +224,6 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                         held = false;
                         return -1;
-                    }
-
-                    case VK_RETURN:
-                    {
-                        if (CSiTRadar::menuState.handoffMode) {
-
-                            SituPlugin::SendKeyboardPresses({ 0x4E, 0x01 });
-
-                            CSiTRadar::menuState.handoffMode = FALSE;
-                        }
-                        CSiTRadar::m_pRadScr->RequestRefresh();
-                        return 0;
                     }
 
                     // *** END OF SHORT KEYBOARD PRESS COMMANDS ***

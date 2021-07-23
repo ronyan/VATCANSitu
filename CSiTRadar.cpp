@@ -149,6 +149,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
 		menuState.handoffMode = FALSE;
+		CSiTRadar::menuState.jurisdictionIndex = 0;
 		SituPlugin::SendKeyboardPresses({ 0x01 });
 	}
 
@@ -1458,13 +1459,22 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	{
 		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) { count++; }
 		// Maintain the aircrafts under controller CJS in hand-off priority order
-
-		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+		// 3rd priority is jurisdictional aircraft
+		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() &&
+			strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
 			CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
 		}
+		// 2nd priority is aircraft being handed off
+		else if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()
+			&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
+			menuState.jurisdictionIndex = 0;
+		}
+		// 1st priority is aircraft being handed off to you
 		else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
 		{
 			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
+			menuState.jurisdictionIndex = 0;
 		}
 	}
 	

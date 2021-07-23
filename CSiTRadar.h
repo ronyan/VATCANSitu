@@ -50,6 +50,7 @@ struct buttonStates {
     bool handoffMode{};
     deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
     clock_t handoffModeStartTime{};
+    size_t jurisdictionIndex{ 0 };
 };
 
 class CSiTRadar :
