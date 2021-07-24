@@ -157,6 +157,8 @@ public:
         RECT Area,
         int Button);
 
+    inline virtual void OnAirportRunwayActivityChanged(void);
+
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
 
