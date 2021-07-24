@@ -340,11 +340,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					// Tag Level Logic
 					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // alpha tag if you have jurisdiction over the aircraft
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].isJurisdictional = true;
 
 						// if you are handing off to someone
 						if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
 							mAcData[callSign].isHandoff = TRUE;
 						}
+					}
+					else {
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].isJurisdictional = false;
 					}
 
 					// Once the handoff is complete, 
@@ -1485,6 +1489,23 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	int count = 0;
 	CSiTRadar::menuState.jurisdictionalAC.clear();
 
+	for (auto& ac : CSiTRadar::mAcData) {
+
+		if (ac.second.isJurisdictional) {
+			count++;
+			if (ac.second.isHandoff) {
+				CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+			}
+			else {
+				CSiTRadar::menuState.jurisdictionalAC.push_back(ac.first);
+			}
+		}
+		if (ac.second.isHandoffToMe) {
+			CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+		}
+	}
+
+	/*
 	for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 		radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 	{
@@ -1508,6 +1529,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
 		}
 	}
+	*/
 	
 	menuState.numJurisdictionAC = count;
 

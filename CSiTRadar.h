@@ -24,6 +24,10 @@ struct ACData {
     int tagType{ 0 };
     bool isHandoff{ FALSE };
     bool isHandoffToMe{ FALSE };
+
+    bool isJurisdictional{ FALSE };
+    bool isOnScreen{ FALSE };
+
     int tagWidth{ 65 }; 
     string CID;
     bool extAlt{ FALSE };

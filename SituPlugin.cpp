@@ -198,7 +198,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                     case VK_F4:
                     {
-
+                        return 0;
                     }
 
                     case VK_F9:
