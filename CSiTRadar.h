@@ -96,7 +96,7 @@ public:
 
     void OnRefresh(HDC hdc, int phase);
 
-    void CSiTRadar::OnClickScreenObject(int ObjectType,
+    void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
         const char* sObjectId,
         POINT Pt,
         RECT Area,

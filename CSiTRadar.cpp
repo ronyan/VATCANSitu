@@ -1028,12 +1028,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	dc.Detach();
 }
 
-void CSiTRadar::OnClickScreenObject(int ObjectType,
+void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	const char* sObjectId,
 	POINT Pt,
 	RECT Area,
 	int Button)
 {	
+
+	if (menuState.mouseMMB) { return; }
 
 	if (ObjectType == AIRCRAFT_SYMBOL) {
 		
@@ -1373,7 +1375,12 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		}
 	}
 
-	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN) {
+	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN ||
+		ObjectType == TAG_ITEM_TYPE_ALTITUDE ||
+		ObjectType == TAG_ITEM_TYPE_GROUND_SPEED_WITH_N ||
+		ObjectType == TAG_ITEM_TYPE_PLANE_TYPE ||
+		ObjectType == TAG_ITEM_TYPE_DESTINATION
+		) {
 
 		if (menuState.mouseMMB) {
 			if (fp.IsValid()) {
