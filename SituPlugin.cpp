@@ -280,16 +280,20 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
+
+        if (CSiTRadar::menuState.handoffMode) { CSiTRadar::menuState.handoffMode = false; } // untoggle h/o if a click happens
+
         MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
         switch (wParam) {
         case WM_MBUTTONDOWN: {
-            CSiTRadar::m_pRadScr->GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", "Click Down", true, true, true, true, false);
-            SendMouseClick(MOUSEEVENTF_RIGHTDOWN);
+            CSiTRadar::menuState.mouseMMB = true;
+            SendMouseClick(MOUSEEVENTF_LEFTDOWN);
             CallNextHookEx(NULL, nCode, wParam, lParam);
             return -1;
         }
         case WM_MBUTTONUP: {
-            SendMouseClick(MOUSEEVENTF_RIGHTUP);
+            CSiTRadar::menuState.mouseMMB = false;
+            SendMouseClick(MOUSEEVENTF_LEFTUP);
             CallNextHookEx(NULL, nCode, wParam, lParam);
             return -1;
         }

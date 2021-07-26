@@ -1033,7 +1033,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	POINT Pt,
 	RECT Area,
 	int Button)
-{
+{	
+
 	if (ObjectType == AIRCRAFT_SYMBOL) {
 		
 		CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
@@ -1374,40 +1375,42 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN) {
 
-		if (fp.IsValid()) {
-			p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+		if (menuState.mouseMMB) {
+			if (fp.IsValid()) {
+				p = ConvertCoordFromPositionToPixel(rt.GetPosition().GetPosition());
+			}
+
+			RECT temp = Area;
+
+			POINT q;
+			q.x = ((temp.right + temp.left) / 2) - p.x - (CSiTRadar::mAcData[rt.GetCallsign()].tagWidth / 2); // Get centre of box 
+			q.y = ((temp.top + temp.bottom) / 2) - p.y - (TAG_HEIGHT / 2);	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
+
+			// check maximal offset
+			if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
+			if (q.x < -TAG_MAX_X_OFFSET - (CSiTRadar::mAcData[rt.GetCallsign()].tagWidth)) { q.x = -TAG_MAX_X_OFFSET - CSiTRadar::mAcData[rt.GetCallsign()].tagWidth; }
+			if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
+			if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
+
+			// nudge tag if necessary (near horizontal, or if directly above target)
+			if (q.x > -((CSiTRadar::mAcData[rt.GetCallsign()].tagWidth) / 2) && q.x < 3) { q.x = 3; };
+			if (q.x > -CSiTRadar::mAcData[rt.GetCallsign()].tagWidth && q.x <= -(CSiTRadar::mAcData[rt.GetCallsign()].tagWidth / 2)) { q.x = -CSiTRadar::mAcData[rt.GetCallsign()].tagWidth; }
+			if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
+
+			rtagOffset[sObjectId] = q;
+
+			if (!Released) {
+
+			}
+			else {
+
+				if (menuState.quickLook) { tempTagData[sObjectId] = 1; } // if you move a tag during quick look, it will stay open
+				// once released, check that the tag does not exceed the limits, and then save it to the map
+			}
 		}
 
-		RECT temp = Area;
-
-		POINT q;
-		q.x = ((temp.right + temp.left) / 2) - p.x - (CSiTRadar::mAcData[rt.GetCallsign()].tagWidth / 2); // Get centre of box 
-		q.y = ((temp.top + temp.bottom) / 2) - p.y - (TAG_HEIGHT / 2);	 //(small nudge of a few pixels for error correcting with IRL behaviour) 
-
-		// check maximal offset
-		if (q.x > TAG_MAX_X_OFFSET) { q.x = TAG_MAX_X_OFFSET; }
-		if (q.x < -TAG_MAX_X_OFFSET - ( CSiTRadar::mAcData[rt.GetCallsign()].tagWidth)) { q.x = -TAG_MAX_X_OFFSET - CSiTRadar::mAcData[rt.GetCallsign()].tagWidth; }
-		if (q.y > TAG_MAX_Y_OFFSET) { q.y = TAG_MAX_Y_OFFSET; }
-		if (q.y < -TAG_MAX_Y_OFFSET - TAG_HEIGHT) { q.y = -TAG_MAX_Y_OFFSET - TAG_HEIGHT; }
-
-		// nudge tag if necessary (near horizontal, or if directly above target)
-		if (q.x > -((CSiTRadar::mAcData[rt.GetCallsign()].tagWidth) / 2) && q.x < 3) { q.x = 3; };
-		if (q.x > -CSiTRadar::mAcData[rt.GetCallsign()].tagWidth && q.x <= -(CSiTRadar::mAcData[rt.GetCallsign()].tagWidth / 2)) { q.x = -CSiTRadar::mAcData[rt.GetCallsign()].tagWidth; }
-		if (q.y > -14 && q.y < 0) { q.y = -7; }; //sticky horizon
-
-		rtagOffset[sObjectId] = q;
-
-		if (!Released) {
-
-		}
-		else {
-
-			if (menuState.quickLook) { tempTagData[sObjectId] = 1; } // if you move a tag during quick look, it will stay open
-			// once released, check that the tag does not exceed the limits, and then save it to the map
-		}
+		RequestRefresh();
 	}
-
-	RequestRefresh();
 }
 
 void CSiTRadar::OnFunctionCall(int FunctionId,
