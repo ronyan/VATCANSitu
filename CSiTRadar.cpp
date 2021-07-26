@@ -1446,22 +1446,26 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 
 	GetPlugIn()->SelectActiveSectorfile();
 	// Active runway highlighting for ground screens
-	for (CSectorElement runway = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RADARS); runway.IsValid();
-		runway = GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RADARS)) {
+	for (CSectorElement runway = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
+		runway = GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
 
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
 			string airportrwy = runway.GetAirportName();
-			airportrwy = airportrwy + runway.GetRunwayName(0);
+			airportrwy = airportrwy + runway.GetRunwayName(0) ;
+			GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
 
 			activerwys.push_back(airportrwy);
 		}
 
-		for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_REGIONS); sectorElement.IsValid();
-			sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_REGIONS)) {
+	}
 
-			string name = sectorElement.GetName();
-			for (const auto& rwy : activerwys) {
+	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_REGIONS); sectorElement.IsValid();
+		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_REGIONS)) {
+
+		string name = sectorElement.GetName();
+		for (const auto& rwy : activerwys) {
+			if (name.find("ACTIVE") != string::npos) {
 				if (name.find(rwy) != string::npos) {
 					ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
 				}
@@ -1470,9 +1474,9 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 				}
 			}
 		}
-
-		RefreshMapContent();
 	}
+
+	RefreshMapContent();
 
 	// Find the position of ADSB radars
 
@@ -1565,42 +1569,6 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	string callSign = FlightPlan.GetCallsign();
 
 	mAcData.erase(callSign);
-
-}
-
-void CSiTRadar::OnAirportRunwayActivityChanged(void) {
-
-	vector<string> activerwys{};
-	// Recheck active runways and enable the highlighting on ground screens
-	GetPlugIn()->SelectActiveSectorfile();
-	// Active runway highlighting for ground screens
-	for (CSectorElement runway = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RADARS); runway.IsValid();
-		runway = GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RADARS)) {
-
-		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
-
-			string airportrwy = runway.GetAirportName();
-			airportrwy = airportrwy + runway.GetRunwayName(0);
-
-			activerwys.push_back(airportrwy);
-		}
-
-		for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_REGIONS); sectorElement.IsValid();
-			sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_REGIONS)) {
-
-			string name = sectorElement.GetName();
-			for (const auto& rwy : activerwys) {
-				if (name.find(rwy) != string::npos) {
-					ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
-				}
-				else {
-					ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
-				}
-			}
-		}
-
-		RefreshMapContent();
-	}
 
 }
 

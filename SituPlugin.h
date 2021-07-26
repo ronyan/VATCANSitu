@@ -25,5 +25,7 @@ public:
         POINT Pt,
         RECT Area);
 
+    virtual void OnAirportRunwayActivityChanged();
+
     static void SendKeyboardPresses(std::vector<WORD> message);
 };

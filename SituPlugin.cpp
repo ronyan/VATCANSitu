@@ -16,6 +16,7 @@ size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
 
 HHOOK appHook;
+HHOOK mouseHook;
 
 // Takes a vector of keycodes and sends as keyboard commands
 void SituPlugin::SendKeyboardPresses(vector<WORD> message)
@@ -37,6 +38,16 @@ void SituPlugin::SendKeyboardPresses(vector<WORD> message)
     }
 
     SendInput(vec.size(), &vec[0], sizeof(INPUT));
+}
+
+void SendMouseClick(DWORD mouseBut) {
+    INPUT input{0};
+    input.type = INPUT_MOUSE;
+    input.mi.mouseData = 0;
+    input.mi.time = 0;
+    input.mi.dwFlags = mouseBut;
+
+    SendInput(1, &input, sizeof(input));
 }
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
@@ -267,6 +278,32 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
+        switch (wParam) {
+        case WM_MBUTTONDOWN: {
+            CSiTRadar::m_pRadScr->GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", "Click Down", true, true, true, true, false);
+            SendMouseClick(MOUSEEVENTF_RIGHTDOWN);
+            CallNextHookEx(NULL, nCode, wParam, lParam);
+            return -1;
+        }
+        case WM_MBUTTONUP: {
+            SendMouseClick(MOUSEEVENTF_RIGHTUP);
+            CallNextHookEx(NULL, nCode, wParam, lParam);
+            return -1;
+        }
+        case WM_MBUTTONDBLCLK: {
+        }
+        default: {
+            return CallNextHookEx(NULL, nCode, wParam, lParam);
+        }
+        }
+
+    }
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
@@ -280,11 +317,13 @@ SituPlugin::SituPlugin()
 
     DWORD appProc = GetCurrentThreadId();
     appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
+    mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, NULL, appProc);
 }
 
 SituPlugin::~SituPlugin()
 {
     UnhookWindowsHookEx(appHook);
+    UnhookWindowsHookEx(mouseHook);
 }
 
 EuroScopePlugIn::CRadarScreen* SituPlugin::OnRadarScreenCreated(const char* sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
@@ -360,3 +399,45 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
     }
 }
 
+void SituPlugin::OnAirportRunwayActivityChanged()
+{
+
+    vector<string> activerwys{};
+    DisplayUserMessage("DEBUG", "DEBUG", "Runway Activity Changed", true, true, true, true, false);
+
+    // Recheck active runways and enable the highlighting on ground screens
+    SelectActiveSectorfile();
+    // Active runway highlighting for ground screens
+    for (CSectorElement runway = SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
+        runway = SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
+
+        if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
+
+            string airportrwy = runway.GetAirportName();
+            airportrwy = airportrwy + runway.GetRunwayName(0);
+            DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
+
+            activerwys.push_back(airportrwy);
+        }
+
+    }
+
+    for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_REGIONS); sectorElement.IsValid();
+        sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_REGIONS)) {
+
+        string name = sectorElement.GetName();
+        for (const auto& rwy : activerwys) {
+            if (name.find("ACTIVE") != string::npos) {
+                if (name.find(rwy) != string::npos) {
+                    CSiTRadar::m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
+                }
+                else {
+                    CSiTRadar::m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
+                }
+            }
+        }
+    }
+
+    CSiTRadar::m_pRadScr->RefreshMapContent();
+
+}
