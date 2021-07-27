@@ -281,7 +281,18 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
 
-        if (CSiTRadar::menuState.handoffMode) { CSiTRadar::menuState.handoffMode = false; } // untoggle h/o if a click happens
+        if (CSiTRadar::menuState.handoffMode) { 
+
+            if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
+
+                CSiTRadar::menuState.handoffMode = false;
+
+                if (CSiTRadar::m_pRadScr->GetPlugIn()->RadarTargetSelectASEL().IsValid()) {
+                    SituPlugin::SendKeyboardPresses({ 0x01 });
+                }
+            }
+
+        } // untoggle h/o if a click happens
 
         MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
         switch (wParam) {
