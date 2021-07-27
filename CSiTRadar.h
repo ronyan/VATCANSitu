@@ -27,6 +27,7 @@ struct ACData {
 
     bool isJurisdictional{ FALSE };
     bool isOnScreen{ FALSE };
+    bool isDestAprt{ FALSE };
 
     int tagWidth{ 65 }; 
     string CID;

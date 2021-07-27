@@ -290,6 +290,18 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 
+					// Check if target is on the display area
+					if(p.y < GetRadarArea().top || 
+						p.y > GetRadarArea().bottom ||
+						p.x < GetRadarArea().left ||
+						p.x > GetRadarArea().right)
+					{
+						mAcData[radarTarget.GetCallsign()].isOnScreen = false;
+					}
+					else {
+						mAcData[radarTarget.GetCallsign()].isOnScreen = true;
+					}
+
 					// Draw PTL
 					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
 						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
@@ -1022,6 +1034,26 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
 			// wxRadar::renderRadar( &g, this, menuState.wxAll);
 		}
+
+		// refresh jurisdictional list on zoom change
+		CSiTRadar::menuState.jurisdictionalAC.clear();
+
+		for (auto& ac : CSiTRadar::mAcData) {
+
+			if (ac.second.isJurisdictional) {
+				if (ac.second.isOnScreen) {
+					if (ac.second.isHandoff) {
+						CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+					}
+					else {
+						CSiTRadar::menuState.jurisdictionalAC.push_back(ac.first);
+					}
+				}
+			}
+			if (ac.second.isHandoffToMe && ac.second.isOnScreen) {
+				CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+			}
+		}
 	}
 
 	g.ReleaseHDC(hdc);
@@ -1507,14 +1539,16 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 
 		if (ac.second.isJurisdictional) {
 			count++;
-			if (ac.second.isHandoff) {
-				CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
-			}
-			else {
-				CSiTRadar::menuState.jurisdictionalAC.push_back(ac.first);
+			if (ac.second.isOnScreen) {
+				if (ac.second.isHandoff) {
+					CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+				}
+				else {
+					CSiTRadar::menuState.jurisdictionalAC.push_back(ac.first);
+				}
 			}
 		}
-		if (ac.second.isHandoffToMe) {
+		if (ac.second.isHandoffToMe && ac.second.isOnScreen) {
 			CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
 		}
 	}
