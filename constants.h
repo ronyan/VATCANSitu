@@ -81,6 +81,8 @@ const int ADD_FREE_TEXT = 1101;
 const int DELETE_FREE_TEXT = 1102;
 const int DELETE_ALL_FREE_TEXT = 1103;
 
+// AC lists
+const int LIST_OFF_SCREEN = 8000;
 
 // Module 2 : distances relative to module origin
 const int HALO_TOOL_X = 0;

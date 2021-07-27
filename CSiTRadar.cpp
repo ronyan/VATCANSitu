@@ -109,7 +109,7 @@ CSiTRadar::CSiTRadar()
 		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "WX Parser", string("PNG Failed to Parse").c_str(), true, false, false, false, false);
 	}
 
-	CSiTRadar::mAcData.reserve(64);
+	CSiTRadar::mAcData.reserve(256);
 
 	time = clock();
 	oldTime = clock();
@@ -263,6 +263,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					RequestRefresh();
 				}
+
+				DrawACList({ 500,500 }, &dc, mAcData, LIST_OFF_SCREEN);
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
@@ -1474,6 +1476,7 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int i
 	AddScreenObject(itemtype, btext.c_str(), rect, 0, "");
 }
 
+
 void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	const char* filt = nullptr;
 	vector<string> activerwys{};
@@ -1614,6 +1617,53 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 
 	mAcData.erase(callSign);
 
+}
+
+void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType)
+{
+	int sDC = dc->SaveDC();
+	CFont font;
+	LOGFONT lgfont;
+	memset(&lgfont, 0, sizeof(LOGFONT));
+	lgfont.lfHeight = 14;
+	lgfont.lfWeight = 500;
+	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+	font.CreateFontIndirect(&lgfont);
+	dc->SetTextColor(C_WHITE);
+	dc->SelectObject(font);
+	string header;
+	
+	if (listType == LIST_OFF_SCREEN) {
+
+		// Draw the heading
+		RECT listHeading{};
+		listHeading.left = p.x;
+		listHeading.top = p.y;
+
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
+
+		header = "OFF Screen";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		// Add the aircrafts
+
+		for (auto &aircraft : ac) {
+			if (aircraft.second.isJurisdictional && !aircraft.second.isOnScreen) {
+
+				dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT);
+
+				listArcft.top += 13;
+			}
+		}
+	}
+
+	dc->RestoreDC(sDC);
+	DeleteObject(font);
 }
 
 

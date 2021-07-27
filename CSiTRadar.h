@@ -168,6 +168,7 @@ public:
 
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
+    void DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType);
 
     // helper functions
     clock_t time = clock();
