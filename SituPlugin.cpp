@@ -287,10 +287,8 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                 CSiTRadar::menuState.handoffMode = false;
 
-                if (CSiTRadar::m_pRadScr->GetPlugIn()->RadarTargetSelectASEL().IsValid()) {
-                    SituPlugin::SendKeyboardPresses({ 0x01 });
-                }
             }
+            return -1;
 
         } // untoggle h/o if a click happens
 
