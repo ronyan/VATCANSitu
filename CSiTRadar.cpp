@@ -148,6 +148,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		lastWxRefresh = clock();
 	}
 
+	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
+		wxRadar::parseVatsimMetar();
+	}
+
 	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
 		menuState.handoffMode = FALSE;
 		CSiTRadar::menuState.jurisdictionIndex = 0;
