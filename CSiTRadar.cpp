@@ -270,7 +270,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 				
 				DrawACList({ 510, 84 }, &dc, mAcData, LIST_TIME_ATIS);
-				DrawACList({ 500,500 }, &dc, mAcData, LIST_OFF_SCREEN);
+				DrawACList({ 0,500 }, &dc, mAcData, LIST_OFF_SCREEN);
 
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
