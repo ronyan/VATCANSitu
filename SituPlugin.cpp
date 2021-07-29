@@ -427,7 +427,7 @@ void SituPlugin::OnAirportRunwayActivityChanged()
         if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
             string airportrwy = runway.GetAirportName();
-            CSiTRadar::menuState.activeRunwaysAltimeter.insert(std::pair<string, string>(airportrwy.substr(1), ""));
+            CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0, 4));
 
             airportrwy = airportrwy + runway.GetRunwayName(0);
             DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);

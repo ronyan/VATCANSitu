@@ -4,6 +4,7 @@
 #include <chrono>
 #include <string>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <array>
 #include <regex>
@@ -53,7 +54,7 @@ struct buttonStates {
     bool wxOn{ FALSE };
     bool mvaDisp{ false };
 
-    map<string, string> activeRunwaysAltimeter;
+    set<string> activeArpt;
 
     bool SFIMode{};
     bool handoffMode{};

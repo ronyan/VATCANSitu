@@ -5,6 +5,7 @@
 #include "CSiTRadar.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include "json.hpp"
 #include "curl/curl.h"
 
@@ -550,6 +551,8 @@ public:
     static int zoomLevel;
     static string ts; 
 
+    static map<string, string> arptAltimeter;
+
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 
     static void parseRadarPNG(CRadarScreen* rad); 
@@ -577,6 +580,38 @@ public:
         catch (exception& e) {
             rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", string("Failed to get RainViewer JSON" + string(e.what())).c_str(), true, true, true, true, true);
         }
+    }
+
+    static void parseVatsimMetar(void) {
+        CURL* metarCurlHandle = curl_easy_init();
+        string metarString;
+
+        if (metarCurlHandle) {
+            curl_easy_setopt(metarCurlHandle, CURLOPT_URL, "http://metar.vatsim.net/metar.php?id=cy");
+            curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEFUNCTION, write_data);
+            curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEDATA, &metarString);
+            CURLcode res;
+            res = curl_easy_perform(metarCurlHandle);
+            curl_easy_cleanup(metarCurlHandle);
+        }
+
+        std::istringstream in(metarString);
+        regex altimeterSettingRegex("A[0-9]{4}");
+        smatch altimeterSetting;
+        string altimeter;
+
+        for (string line; getline(in, line);) {
+            string icao = line.substr(0, 4);
+            if (regex_search(line, altimeterSetting, altimeterSettingRegex)) {
+                altimeter = altimeterSetting[0].str().substr(1,4);
+            }
+            else 
+            { 
+                altimeter = "****"; 
+            }
+            arptAltimeter[icao] = altimeter;
+        }
+
     }
 
     static double pixel2lat(int y, int zoom) {

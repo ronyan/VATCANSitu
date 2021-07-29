@@ -6,6 +6,7 @@ string wxRadar::wxLatCtr = { "0.0" };
 string wxRadar::wxLongCtr = { "0.0" };
 int wxRadar::zoomLevel;
 string wxRadar::ts;
+std::map<string, string> wxRadar::arptAltimeter;
 
 void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& filename) //designed for loading files from hard disk in an std::vector
 {

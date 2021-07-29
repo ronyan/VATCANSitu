@@ -103,6 +103,7 @@ CSiTRadar::CSiTRadar()
 	try {
 		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+		wxRadar::parseVatsimMetar();
 		lastWxRefresh = clock();
 	}
 	catch (...) {
@@ -264,7 +265,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					RequestRefresh();
 				}
 				
-				DrawACList({ 500,120 }, &dc, mAcData, LIST_TIME_ATIS);
+				DrawACList({ 510, 84 }, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList({ 500,500 }, &dc, mAcData, LIST_OFF_SCREEN);
 
 
@@ -1502,7 +1503,7 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
 			string airportrwy = runway.GetAirportName();
-			CSiTRadar::menuState.activeRunwaysAltimeter.insert(std::pair<string, string>(airportrwy.substr(1), ""));
+			CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0,4));
 
 			airportrwy = airportrwy + runway.GetRunwayName(0) ;
 			GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
@@ -1672,10 +1673,15 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		listArpt.left = p.x;
 		listArpt.top = p.y + 13;
 
-		for (auto& arpt : CSiTRadar::menuState.activeRunwaysAltimeter) {
+		for (auto& arpt : CSiTRadar::menuState.activeArpt) {
+			string arptString = arpt.substr(1,3);
 
-			dc->DrawText(arpt.first.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(arpt.first.c_str(), &listArpt, DT_LEFT);
+			if (wxRadar::arptAltimeter.find(arpt.c_str()) != wxRadar::arptAltimeter.end()) {
+				arptString += " - " + wxRadar::arptAltimeter.at(arpt.c_str());
+			}
+
+			dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT);
 
 			listArpt.top += 13;
 			showArrow = true;
@@ -1709,7 +1715,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 	if (showArrow) {
 		POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
-		if (collapsed)
+		if (!collapsed)
 		{
 			vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
 			vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
