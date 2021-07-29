@@ -53,6 +53,7 @@ struct buttonStates {
     bool wxOn{ FALSE };
     bool mvaDisp{ false };
 
+    map<string, string> activeRunwaysAltimeter;
 
     bool SFIMode{};
     bool handoffMode{};
@@ -61,6 +62,12 @@ struct buttonStates {
     size_t jurisdictionIndex{ 0 };
 
     bool mouseMMB{ false };
+};
+
+struct ACList {
+    POINT m_p = { 0,0 };
+    bool m_collapsed = false; 
+    int m_listType{};
 };
 
 class CSiTRadar :
@@ -163,8 +170,6 @@ public:
         POINT Pt,
         RECT Area,
         int Button);
-
-
 
 protected:
     void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);

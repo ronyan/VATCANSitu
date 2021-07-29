@@ -263,8 +263,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					RequestRefresh();
 				}
-
+				
+				DrawACList({ 500,120 }, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList({ 500,500 }, &dc, mAcData, LIST_OFF_SCREEN);
+
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
@@ -1500,10 +1502,13 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
 			string airportrwy = runway.GetAirportName();
+			CSiTRadar::menuState.activeRunwaysAltimeter.insert(std::pair<string, string>(airportrwy.substr(1), ""));
+
 			airportrwy = airportrwy + runway.GetRunwayName(0) ;
 			GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
 
 			activerwys.push_back(airportrwy);
+
 		}
 
 	}
@@ -1635,13 +1640,49 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 	dc->SetTextColor(C_WHITE);
 	dc->SelectObject(font);
 	string header;
+
+	// Draw the heading
+	RECT listHeading{};
+	listHeading.left = p.x;
+	listHeading.top = p.y;
+
+	// Draw the arrow
+	HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);;
+	HBRUSH targetBrush = CreateSolidBrush(C_WHITE);
+
+	dc->SelectObject(targetPen);
+	dc->SelectObject(targetBrush);
+	
+	bool collapsed{ false };
+	bool showArrow = false;
+
+	if (listType == LIST_TIME_ATIS) {
+		struct tm gmt;
+		time_t t = std::time(0);
+		gmtime_s(&gmt, &t);
+
+		char timeStr[50];
+		strftime(timeStr, 50, "%y-%m-%d %R", &gmt);
+
+		dc->DrawText(timeStr, &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(timeStr, &listHeading, DT_LEFT);
+
+		// 1st aircraft of a list
+		RECT listArpt{};
+		listArpt.left = p.x;
+		listArpt.top = p.y + 13;
+
+		for (auto& arpt : CSiTRadar::menuState.activeRunwaysAltimeter) {
+
+			dc->DrawText(arpt.first.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(arpt.first.c_str(), &listArpt, DT_LEFT);
+
+			listArpt.top += 13;
+			showArrow = true;
+		}
+	}
 	
 	if (listType == LIST_OFF_SCREEN) {
-
-		// Draw the heading
-		RECT listHeading{};
-		listHeading.left = p.x;
-		listHeading.top = p.y;
 
 		// 1st aircraft of a list
 		RECT listArcft{};
@@ -1661,12 +1702,27 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 				dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT);
 
 				listArcft.top += 13;
+				showArrow = true;
 			}
 		}
 	}
 
+	if (showArrow) {
+		POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+		if (collapsed)
+		{
+			vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+			vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+			vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+		}
+		dc->Polygon(vertices, 3);
+	}
+
+
 	dc->RestoreDC(sDC);
 	DeleteObject(font);
+	DeleteObject(targetPen);
+	DeleteObject(targetBrush);
 }
 
 
