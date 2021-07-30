@@ -104,6 +104,7 @@ CSiTRadar::CSiTRadar()
 		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 		wxRadar::parseVatsimMetar();
+		lastMetarRefresh = clock();
 		lastWxRefresh = clock();
 	}
 	catch (...) {
@@ -148,8 +149,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		lastWxRefresh = clock();
 	}
 
-	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
+	if (((clock() - lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
 		wxRadar::parseVatsimMetar();
+		lastMetarRefresh = clock();
 	}
 
 	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
@@ -1537,13 +1539,14 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	RefreshMapContent();
 
 	// Find the position of ADSB radars
-
+	/*
 	for (CSectorElement sectorElement = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RADARS); sectorElement.IsValid();
 		sectorElement = GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_RADARS))	{
 		if (!strcmp(sectorElement.GetName(), "QER")) {
 			sectorElement.GetPosition(&adsbSite, 0);
 		}
 	}
+	*/
 } 
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
@@ -1682,6 +1685,9 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 			if (wxRadar::arptAltimeter.find(arpt.c_str()) != wxRadar::arptAltimeter.end()) {
 				arptString += " - " + wxRadar::arptAltimeter.at(arpt.c_str());
+			}
+			else {
+				arptString += " - ****";
 			}
 
 			dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
