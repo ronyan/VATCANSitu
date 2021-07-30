@@ -416,6 +416,7 @@ void SituPlugin::OnAirportRunwayActivityChanged()
 {
 
     vector<string> activerwys{};
+    CSiTRadar::menuState.activeArpt.clear();
     DisplayUserMessage("DEBUG", "DEBUG", "Runway Activity Changed", true, true, true, true, false);
 
     // Recheck active runways and enable the highlighting on ground screens
