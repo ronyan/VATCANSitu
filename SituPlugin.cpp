@@ -414,46 +414,5 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
 
 void SituPlugin::OnAirportRunwayActivityChanged()
 {
-
-    vector<string> activerwys{};
-    CSiTRadar::menuState.activeArpt.clear();
-    DisplayUserMessage("DEBUG", "DEBUG", "Runway Activity Changed", true, true, true, true, false);
-
-    // Recheck active runways and enable the highlighting on ground screens
-    SelectActiveSectorfile();
-    // Active runway highlighting for ground screens
-    for (CSectorElement runway = SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
-        runway = SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
-
-        if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
-
-            string airportrwy = runway.GetAirportName();
-            CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0, 4));
-
-            airportrwy = airportrwy + runway.GetRunwayName(0);
-            DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
-
-            activerwys.push_back(airportrwy);
-        }
-
-    }
-
-    for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_REGIONS); sectorElement.IsValid();
-        sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_REGIONS)) {
-
-        string name = sectorElement.GetName();
-        for (const auto& rwy : activerwys) {
-            if (name.find("ACTIVE") != string::npos) {
-                if (name.find(rwy) != string::npos) {
-                    CSiTRadar::m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
-                }
-                else {
-                    CSiTRadar::m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
-                }
-            }
-        }
-    }
-
-    CSiTRadar::m_pRadScr->RefreshMapContent();
-
+    CSiTRadar::updateActiveRunways(CSiTRadar::m_pRadScr);
 }

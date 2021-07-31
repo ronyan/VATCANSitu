@@ -98,6 +98,7 @@ public:
     void OnAsrContentToBeSaved();
     inline virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
     inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
+    static void updateActiveRunways(CRadarScreen* rad);
 
     static void RegisterButton(RECT rect) {
 
@@ -173,7 +174,7 @@ public:
         int Button);
 
 protected:
-    void ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype);
+    void ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string& btext, int itemtype);
     void DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType);
 
     // helper functions

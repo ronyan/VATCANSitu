@@ -1484,35 +1484,25 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 	}
 }
 
-void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, RECT rect, string btext, int itemtype) {
+void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string& btext, int itemtype) {
 	AddScreenObject(itemtype, btext.c_str(), rect, 0, "");
 }
 
-
-void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
-	const char* filt = nullptr;
+void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 	vector<string> activerwys{};
 
-	// getting altitude filter information
-	if ((filt = GetDataFromAsr("altFilterHigh")) != NULL) {
-		altFilterHigh = atoi(filt);
-	}
-	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
-		altFilterLow = atoi(filt);
-	}
-
-	GetPlugIn()->SelectActiveSectorfile();
+	rad->GetPlugIn()->SelectActiveSectorfile();
 	// Active runway highlighting for ground screens
-	for (CSectorElement runway = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
-		runway = GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
+	for (CSectorElement runway = rad->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
+		runway = rad->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
 
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
 			string airportrwy = runway.GetAirportName();
-			CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0,4));
+			CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0, 4));
 
-			airportrwy = airportrwy + runway.GetRunwayName(0) ;
-			GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
+			airportrwy = airportrwy + runway.GetRunwayName(0);
+			rad->GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
 
 			activerwys.push_back(airportrwy);
 
@@ -1527,16 +1517,30 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 		for (const auto& rwy : activerwys) {
 			if (name.find("ACTIVE") != string::npos) {
 				if (name.find(rwy) != string::npos) {
-					ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
+					rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
 				}
 				else {
-					ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
+					rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
 				}
 			}
 		}
 	}
 
-	RefreshMapContent();
+	rad->RefreshMapContent();
+}
+
+void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
+	const char* filt = nullptr;
+
+	// getting altitude filter information
+	if ((filt = GetDataFromAsr("altFilterHigh")) != NULL) {
+		altFilterHigh = atoi(filt);
+	}
+	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
+		altFilterLow = atoi(filt);
+	}    
+
+	std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, this);
 
 	// Find the position of ADSB radars
 	/*
