@@ -614,6 +614,10 @@ public:
 
     }
 
+    static void parseVatsimATIS(void) {
+
+    }
+
     static double pixel2lat(int y, int zoom) {
         double pixels = 256 * pow(2, zoom);
         double n = PI - 2 * PI * y / pixels;

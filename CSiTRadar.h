@@ -13,6 +13,7 @@
 #include <deque>
 #include "constants.h"
 #include "pch.h"
+#include "wxRadar.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -65,11 +66,78 @@ struct buttonStates {
     bool mouseMMB{ false };
 };
 
-struct ACList {
-    POINT m_p = { 0,0 };
+class CAircraftList {
+
+public:
+    POINT m_p{ 0,0 };
     bool m_collapsed = false; 
     int m_listType{};
+    int listType{};
+    CRadarScreen* radscr;
+    unordered_map<string, ACData>* acData{};
+    CDC* dc;
+
+    CAircraftList() 
+        : m_p({ 0,0 }) 
+    {}
+
+    void Draw() 
+    {
+        int sDC = dc->SaveDC();
+        CFont font;
+        LOGFONT lgfont;
+        memset(&lgfont, 0, sizeof(LOGFONT));
+        lgfont.lfHeight = 14;
+        lgfont.lfWeight = 500;
+        strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+        font.CreateFontIndirect(&lgfont);
+        dc->SetTextColor(C_WHITE);
+        dc->SelectObject(font);
+        string header;
+
+        // Draw the heading
+        RECT listHeading{};
+        listHeading.left = m_p.x;
+        listHeading.top = m_p.y;
+
+        // Draw the arrow
+        HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);;
+        HBRUSH targetBrush = CreateSolidBrush(C_WHITE);
+
+        dc->SelectObject(targetPen);
+        dc->SelectObject(targetBrush);
+
+        bool collapsed{ false };
+        bool showArrow = false;
+
+
+
+        dc->RestoreDC(sDC);
+        DeleteObject(font);
+        DeleteObject(targetPen);
+        DeleteObject(targetBrush);
+    }
+    void Move(int x, int y)
+    {
+        m_p.x = x;
+        m_p.y = y;
+    }
+    void Collapse()
+    {
+        m_collapsed = true;
+    }
+
+    void Expand() 
+    {
+        m_collapsed = false;
+    }
+    
+    int GetListType() 
+    {
+        return m_listType;
+    }
 };
+
 
 class CSiTRadar :
     public EuroScopePlugIn::CRadarScreen

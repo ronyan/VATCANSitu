@@ -1492,6 +1492,7 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 	vector<string> activerwys{};
 
 	rad->GetPlugIn()->SelectActiveSectorfile();
+	CSiTRadar::menuState.activeArpt.clear();
 	// Active runway highlighting for ground screens
 	for (CSectorElement runway = rad->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = rad->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
