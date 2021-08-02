@@ -552,6 +552,7 @@ public:
     static string ts; 
 
     static map<string, string> arptAltimeter;
+    static map<string, string> arptAtisLetter;
 
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 
@@ -615,6 +616,46 @@ public:
     }
 
     static void parseVatsimATIS(void) {
+        CURL* vatsimURL = curl_easy_init();
+        CURL* atisVatsimStatusJson = curl_easy_init();
+        string strVatsimURL;
+        string jsAtis;
+        arptAtisLetter.clear();
+
+        if (vatsimURL) {
+            curl_easy_setopt(vatsimURL, CURLOPT_URL, "http://status.vatsim.net/status.json");
+            curl_easy_setopt(vatsimURL, CURLOPT_WRITEFUNCTION, write_data);
+            curl_easy_setopt(vatsimURL, CURLOPT_WRITEDATA, &strVatsimURL);
+            CURLcode res;
+            res = curl_easy_perform(vatsimURL);
+            curl_easy_cleanup(vatsimURL);
+        }
+
+        json jsVatsimURL = json::parse(strVatsimURL);
+        string dataURL = jsVatsimURL["data"]["v3"][0];
+
+        if (atisVatsimStatusJson) {
+            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_URL, dataURL.c_str());
+            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEFUNCTION, write_data);
+            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEDATA, &jsAtis);
+            CURLcode res;
+            res = curl_easy_perform(atisVatsimStatusJson);
+            curl_easy_cleanup(atisVatsimStatusJson);
+        }
+        try {
+            json jsVatsimAtis = json::parse(jsAtis.c_str());
+
+
+            if (!jsVatsimAtis["atis"].empty()) {
+                for (auto& atis : jsVatsimAtis["atis"]) {
+                    if (!atis["atis_code"].is_null()) {
+                        string airport = atis["callsign"];
+                        arptAtisLetter[airport.substr(0, 4)] = atis["atis_code"];
+                    }
+                }
+            }
+        }
+        catch (exception& e) { string error = e.what(); }
 
     }
 

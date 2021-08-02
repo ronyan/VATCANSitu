@@ -250,6 +250,7 @@ protected:
     clock_t oldTime = clock();
     clock_t lastWxRefresh = 0;
     clock_t lastMetarRefresh = 0;
+    clock_t lastAtisRefresh = 0;
 
     // menu states
     bool halotool = FALSE;

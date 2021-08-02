@@ -104,6 +104,7 @@ CSiTRadar::CSiTRadar()
 		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 		wxRadar::parseVatsimMetar();
+		wxRadar::parseVatsimATIS();
 		lastMetarRefresh = clock();
 		lastWxRefresh = clock();
 	}
@@ -152,6 +153,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	if (((clock() - lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
 		wxRadar::parseVatsimMetar();
 		lastMetarRefresh = clock();
+	}
+
+	if (((clock() - lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
+		wxRadar::parseVatsimATIS();
+		lastAtisRefresh = clock();
 	}
 
 	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
@@ -1693,6 +1699,10 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 			}
 			else {
 				arptString += " - ****";
+			}
+
+			if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
+				arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
 			}
 
 			dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
