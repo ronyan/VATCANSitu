@@ -596,22 +596,25 @@ public:
             curl_easy_cleanup(metarCurlHandle);
         }
 
-        std::istringstream in(metarString);
-        regex altimeterSettingRegex("A[0-9]{4}");
-        smatch altimeterSetting;
-        string altimeter;
+        try {
+            std::istringstream in(metarString);
+            regex altimeterSettingRegex("A[0-9]{4}");
+            smatch altimeterSetting;
+            string altimeter;
 
-        for (string line; getline(in, line);) {
-            string icao = line.substr(0, 4);
-            if (regex_search(line, altimeterSetting, altimeterSettingRegex)) {
-                altimeter = altimeterSetting[0].str().substr(1,4);
+            for (string line; getline(in, line);) {
+                string icao = line.substr(0, 4);
+                if (regex_search(line, altimeterSetting, altimeterSettingRegex)) {
+                    altimeter = altimeterSetting[0].str().substr(1, 4);
+                }
+                else
+                {
+                    altimeter = "****";
+                }
+                arptAltimeter[icao] = altimeter;
             }
-            else 
-            { 
-                altimeter = "****"; 
-            }
-            arptAltimeter[icao] = altimeter;
         }
+        catch (exception& e) { string error = e.what(); }
 
     }
 
@@ -631,8 +634,13 @@ public:
             curl_easy_cleanup(vatsimURL);
         }
 
-        json jsVatsimURL = json::parse(strVatsimURL);
-        string dataURL = jsVatsimURL["data"]["v3"][0];
+        string dataURL;
+
+        try {
+            json jsVatsimURL = json::parse(strVatsimURL);
+            dataURL = jsVatsimURL["data"]["v3"][0];
+        }
+        catch (exception& e) { string error = e.what(); }
 
         if (atisVatsimStatusJson) {
             curl_easy_setopt(atisVatsimStatusJson, CURLOPT_URL, dataURL.c_str());
@@ -642,6 +650,7 @@ public:
             res = curl_easy_perform(atisVatsimStatusJson);
             curl_easy_cleanup(atisVatsimStatusJson);
         }
+
         try {
             json jsVatsimAtis = json::parse(jsAtis.c_str());
 
