@@ -1517,8 +1517,8 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 
 	}
 
-	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_REGIONS); sectorElement.IsValid();
-		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_REGIONS)) {
+	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_GEO); sectorElement.IsValid();
+		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_GEO)) {
 
 		string name = sectorElement.GetName();
 		for (const auto& rwy : activerwys) {
