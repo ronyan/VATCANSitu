@@ -592,9 +592,12 @@ public:
             curl_easy_setopt(metarCurlHandle, CURLOPT_URL, "http://metar.vatsim.net/metar.php?id=cy");
             curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEFUNCTION, write_data);
             curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEDATA, &metarString);
-            curl_easy_setopt(metarCurlHandle, CURLOPT_TIMEOUT_MS, 500L);
+            curl_easy_setopt(metarCurlHandle, CURLOPT_TIMEOUT_MS, 2500L);
             CURLcode res;
             res = curl_easy_perform(metarCurlHandle);
+            if (res == CURLE_OPERATION_TIMEDOUT) {
+                rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", "METAR Fetch Timed Out", true, true, true, false, false);
+            }
             curl_easy_cleanup(metarCurlHandle);
         }
 
@@ -631,9 +634,12 @@ public:
             curl_easy_setopt(vatsimURL, CURLOPT_URL, "http://status.vatsim.net/status.json");
             curl_easy_setopt(vatsimURL, CURLOPT_WRITEFUNCTION, write_data);
             curl_easy_setopt(vatsimURL, CURLOPT_WRITEDATA, &strVatsimURL);
-            curl_easy_setopt(vatsimURL, CURLOPT_TIMEOUT_MS, 500L);
+            curl_easy_setopt(vatsimURL, CURLOPT_TIMEOUT_MS, 1500L);
             CURLcode res;
             res = curl_easy_perform(vatsimURL);
+            if (res == CURLE_OPERATION_TIMEDOUT) {
+                rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", "VATSIM Datafeed URL Fetch Timed Out", true, true, true, false, false);
+            }
             curl_easy_cleanup(vatsimURL);
         }
 
@@ -649,9 +655,12 @@ public:
             curl_easy_setopt(atisVatsimStatusJson, CURLOPT_URL, dataURL.c_str());
             curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEFUNCTION, write_data);
             curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEDATA, &jsAtis);
-            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_TIMEOUT_MS, 500L);
+            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_TIMEOUT_MS, 1500L);
             CURLcode res;
             res = curl_easy_perform(atisVatsimStatusJson);
+            if (res == CURLE_OPERATION_TIMEDOUT) {
+                rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", "VATSIM Datafeed Timed Out", true, true, true, false, false);
+            }
             curl_easy_cleanup(atisVatsimStatusJson);
         } 
         else { return; }
