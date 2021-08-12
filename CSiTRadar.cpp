@@ -103,8 +103,8 @@ CSiTRadar::CSiTRadar()
 	try {
 		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-		wxRadar::parseVatsimMetar();
-		wxRadar::parseVatsimATIS();
+		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, this);
+		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, this);
 		lastMetarRefresh = clock();
 		lastWxRefresh = clock();
 	}
@@ -151,12 +151,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (((clock() - lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
-		wxRadar::parseVatsimMetar();
+		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, this);
 		lastMetarRefresh = clock();
 	}
 
 	if (((clock() - lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
-		wxRadar::parseVatsimATIS();
+		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, this);
 		lastAtisRefresh = clock();
 	}
 
