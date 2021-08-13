@@ -1494,7 +1494,6 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 
 				if (name.find(rwy) != string::npos) {
 					rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
-					rad->GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", sectorElement.GetComponentName(0), true, true, true, true, false);
 				}
 			}
 		}
