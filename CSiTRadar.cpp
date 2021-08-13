@@ -1,45 +1,3 @@
-/*	Drawing on the main radar screen is done with this file
-	This draws:
-	1. CSiT Tools Menu
-	2. VFR radar target
-	3. Mouse halo if enabled
-	4. Aircraft specific halos if enabled
-	5. PTLS for aircrafts if enabled
-
-
-	// DEBUG
-
-	POINT q;
-	q = ConvertCoordFromPositionToPixel(adsbSite);
-	HPEN targetPen;
-	targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
-	dc.SelectObject(targetPen);
-
-	dc.MoveTo(q.x, q.y);
-	dc.LineTo(q.x + 20, q.y + 20);
-
-	CFont font;
-	LOGFONT lgfont;
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
-	dc.SelectObject(font);
-
-	RECT debug;
-	debug.top = 250;
-	debug.left = 250;
-	dc.DrawText(to_string(adsbSite.m_Latitude).c_str(), &debug, DT_LEFT);
-	debug.top += 10;
-
-	DeleteObject(font);
-
-	DeleteObject(targetPen);
-
-	// DEBUG
-*/
-
 #include "pch.h"
 #include "CSiTRadar.h"
 #include "HaloTool.h"
@@ -1509,8 +1467,6 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 			CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0, 4));
 
 			airportrwy = airportrwy + runway.GetRunwayName(0);
-			rad->GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", airportrwy.c_str(), true, true, true, true, false);
-
 			activerwys.push_back(airportrwy);
 
 		}
@@ -1521,13 +1477,24 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_GEO)) {
 
 		string name = sectorElement.GetName();
-		for (const auto& rwy : activerwys) {
-			if (name.find("ACTIVE") != string::npos) {
+
+		if (name.find("ACTIVE") != string::npos) {
+			rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
+
+			if (CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName") != NULL) {
+				string DisplayType = CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName");
+				// Only toggle highlighting on non-radar screens
+				if (strcmp(DisplayType.c_str(), "VFR") == 0 ||
+					strcmp(DisplayType.c_str(), "IFR") == 0) {
+					continue;
+				}
+			}
+
+			for (const auto& rwy : activerwys) {
+
 				if (name.find(rwy) != string::npos) {
 					rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
-				}
-				else {
-					rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
+					rad->GetPlugIn()->DisplayUserMessage("DEBUG", "DEBUG", sectorElement.GetComponentName(0), true, true, true, true, false);
 				}
 			}
 		}
