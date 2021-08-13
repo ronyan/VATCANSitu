@@ -34,6 +34,17 @@ CSiTRadar::CSiTRadar()
 	menuState.ptlTool = FALSE;
 	menuLayer = 0;
 
+#pragma region intializeLists
+	//initialize lists
+	ACList atisList, offScreenList;
+	atisList.listType = LIST_TIME_ATIS;
+	atisList.p = { 500,84 }; // Default Location
+	offScreenList.p = { 0,500 }; // Default Location
+	offScreenList.listType = LIST_OFF_SCREEN;
+	acLists[LIST_TIME_ATIS] = atisList;
+	acLists[LIST_OFF_SCREEN] = offScreenList;
+#pragma endregion
+
 	// load settings file
 	try {
 
@@ -43,13 +54,27 @@ CSiTRadar::CSiTRadar()
 
 			wxRadar::wxLatCtr = j["wxlat"];
 			wxRadar::wxLongCtr = j["wxlong"];
+
+			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
+			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
+
+			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
+			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
+
 		}
+		// write defaults if no file
 		else {
 			std::ofstream settings_file(".\\situWx\\settings.json");
 
 			json j;
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
+
+			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
+			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
+
+			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
+			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
 			settings_file << j;
 		}
@@ -75,17 +100,33 @@ CSiTRadar::CSiTRadar()
 
 	time = clock();
 	oldTime = clock();
-
-	//initialize listts
-	ACList atisList, offScreenList;
-	atisList.p = { 510, 84 };
-	atisList.listType = LIST_TIME_ATIS;
-
-	acLists[LIST_TIME_ATIS] = atisList;
 }
 
 CSiTRadar::~CSiTRadar()
 {
+	// Save settings file
+	try {
+
+		std::ifstream settings_file(".\\situWx\\settings.json");
+		if (settings_file.is_open()) {
+			std::ofstream settings_file(".\\situWx\\settings.json");
+
+			json j;
+			j["wxlat"] = wxRadar::wxLatCtr;
+			j["wxlong"] = wxRadar::wxLongCtr;
+
+			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
+			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
+
+			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
+			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
+
+			settings_file << j;
+		}
+	}
+	catch (std::ifstream::failure e) {
+
+	};
 }
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
@@ -244,7 +285,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 				
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
-				DrawACList({ 0,500 }, &dc, mAcData, LIST_OFF_SCREEN);
+				DrawACList(acLists[LIST_OFF_SCREEN].p, &dc, mAcData, LIST_OFF_SCREEN);
 
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
@@ -1443,6 +1484,9 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		if (ObjectType == LIST_TIME_ATIS) {
 			acLists[LIST_TIME_ATIS].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
 		}
+		if (ObjectType == LIST_OFF_SCREEN) {
+			acLists[LIST_OFF_SCREEN].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
 	}
 }
 
@@ -1722,15 +1766,17 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_OFF_SCREEN, to_string(LIST_OFF_SCREEN).c_str(), listHeading, true, "");
+
 		// Add the aircrafts
 
 		for (auto &aircraft : ac) {
 			if (aircraft.second.isJurisdictional && !aircraft.second.isOnScreen) {
-
-				dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-				dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT);
-
-				listArcft.top += 13;
+				if (!!acLists[LIST_OFF_SCREEN].collapsed) {
+					dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+					dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT);
+					listArcft.top += 13;
+				}
 				showArrow = true;
 			}
 		}
