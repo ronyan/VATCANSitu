@@ -18,6 +18,12 @@
 using namespace EuroScopePlugIn;
 using namespace std;
 
+struct ACList {
+    POINT p{ 0, 0 };
+    int listType{ 0 };
+    bool collapsed{ false };
+};
+
 struct ACData {
     bool hasVFRFP;
     bool isADSB;
@@ -75,6 +81,7 @@ public:
     int listType{};
     CRadarScreen* radscr;
     unordered_map<string, ACData>* acData{};
+    unordered_map<int, ACList> acLists;
     CDC* dc;
 
     CAircraftList() 

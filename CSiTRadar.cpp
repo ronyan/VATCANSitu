@@ -21,6 +21,7 @@ map<string, bool> CSiTRadar::destAirportList;
 buttonStates CSiTRadar::menuState = {};
 bool CSiTRadar::halfSecTick = FALSE;
 CRadarScreen* CSiTRadar::m_pRadScr;
+unordered_map<int, ACList> acLists;
 
 CSiTRadar::CSiTRadar()
 {
@@ -74,6 +75,13 @@ CSiTRadar::CSiTRadar()
 
 	time = clock();
 	oldTime = clock();
+
+	//initialize listts
+	ACList atisList, offScreenList;
+	atisList.p = { 510, 84 };
+	atisList.listType = LIST_TIME_ATIS;
+
+	acLists[LIST_TIME_ATIS] = atisList;
 }
 
 CSiTRadar::~CSiTRadar()
@@ -235,7 +243,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					RequestRefresh();
 				}
 				
-				DrawACList({ 510, 84 }, &dc, mAcData, LIST_TIME_ATIS);
+				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList({ 0,500 }, &dc, mAcData, LIST_OFF_SCREEN);
 
 
@@ -1339,6 +1347,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			}
 		}
 	}
+
+	if (ObjectType == LIST_TIME_ATIS) {
+		acLists[LIST_TIME_ATIS].collapsed = !acLists[LIST_TIME_ATIS].collapsed;
+	}
 }
 
 void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released) {
@@ -1426,6 +1438,10 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 
 			RequestRefresh();
+		}
+		
+		if (ObjectType == LIST_TIME_ATIS) {
+			acLists[LIST_TIME_ATIS].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
 		}
 	}
 }
@@ -1613,7 +1629,7 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 }
 
 void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType)
-{
+{	
 	int sDC = dc->SaveDC();
 	CFont font;
 	LOGFONT lgfont;
@@ -1652,13 +1668,16 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		dc->DrawText(timeStr, &listHeading, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(timeStr, &listHeading, DT_LEFT);
 
+		AddScreenObject(LIST_TIME_ATIS, to_string(LIST_TIME_ATIS).c_str(), listHeading, true, "");
+
 		// 1st aircraft of a list
 		RECT listArpt{};
 		listArpt.left = p.x;
 		listArpt.top = p.y + 13;
 
+		
 		for (auto& arpt : CSiTRadar::menuState.activeArpt) {
-			string arptString = arpt.substr(1,3);
+			string arptString = arpt.substr(1, 3);
 
 			if (wxRadar::arptAltimeter.find(arpt.c_str()) != wxRadar::arptAltimeter.end()) {
 				arptString += " - " + wxRadar::arptAltimeter.at(arpt.c_str());
@@ -1670,12 +1689,25 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 			if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
 				arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
 			}
+			if (!acLists[LIST_TIME_ATIS].collapsed) {
+				dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT);
+				listArpt.top += 13;
+			}
 
-			dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT);
-
-			listArpt.top += 13;
 			showArrow = true;
+		}
+		
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_TIME_ATIS].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
 		}
 	}
 	
@@ -1702,18 +1734,20 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 				showArrow = true;
 			}
 		}
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!!acLists[LIST_OFF_SCREEN].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
 	}
 
-	if (showArrow) {
-		POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
-		if (!collapsed)
-		{
-			vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
-			vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
-			vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
-		}
-		dc->Polygon(vertices, 3);
-	}
+
 
 
 	dc->RestoreDC(sDC);
