@@ -1392,6 +1392,9 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == LIST_TIME_ATIS) {
 		acLists[LIST_TIME_ATIS].collapsed = !acLists[LIST_TIME_ATIS].collapsed;
 	}
+	if (ObjectType == LIST_OFF_SCREEN) {
+		acLists[LIST_OFF_SCREEN].collapsed = !acLists[LIST_OFF_SCREEN].collapsed;
+	}
 }
 
 void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released) {
