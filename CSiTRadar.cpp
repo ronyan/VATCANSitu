@@ -127,6 +127,8 @@ CSiTRadar::~CSiTRadar()
 	catch (std::ifstream::failure e) {
 
 	};
+
+	m_pRadScr = nullptr;
 }
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
@@ -246,7 +248,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						memset(&lgfont, 0, sizeof(LOGFONT));
 						lgfont.lfWeight = 500;
 						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 12;
+						lgfont.lfHeight = 14;
 						font.CreateFontIndirect(&lgfont);
 
 						dc.SelectObject(font);
@@ -441,7 +443,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						memset(&lgfont, 0, sizeof(LOGFONT));
 						lgfont.lfWeight = 500;
 						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 12;
+						lgfont.lfHeight = 14;
 						font.CreateFontIndirect(&lgfont);
 
 						dc.SelectObject(font);
@@ -494,7 +496,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							memset(&lgfont, 0, sizeof(LOGFONT));
 							lgfont.lfWeight = 500;
 							strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-							lgfont.lfHeight = 12;
+							lgfont.lfHeight = 14;
 							font.CreateFontIndirect(&lgfont);
 
 							dc.SelectObject(font);

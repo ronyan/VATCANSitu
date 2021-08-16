@@ -704,7 +704,7 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 	CFont boldfont;
 	LOGFONT lgfont;
 	std::memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 12;
+	lgfont.lfHeight = 14;
 	lgfont.lfWeight = 500;
 	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
 	font.CreateFontIndirect(&lgfont);

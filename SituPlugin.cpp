@@ -52,6 +52,8 @@ void SendMouseClick(DWORD mouseBut) {
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
+    if (CSiTRadar::m_pRadScr == nullptr) { return CallNextHookEx(NULL, nCode, wParam, lParam); }
+
     if (
         wParam == VK_F1 ||
         wParam == VK_F3 ||
