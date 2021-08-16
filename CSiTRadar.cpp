@@ -301,15 +301,29 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					string callSign = radarTarget.GetCallsign();
 					// altitude filtering 
 
+						// Destination airport highlighting
+					auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination());
+					bool isDest = false;
+
+					if (itr != end(CSiTRadar::menuState.destICAO)
+						&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "") != 0) {
+						if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)]) {
+							isDest = true;
+						}
+					}
+
 					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() ||  // Do not filter aircraft being tracked by me
-						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 || // Do not filter aircraft being handed off to me
-						CSiTRadar::destAirportList.find(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination()) != CSiTRadar::destAirportList.end() // Do not filter aircraft on Dest Aiport List
+						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0
 						) {
-						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 && !menuState.filterBypassAll) {
+						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 
+							&& !menuState.filterBypassAll
+							&& !isDest) {
 							continue;
 						}
 
-						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 && !menuState.filterBypassAll) {
+						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 
+							&& !menuState.filterBypassAll
+							&& !isDest) {
 							continue;
 						}
 					}
@@ -631,7 +645,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					menuButton but_destAirport = { { modOrigin.x + 195, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_destAirport);
-					ButtonToScreen(this, but, "Dest Airport", 0);
+					ButtonToScreen(this, but, "Dest Airport", BUTON_MENU_DEST_APRT);
 
 					menutopleft.x = 295;
 
@@ -890,6 +904,55 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				}
 
+				// Destination Airport Menu
+
+				if (menuState.destAirport) {
+					TopMenu::DrawBackground(dc, { 203, radarea.top }, 350, 90);
+
+					menuButton but_dest_1 = { {210, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[0] };
+					but = TopMenu::DrawBut(&dc, but_dest_1);
+					ButtonToScreen(this, but, "Dest 1", BUTTON_MENU_DEST_1);
+
+					auto dest1 = TopMenu::MakeField(dc, { 225, 34 }, 32, 15, menuState.destICAO[0].c_str());
+					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest1", dest1, 0, "");
+
+					menuButton but_dest_2 = { {210, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[1] };
+					but = TopMenu::DrawBut(&dc, but_dest_2);
+					ButtonToScreen(this, but, "Dest 2", BUTTON_MENU_DEST_2);
+
+					auto dest2 = TopMenu::MakeField(dc, { 225, 60 }, 32, 15, menuState.destICAO[1].c_str());
+					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest2", dest2, 0, "");
+
+					menuButton but_dest_3 = { {265, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[2] };
+					but = TopMenu::DrawBut(&dc, but_dest_3);
+					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_3);
+
+					auto dest3 = TopMenu::MakeField(dc, { 280, 34 }, 32, 15, menuState.destICAO[2].c_str());
+					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest3", dest3, 0, "");
+
+					menuButton but_dest_4 = { {265, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[3] };
+					but = TopMenu::DrawBut(&dc, but_dest_4);
+					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_4);
+
+					auto dest4 = TopMenu::MakeField(dc, { 280, 60 }, 32, 15, menuState.destICAO[3].c_str());
+					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest4", dest4, 0, "");
+
+					menuButton but_dest_5 = { {320, 83}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[4] };
+					but = TopMenu::DrawBut(&dc, but_dest_5);
+					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_5);
+
+					auto dest5 = TopMenu::MakeField(dc, { 335, 80 }, 32, 15, "");
+					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest5", dest5, 0, menuState.destICAO[4].c_str());
+
+					menuButton but_close_dest_arpt = { {465, 90}, "Close", 40, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_close_dest_arpt);
+					ButtonToScreen(this, but, "Close Dest", BUTTON_MENU_CLOSE_DEST);
+
+					menuButton but_clear_dest_arpt = { {380, 78}, "Clear All Dest", 80, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_clear_dest_arpt);
+					ButtonToScreen(this, but, "Clear All Dest", BUTTON_MENU_CLEAR_DEST);
+				}
+
 				else if (menuLayer == 1) {
 
 				POINT elementOrigin = CPoint(radarea.left + 10, radarea.top + 6);
@@ -1132,6 +1195,42 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					hasPTL[callsign] = TRUE;
 				}
 			}
+		}
+	}
+
+	if (ObjectType == BUTON_MENU_DEST_APRT) {
+		menuState.destAirport = true;
+	}
+
+	if (ObjectType == BUTTON_MENU_CLOSE_DEST) {
+		menuState.destAirport = false;
+	}
+
+	if (ObjectType >= BUTTON_MENU_DEST_1 && ObjectType <= BUTTON_MENU_DEST_5) {
+		menuState.destArptOn[ObjectType - BUTTON_MENU_DEST_1] = !menuState.destArptOn[ObjectType - BUTTON_MENU_DEST_1];
+	}
+
+	if (ObjectType == BUTTON_MENU_DEST_ICAO) {
+		if (!strcmp(sObjectId, "dest1")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_1, menuState.destICAO[0].c_str());
+		}
+		else if (!strcmp(sObjectId, "dest2")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_2, menuState.destICAO[1].c_str());
+		}
+		else if (!strcmp(sObjectId, "dest3")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_3, menuState.destICAO[2].c_str());
+		}
+		else if (!strcmp(sObjectId, "dest4")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_4, menuState.destICAO[3].c_str());
+		}
+		else if (!strcmp(sObjectId, "dest5")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_5, menuState.destICAO[4].c_str());
+		}
+	}
+
+	if (ObjectType == BUTTON_MENU_CLEAR_DEST) {
+		for (auto& it : menuState.destArptOn) {
+			it = false;
 		}
 	}
 	
@@ -1510,6 +1609,12 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 			altFilterHigh = stoi(sItemString);
 		}
 		catch (...) {}
+	}
+
+	if (FunctionId >= FUNCTION_DEST_ICAO_1 && FunctionId <= FUNCTION_DEST_ICAO_5) {
+		string ICAO = sItemString;
+		std::transform(ICAO.begin(), ICAO.end(), ICAO.begin(), ::toupper);
+		menuState.destICAO[FunctionId - FUNCTION_DEST_ICAO_1] = ICAO.substr(0,4).c_str();
 	}
 }
 

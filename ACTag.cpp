@@ -107,7 +107,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	int tagOffsetY = 0;
 
 	bool blinking = FALSE;
-	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) { blinking = TRUE; }
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
+		&& rad->GetPlugIn()->ControllerMyself().IsController()) { blinking = TRUE; }
 	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
 	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
 
@@ -215,17 +216,25 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	// save context
 	int sDC = dc->SaveDC();
 
-	/*
+	
 	// Destination airport highlighting
-	if (CSiTRadar::destAirportList.find(fp->GetFlightPlanData().GetDestination()) != CSiTRadar::destAirportList.end()) {
-		HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
-		dc->SelectObject(targetPen);
-		dc->SelectStockObject(HOLLOW_BRUSH);
-		dc->Ellipse(p.x - 7, p.y - 7, p.x + 7, p.y + 7);
+	auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), fp->GetFlightPlanData().GetDestination());
+	bool isDest = false;
+	
+	if (itr != end(CSiTRadar::menuState.destICAO) 
+		&& strcmp(fp->GetFlightPlanData().GetDestination(), "") !=  0) {
+		if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)]) {
 
-		DeleteObject(targetPen);
+			HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+			dc->SelectObject(targetPen);
+			dc->SelectStockObject(HOLLOW_BRUSH);
+			dc->Ellipse(p.x - 7, p.y - 6, p.x + 8, p.y + 8);
+
+			isDest = true;
+
+			DeleteObject(targetPen);
+		}
 	}
-	*/
 
 	CFont font;
 	CFont boldfont;
@@ -533,9 +542,18 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(acType.c_str(), &rline3, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, rt->GetCallsign(), rline3, TRUE, "");
 		rline3.left = rline3.right + 10;
+
+		if (isDest) {
+			dc->SetTextColor(C_WHITE);
+		}
+
 		dc->DrawText(destination.c_str(), &rline3, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(destination.c_str(), &rline3, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_DESTINATION, rt->GetCallsign(), rline3, TRUE, "");
+
+		if (isDest) {
+			dc->SetTextColor(C_PPS_YELLOW);
+		}
 
 		// Line 4
 		RECT rline4;
@@ -583,6 +601,15 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 		bline1.left = bline1.right + 5;
 
+		bline3.top = bline1.bottom - 2;
+		bline3.left = p.x + 38;
+		if (isDest) {
+			dc->SetTextColor(C_WHITE);
+			dc->DrawText(destination.c_str(), &bline3, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(destination.c_str(), &bline3, DT_LEFT);
+			rad->AddScreenObject(TAG_ITEM_TYPE_DESTINATION, rt->GetCallsign(), bline3, TRUE, "");
+			dc->SetTextColor(C_PPS_YELLOW);
+		}
 	}
 	
 

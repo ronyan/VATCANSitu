@@ -54,6 +54,7 @@ struct buttonStates {
     bool quickLook{ FALSE };
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
+    bool destAirport{ false };
 
 
     bool wxAll{ FALSE };
@@ -68,6 +69,9 @@ struct buttonStates {
     deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
     clock_t handoffModeStartTime{};
     size_t jurisdictionIndex{ 0 };
+
+    bool destArptOn[5];
+    string destICAO[5];
 
     bool mouseMMB{ false };
 };

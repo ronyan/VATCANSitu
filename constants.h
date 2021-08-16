@@ -62,6 +62,15 @@ const int BUTTON_MENU_HALO_MOUSE = 218;
 const int BUTTON_MENU_HALO_TOOL = 219;
 const int BUTTON_MENU_WX_HIGH = 220;
 const int BUTTON_MENU_WX_ALL = 221;
+const int BUTON_MENU_DEST_APRT = 222;
+const int BUTTON_MENU_CLOSE_DEST = 223;
+const int BUTTON_MENU_CLEAR_DEST = 224;
+const int BUTTON_MENU_DEST_1 = 225;
+const int BUTTON_MENU_DEST_2 = 226;
+const int BUTTON_MENU_DEST_3 = 227;
+const int BUTTON_MENU_DEST_4 = 228;
+const int BUTTON_MENU_DEST_5 = 229;
+const int BUTTON_MENU_DEST_ICAO = 230;
 
 // Menu Modules
 const int MODULE_1_X = 0;
@@ -73,6 +82,12 @@ const int MODULE_2_Y = 2;
 const int FUNCTION_ALT_FILT_LOW = 301;
 const int FUNCTION_ALT_FILT_HIGH = 302;
 const int FUNCTION_ALT_FILT_SAVE = 303;
+
+const int FUNCTION_DEST_ICAO_1 = 304;
+const int FUNCTION_DEST_ICAO_2 = 305;
+const int FUNCTION_DEST_ICAO_3 = 306;
+const int FUNCTION_DEST_ICAO_4 = 307;
+const int FUNCTION_DEST_ICAO_5 = 308;
 
 // Radar Background
 const int SCREEN_BACKGROUND = 501;
