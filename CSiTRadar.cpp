@@ -944,6 +944,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					auto dest5 = TopMenu::MakeField(dc, { 335, 80 }, 32, 15, "");
 					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest5", dest5, 0, menuState.destICAO[4].c_str());
 
+					menuButton but_dest_dist = { {380, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destDME };
+					but = TopMenu::DrawBut(&dc, but_dest_dist);
+					ButtonToScreen(this, but, "Dest Dist", BUTTON_MENU_DEST_DIST);
+					TopMenu::MakeText(dc, { 385, 25 }, 40, 30, "DME");
+
+					menuButton but_dest_est = { {430, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destEST };
+					but = TopMenu::DrawBut(&dc, but_dest_est);
+					ButtonToScreen(this, but, "Dest EST", BUTTON_MENU_DEST_EST);
+					TopMenu::MakeText(dc, { 433, 25 }, 40, 30, "EST");
+
+					menuButton but_dest_vfr = { {380, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destVFR };
+					but = TopMenu::DrawBut(&dc, but_dest_vfr);
+					ButtonToScreen(this, but, "Dest VFR", BUTTON_MENU_DEST_VFR);
+					TopMenu::MakeText(dc, { 383, 51 }, 40, 30, "VFR");
+
+
 					menuButton but_close_dest_arpt = { {465, 90}, "Close", 40, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_close_dest_arpt);
 					ButtonToScreen(this, but, "Close Dest", BUTTON_MENU_CLOSE_DEST);
@@ -1237,6 +1253,16 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_HALO_TOOL) {
 		menuState.haloTool = true;
 		menuLayer = 1;
+	}
+
+	if (ObjectType == BUTTON_MENU_DEST_DIST) {
+		menuState.destDME = !menuState.destDME;
+	}
+	if (ObjectType == BUTTON_MENU_DEST_VFR) {
+		menuState.destVFR = !menuState.destVFR;
+	}
+	if (ObjectType == BUTTON_MENU_DEST_EST) {
+		menuState.destEST = !menuState.destEST;
 	}
 
 	if (ObjectType == BUTTON_MENU_HALO_OPTIONS) {

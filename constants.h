@@ -71,6 +71,9 @@ const int BUTTON_MENU_DEST_3 = 227;
 const int BUTTON_MENU_DEST_4 = 228;
 const int BUTTON_MENU_DEST_5 = 229;
 const int BUTTON_MENU_DEST_ICAO = 230;
+const int BUTTON_MENU_DEST_DIST = 231;
+const int BUTTON_MENU_DEST_EST = 232;
+const int BUTTON_MENU_DEST_VFR = 233;
 
 // Menu Modules
 const int MODULE_1_X = 0;

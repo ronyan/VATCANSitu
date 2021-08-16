@@ -72,6 +72,9 @@ struct buttonStates {
 
     bool destArptOn[5];
     string destICAO[5];
+    bool destEST;
+    bool destVFR;
+    bool destDME;
 
     bool mouseMMB{ false };
 };

@@ -174,7 +174,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			sectorElement.GetPosition(&dest, 0);
 		}
 	}
-	string destinationDist;
+	string destinationDist, destinationTime;
 	// if the destination airport is not in the sector file, have to use Euroscope's FP calculated distance and not a direct distance
 	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0) {
 		destinationDist = to_string((long)rt->GetCorrelatedFlightPlan().GetDistanceToDestination());
@@ -183,12 +183,27 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	else {
 		destinationDist = to_string((long)rt->GetPosition().GetPosition().DistanceTo(dest));
 	}
+
+	string est;
 	if (rt->GetGS() > 0) {
-		string destinationTime = to_string((int)rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS());
+		struct tm gmt;
+		time_t t = std::time(0);
+		t += ((rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS()) * 3600);
+		gmtime_s(&gmt, &t);
+
+		char timeStr[50];
+		strftime(timeStr, 50, "%R", &gmt);
+		est = timeStr;
 	}
 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1) {
+	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1  ||
+		CSiTRadar::menuState.destDME) {
 		destination = destination + "-" + destinationDist;
+	}
+
+	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1 ||
+		CSiTRadar::menuState.destEST) {
+		destination = destination + "-" + est;
 	}
 	
 	// Initiate the default tag location, if no location is set already or find it in the map
