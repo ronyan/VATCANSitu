@@ -112,6 +112,25 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
 	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
 
+	// Destination airport highlighting
+	auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), fp->GetFlightPlanData().GetDestination());
+	bool isDest = false;
+
+	if (itr != end(CSiTRadar::menuState.destICAO)
+		&& strcmp(fp->GetFlightPlanData().GetDestination(), "") != 0) {
+		if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)]) {
+
+			HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+			dc->SelectObject(targetPen);
+			dc->SelectStockObject(HOLLOW_BRUSH);
+			dc->Ellipse(p.x - 7, p.y - 6, p.x + 8, p.y + 8);
+
+			isDest = true;
+
+			DeleteObject(targetPen);
+		}
+	}
+
 	// Line 0 Items
 	string ssr = rt->GetPosition().GetSquawk();
 
@@ -197,13 +216,18 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	}
 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1  ||
-		CSiTRadar::menuState.destDME) {
+		(CSiTRadar::menuState.destDME  && !CSiTRadar::menuState.destEST && isDest)) {
 		destination = destination + "-" + destinationDist;
 	}
 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1 ||
-		CSiTRadar::menuState.destEST) {
+	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 2 ||
+		(CSiTRadar::menuState.destEST && !CSiTRadar::menuState.destDME &&  isDest) ) {
 		destination = destination + "-" + est;
+	}
+
+	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 3 ||
+		(CSiTRadar::menuState.destEST && CSiTRadar::menuState.destDME && isDest)) {
+		destination = destination + "-" + destinationDist + "-" + est;
 	}
 	
 	// Initiate the default tag location, if no location is set already or find it in the map
@@ -230,26 +254,6 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	// save context
 	int sDC = dc->SaveDC();
-
-	
-	// Destination airport highlighting
-	auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), fp->GetFlightPlanData().GetDestination());
-	bool isDest = false;
-	
-	if (itr != end(CSiTRadar::menuState.destICAO) 
-		&& strcmp(fp->GetFlightPlanData().GetDestination(), "") !=  0) {
-		if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)]) {
-
-			HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
-			dc->SelectObject(targetPen);
-			dc->SelectStockObject(HOLLOW_BRUSH);
-			dc->Ellipse(p.x - 7, p.y - 6, p.x + 8, p.y + 8);
-
-			isDest = true;
-
-			DeleteObject(targetPen);
-		}
-	}
 
 	CFont font;
 	CFont boldfont;

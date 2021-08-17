@@ -941,8 +941,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					but = TopMenu::DrawBut(&dc, but_dest_5);
 					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_5);
 
-					auto dest5 = TopMenu::MakeField(dc, { 335, 80 }, 32, 15, "");
-					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest5", dest5, 0, menuState.destICAO[4].c_str());
+					auto dest5 = TopMenu::MakeField(dc, { 335, 80 }, 32, 15, menuState.destICAO[4].c_str());
+					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest5", dest5, 0, "");
 
 					menuButton but_dest_dist = { {380, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destDME };
 					but = TopMenu::DrawBut(&dc, but_dest_dist);
@@ -1507,10 +1507,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_DESTINATION, sObjectId, NULL, TAG_ITEM_FUNCTION_ASSIGNED_HEADING_POPUP, Pt, Area);
 		}
 		if (Button == BUTTON_LEFT) {
-			if(mAcData[sObjectId].destLabelType == 0) {
-				mAcData[sObjectId].destLabelType = 1;
+			if(mAcData[sObjectId].destLabelType < 3) {
+				mAcData[sObjectId].destLabelType += 1;
 			}
-			else if (mAcData[sObjectId].destLabelType == 1) {
+			else {
 				mAcData[sObjectId].destLabelType = 0;
 			}
 		}
