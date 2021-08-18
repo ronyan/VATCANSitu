@@ -1506,12 +1506,26 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (Button == BUTTON_RIGHT) {
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_DESTINATION, sObjectId, NULL, TAG_ITEM_FUNCTION_ASSIGNED_HEADING_POPUP, Pt, Area);
 		}
-		if (Button == BUTTON_LEFT) {
-			if(mAcData[sObjectId].destLabelType < 3) {
-				mAcData[sObjectId].destLabelType += 1;
+
+		auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), GetPlugIn()->FlightPlanSelect(sObjectId).GetFlightPlanData().GetDestination());
+		bool isDest = false;
+
+
+		if (itr != end(CSiTRadar::menuState.destICAO)
+			&& strcmp(GetPlugIn()->FlightPlanSelect(sObjectId).GetFlightPlanData().GetDestination(), "") != 0) {
+			if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)]) {
+				isDest = true;
 			}
-			else {
-				mAcData[sObjectId].destLabelType = 0;
+		}
+
+		if (!isDest) {
+			if (Button == BUTTON_LEFT) {
+				if (mAcData[sObjectId].destLabelType < 3) {
+					mAcData[sObjectId].destLabelType += 1;
+				}
+				else {
+					mAcData[sObjectId].destLabelType = 0;
+				}
 			}
 		}
 	}

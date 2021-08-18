@@ -215,19 +215,29 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		est = timeStr;
 	}
 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1  ||
-		(CSiTRadar::menuState.destDME  && !CSiTRadar::menuState.destEST && isDest)) {
-		destination = destination + "-" + destinationDist;
+	if (isDest) {
+		if (CSiTRadar::menuState.destDME && !CSiTRadar::menuState.destEST) {
+			destination = destination + "-" + destinationDist;
+		}
+		else if (CSiTRadar::menuState.destEST && !CSiTRadar::menuState.destDME) {
+			destination = destination + "-" + est;
+		}
+		else if (CSiTRadar::menuState.destEST && CSiTRadar::menuState.destDME) {
+			destination = destination + "-" + destinationDist + "-" + est;
+		}
 	}
+	else
+	{
+		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1) {
+			destination = destination + "-" + destinationDist;
+		}
+		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 2) {
+			destination = destination + "-" + est;
+		}
 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 2 ||
-		(CSiTRadar::menuState.destEST && !CSiTRadar::menuState.destDME &&  isDest) ) {
-		destination = destination + "-" + est;
-	}
-
-	if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 3 ||
-		(CSiTRadar::menuState.destEST && CSiTRadar::menuState.destDME && isDest)) {
-		destination = destination + "-" + destinationDist + "-" + est;
+		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 3) {
+			destination = destination + "-" + destinationDist + "-" + est;
+		}
 	}
 	
 	// Initiate the default tag location, if no location is set already or find it in the map
