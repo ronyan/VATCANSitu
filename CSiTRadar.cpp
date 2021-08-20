@@ -390,6 +390,20 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 
 					// Tag Level Logic
+					if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
+						menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())) {
+						// Open tags for quick looked targets
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
+					}
+					else if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
+						!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) 
+						&& CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked) {
+
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = false;
+					}
+
 					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1; // alpha tag if you have jurisdiction over the aircraft
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].isJurisdictional = true;
@@ -414,7 +428,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (hoAcceptedTime.find(callSign) != hoAcceptedTime.end() && (clock() - hoAcceptedTime[callSign]) / CLOCKS_PER_SEC > 12) {
 						hoAcceptedTime.erase(callSign);
 
-						// if quick look is open, defer closing the tag until quicklook is off;
+						// if quick look is open, defer closing the tag until bypass All filter is off;
 						if (!menuState.filterBypassAll) {
 							mAcData[callSign].tagType = 0;
 						}
@@ -601,7 +615,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				menutopleft.y += 6;
 				menutopleft.x += 6;
 
-				if (menuLayer == 0) {
+				if (menuLayer == 0 || menuLayer == 2) {
 
 					POINT modOrigin;
 					modOrigin.x = 8;
@@ -649,170 +663,172 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					menutopleft.x = 295;
 
+					if (menuLayer == 0) {
 
-					// screen range, dummy buttons, not really necessary in ES.
-					but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
-					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
-					menutopleft.y += 25;
+						// screen range, dummy buttons, not really necessary in ES.
+						but = TopMenu::DrawButton(&dc, menutopleft, 70, 23, "Relocate", autoRefresh);
+						ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_RELOCATE);
+						menutopleft.y += 25;
 
-					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0);
-					menutopleft.x += 35;
-					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
-					menutopleft.y -= 25;
-					menutopleft.x += 55;
+						TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Zoom", 0);
+						menutopleft.x += 35;
+						TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
+						menutopleft.y -= 25;
+						menutopleft.x += 55;
 
-					// horizontal range calculation
-					int range = (int)round(RadRange());
-					string rng = to_string(range);
-					TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
-					menutopleft.y += 15;
+						// horizontal range calculation
+						int range = (int)round(RadRange());
+						string rng = to_string(range);
+						TopMenu::MakeText(dc, menutopleft, 50, 15, "Range");
+						menutopleft.y += 15;
 
-					// 109 pix per in on my monitor
-					int nmIn = (int)round(109 / pixnm);
-					string nmtext = "1\" = " + to_string(nmIn) + "nm";
-					TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
-					menutopleft.y += 17;
+						// 109 pix per in on my monitor
+						int nmIn = (int)round(109 / pixnm);
+						string nmtext = "1\" = " + to_string(nmIn) + "nm";
+						TopMenu::MakeText(dc, menutopleft, 50, 15, nmtext.c_str());
+						menutopleft.y += 17;
 
-					POINT downArrow[3] = {
-						{-2,-2},
-						{3,-2},
-						{1, 3}
-					};
+						POINT downArrow[3] = {
+							{-2,-2},
+							{3,-2},
+							{1, 3}
+						};
 
-					POINT downArrow1[3] = {
-						{-2,-2},
-						{3,-2},
-						{1, 3}
-					};
+						POINT downArrow1[3] = {
+							{-2,-2},
+							{3,-2},
+							{1, 3}
+						};
 
-					POINT downArrow2[3] = {
-						{-2,-2},
-						{3,-2},
-						{1, 3}
-					};
+						POINT downArrow2[3] = {
+							{-2,-2},
+							{3,-2},
+							{1, 3}
+						};
 
-					TopMenu::MakeDropDown(dc, menutopleft, 35, 15, rng.c_str());
+						TopMenu::MakeDropDown(dc, menutopleft, 35, 15, rng.c_str());
 
-					menuButton but_rngdropdown = { { menutopleft.x + 35, radarea.top + 38 }, "", 15, 15, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_rngdropdown);
-					TopMenu::DrawIconBut(&dc, but_rngdropdown, downArrow, 3);
+						menuButton but_rngdropdown = { { menutopleft.x + 35, radarea.top + 38 }, "", 15, 15, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_rngdropdown);
+						TopMenu::DrawIconBut(&dc, but_rngdropdown, downArrow, 3);
 
-					menutopleft.x += 65;
-					menutopleft.y -= 32;
+						menutopleft.x += 65;
+						menutopleft.y -= 32;
 
-					menutopleft.y += 8;
-					TopMenu::MakeText(dc, { menutopleft.x - 8, menutopleft.y-3 }, 35, 15, "Map");
-					menutopleft.y += 18;
+						menutopleft.y += 8;
+						TopMenu::MakeText(dc, { menutopleft.x - 8, menutopleft.y - 3 }, 35, 15, "Map");
+						menutopleft.y += 18;
 
-					TopMenu::MakeDropDown(dc, menutopleft, 75, 18, GetPlugIn()->ControllerMyself().GetSectorFileName());
-					menuButton but_mapdropdown = { { menutopleft.x + 73, radarea.top + 32 }, "", 18, 18, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_mapdropdown);
-					TopMenu::DrawIconBut(&dc, but_mapdropdown, downArrow1, 3);
+						TopMenu::MakeDropDown(dc, menutopleft, 75, 18, GetPlugIn()->ControllerMyself().GetSectorFileName());
+						menuButton but_mapdropdown = { { menutopleft.x + 73, radarea.top + 32 }, "", 18, 18, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_mapdropdown);
+						TopMenu::DrawIconBut(&dc, but_mapdropdown, downArrow1, 3);
 
-					menutopleft.y -= 26;
-					menutopleft.x += 35;
-					but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Overlays", 1);
+						menutopleft.y -= 26;
+						menutopleft.x += 35;
+						but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Overlays", 1);
 
-					menutopleft.x += 70;
-					menutopleft.y += 8;
-					menuButton but_preset = { {menutopleft.x, radarea.top + 6 }, "Preset", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_preset);
+						menutopleft.x += 70;
+						menutopleft.y += 8;
+						menuButton but_preset = { {menutopleft.x, radarea.top + 6 }, "Preset", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_preset);
 
-					menutopleft.y += 18;
-					TopMenu::MakeDropDown(dc, menutopleft, 73, 18, "preset");
-					menuButton but_presetdropdown = { { menutopleft.x + 73, radarea.top + 32 }, "", 18, 18, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_presetdropdown);
-					TopMenu::DrawIconBut(&dc, but_presetdropdown, downArrow2, 3);
+						menutopleft.y += 18;
+						TopMenu::MakeDropDown(dc, menutopleft, 73, 18, "preset");
+						menuButton but_presetdropdown = { { menutopleft.x + 73, radarea.top + 32 }, "", 18, 18, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_presetdropdown);
+						TopMenu::DrawIconBut(&dc, but_presetdropdown, downArrow2, 3);
 
-					menutopleft.y -= 26;
-					menutopleft.x += 47;
+						menutopleft.y -= 26;
+						menutopleft.x += 47;
 
-					menuButton but_presetback = { {menutopleft.x, radarea.top + 6 }, "Back", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_presetback);
+						menuButton but_presetback = { {menutopleft.x, radarea.top + 6 }, "Back", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_presetback);
 
-					menutopleft.x += 58;
+						menutopleft.x += 58;
 
-					// altitude filters
+						// altitude filters
 
-					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
-					ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
+						but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Alt Filter", altFilterOpts);
+						ButtonToScreen(this, but, "Alt Filt Opts", BUTTON_MENU_ALT_FILT_OPT);
 
-					menutopleft.y += 25;
+						menutopleft.y += 25;
 
-					string altFilterLowFL = to_string(altFilterLow);
-					if (altFilterLowFL.size() < 3) {
-						altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+						string altFilterLowFL = to_string(altFilterLow);
+						if (altFilterLowFL.size() < 3) {
+							altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
+						}
+						string altFilterHighFL = to_string(altFilterHigh);
+						if (altFilterHighFL.size() < 3) {
+							altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
+						}
+
+						string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
+						but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
+						ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
+						menutopleft.y -= 25;
+						menutopleft.x += 64;
+
+						// separation tools
+						string haloText = "Halo " + to_string(menuState.haloRad);
+						but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), menuState.haloTool);
+						ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_TOOL);
+
+						menutopleft.y = menutopleft.y + 25;
+						string ptlText = "PTL " + to_string(menuState.ptlLength);
+						but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, ptlText.c_str(), CSiTRadar::menuState.ptlTool);
+						ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
+
+						menutopleft.y = menutopleft.y - 25;
+						menutopleft.x = menutopleft.x + 47;
+						TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
+
+						menutopleft.y = menutopleft.y + 25;
+						TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
+
+						menutopleft.y = menutopleft.y - 25;
+						menutopleft.x = menutopleft.x + 37;
+						TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
+
+						menutopleft.y = menutopleft.y + 25;
+						TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
+
+						menutopleft.y = menutopleft.y - 25;
+						menutopleft.x = menutopleft.x + 52;
+						TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Airspace", 0);
+
+						// get the controller position ID and display it (aesthetics :) )
+						if (GetPlugIn()->ControllerMyself().IsValid())
+						{
+							controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
+						}
+
+						menutopleft.x += 58;
+						string cid = "CJS - " + controllerID;
+
+						RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
+
+						menutopleft.y += 25;
+						but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
+						menutopleft.y -= 25;
+						ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
 					}
-					string altFilterHighFL = to_string(altFilterHigh);
-					if (altFilterHighFL.size() < 3) {
-						altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
-					}
 
-					string filtText = altFilterLowFL + string(" - ") + altFilterHighFL;
-					but = TopMenu::DrawButton(&dc, menutopleft, 50, 23, filtText.c_str(), altFilterOn);
-					ButtonToScreen(this, but, "", BUTTON_MENU_ALT_FILT_ON);
-					menutopleft.y -= 25;
-					menutopleft.x += 64;
-
-					// separation tools
-					string haloText = "Halo " + to_string(menuState.haloRad);
-					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, haloText.c_str(), menuState.haloTool);
-					ButtonToScreen(this, but, "Halo", BUTTON_MENU_HALO_TOOL);
-
-					menutopleft.y = menutopleft.y + 25;
-					string ptlText = "PTL " + to_string(menuState.ptlLength);
-					but = TopMenu::DrawButton(&dc, menutopleft, 45, 23, ptlText.c_str(), CSiTRadar::menuState.ptlTool);
-					ButtonToScreen(this, but, "PTL", BUTTON_MENU_PTL_TOOL);
-
-					menutopleft.y = menutopleft.y - 25;
-					menutopleft.x = menutopleft.x + 47;
-					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "RBL", 0);
-
-					menutopleft.y = menutopleft.y + 25;
-					TopMenu::DrawButton(&dc, menutopleft, 35, 23, "PIV", 0);
-
-					menutopleft.y = menutopleft.y - 25;
-					menutopleft.x = menutopleft.x + 37;
-					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Rings 20", 0);
-
-					menutopleft.y = menutopleft.y + 25;
-					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Grid", 0);
-
-					menutopleft.y = menutopleft.y - 25;
-					menutopleft.x = menutopleft.x + 52;
-					TopMenu::DrawButton(&dc, menutopleft, 50, 23, "Airspace", 0);
-
-					// get the controller position ID and display it (aesthetics :) )
-					if (GetPlugIn()->ControllerMyself().IsValid())
-					{
-						controllerID = GetPlugIn()->ControllerMyself().GetPositionId();
-					}
-
-					menutopleft.x += 58;
-					string cid = "CJS - " + controllerID;
-
-					RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
-
-					menutopleft.y += 25;
-					but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
-					menutopleft.y -= 25;
-					ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
-
-					POINT psrPoor[13] = {
-						{0,0},
-						{0,-5},
-						{0,5},
-						{0,0},
-						{4,-4},
-						{-4,4},
-						{0,0},
-						{4,4},
-						{-4,-4},
-						{0,0},
-						{-5,0},
-						{5,0},
-						{0,0}
-					};
+						POINT psrPoor[13] = {
+							{0,0},
+							{0,-5},
+							{0,5},
+							{0,0},
+							{4,-4},
+							{-4,4},
+							{0,0},
+							{4,4},
+							{-4,-4},
+							{0,0},
+							{-5,0},
+							{5,0},
+							{0,0}
+						};
 
 					POINT targetModuleOrigin = { 980, radarea.top + 6 };
 
@@ -967,6 +983,36 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menuButton but_clear_dest_arpt = { {380, 78}, "Clear All Dest", 80, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_clear_dest_arpt);
 					ButtonToScreen(this, but, "Clear All Dest", BUTTON_MENU_CLEAR_DEST);
+				}
+
+				// QUICK look menu
+
+				if (menuState.quickLook) {
+					TopMenu::DrawBackground(dc, { 286, radarea.top }, 690, 60);
+
+					menuButton but_quickLook = { {900, 30}, "Close", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_quickLook);
+					ButtonToScreen(this, but, "Close", BUTTON_MENU_QUICK_LOOK);
+
+					but_quickLook = { {828, 30}, "Clear All", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_quickLook);
+					ButtonToScreen(this, but, "Clear All", BUTTON_MENU_QUICK_LOOK);
+
+					but_quickLook = { {828, 55}, "Select All", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_quickLook);
+					ButtonToScreen(this, but, "Select All", BUTTON_MENU_QUICK_LOOK);
+
+					for (auto cjs : menuState.nearbyCJS) {
+
+						int deltax = 0;
+						but_quickLook = { {295+deltax, radarea.top + 10}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
+						but = TopMenu::DrawBut(&dc, but_quickLook);
+						ButtonToScreen(this, but, cjs.first.c_str(), BUTTON_MENU_QL_CJS);
+
+						TopMenu::MakeText(dc, { 307+deltax, radarea.top + 9 }, 20, 10, cjs.first.c_str());
+
+						deltax += 30;
+					}
 				}
 
 				else if (menuLayer == 1) {
@@ -1187,7 +1233,8 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 				else if (CSiTRadar::mAcData[sObjectId].tagType == 1 &&
 					!GetPlugIn()->FlightPlanSelect(sObjectId).GetTrackingControllerIsMe() &&
-					!menuState.quickLook) {
+					!menuState.filterBypassAll &&
+					!CSiTRadar::mAcData[sObjectId].isQuickLooked ) {
 					CSiTRadar::mAcData[sObjectId].tagType = 0;
 				} // can't make bravo tag if you are tracking or if quick look is on
 			}
@@ -1216,6 +1263,8 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 	if (ObjectType == BUTON_MENU_DEST_APRT) {
 		menuState.destAirport = true;
+		menuState.quickLook = false;
+		menuLayer = 0;
 	}
 
 	if (ObjectType == BUTTON_MENU_CLOSE_DEST) {
@@ -1380,7 +1429,36 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_QUICK_LOOK) {
+		if (!strcmp(sObjectId, "Qck Look")) {
+			menuState.quickLook = true;
+			menuState.destAirport = false;
+			menuLayer = 2;
+		}
+		
+		if (!strcmp(sObjectId, "Close")) {
+			menuState.quickLook = false;
+			menuLayer = 0;
+		}
 
+		if (!strcmp(sObjectId, "Clear All")) {
+			for (auto &cjs : menuState.nearbyCJS) {
+				cjs.second = false;
+			}
+		}
+
+		if (!strcmp(sObjectId, "Select All")) {
+			for (auto &cjs : menuState.nearbyCJS) {
+				cjs.second = true;
+			}
+		}
+
+	}
+
+	if (ObjectType == BUTTON_MENU_QL_CJS) {
+		if (menuState.nearbyCJS.find(sObjectId) != menuState.nearbyCJS.end()) {
+			menuState.nearbyCJS[sObjectId] = !menuState.nearbyCJS[sObjectId];
+		}
+		RequestRefresh();
 	}
 
 	if (ObjectType == BUTTON_MENU_WX_HIGH) {
@@ -1617,7 +1695,7 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 			}
 			else {
 
-				if (menuState.quickLook) { tempTagData[sObjectId] = 1; } // if you move a tag during quick look, it will stay open
+				if (menuState.filterBypassAll) { tempTagData[sObjectId] = 1; } // if you move a tag during quick look, it will stay open
 				// once released, check that the tag does not exceed the limits, and then save it to the map
 			}
 
@@ -1655,6 +1733,11 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 		string ICAO = sItemString;
 		std::transform(ICAO.begin(), ICAO.end(), ICAO.begin(), ::toupper);
 		menuState.destICAO[FunctionId - FUNCTION_DEST_ICAO_1] = ICAO.substr(0,4).c_str();
+	}
+	if (FunctionId == FUNCTION_RMB_POPUP) {
+		// Draw the right click popup menu
+
+
 	}
 }
 
@@ -1960,4 +2043,20 @@ void CSiTRadar::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId,
 
 void CSiTRadar::OnAsrContentToBeSaved() {
 
+}
+
+void CSiTRadar::OnControllerPositionUpdate(CController Controller)
+{
+	for (CController ctrl = CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectFirst(); ctrl.IsValid(); ctrl = CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectNext(ctrl))
+	{
+		if (ctrl.GetPositionIdentified()) {
+			CSiTRadar::menuState.nearbyCJS.insert(pair<string, bool>(ctrl.GetPositionId(), false));
+		}
+	}
+}
+
+void CSiTRadar::OnControllerDisconnect(CController Controller) {
+	if (CSiTRadar::menuState.nearbyCJS.find(Controller.GetPositionId()) != CSiTRadar::menuState.nearbyCJS.end()) {
+		CSiTRadar::menuState.nearbyCJS.erase(Controller.GetPositionId());
+	}
 }

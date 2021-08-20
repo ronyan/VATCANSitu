@@ -628,7 +628,6 @@ public:
         CURL* atisVatsimStatusJson = curl_easy_init();
         string strVatsimURL;
         string jsAtis;
-        arptAtisLetter.clear();
 
         if (vatsimURL) {
             curl_easy_setopt(vatsimURL, CURLOPT_URL, "http://status.vatsim.net/status.json");
@@ -639,6 +638,7 @@ public:
             res = curl_easy_perform(vatsimURL);
             if (res == CURLE_OPERATION_TIMEDOUT) {
                 rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", "VATSIM Datafeed URL Fetch Timed Out", true, true, true, false, false);
+                return;
             }
             curl_easy_cleanup(vatsimURL);
         }
@@ -660,6 +660,10 @@ public:
             res = curl_easy_perform(atisVatsimStatusJson);
             if (res == CURLE_OPERATION_TIMEDOUT) {
                 rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", "VATSIM Datafeed Timed Out", true, true, true, false, false);
+                return;
+            }
+            else {
+                arptAtisLetter.clear();
             }
             curl_easy_cleanup(atisVatsimStatusJson);
         } 

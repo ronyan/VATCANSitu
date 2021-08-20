@@ -75,6 +75,8 @@ const int BUTTON_MENU_DEST_DIST = 231;
 const int BUTTON_MENU_DEST_EST = 232;
 const int BUTTON_MENU_DEST_VFR = 233;
 
+const int BUTTON_MENU_QL_CJS = 234;
+
 // Menu Modules
 const int MODULE_1_X = 0;
 const int MODULE_1_Y = 2;
@@ -91,6 +93,8 @@ const int FUNCTION_DEST_ICAO_2 = 305;
 const int FUNCTION_DEST_ICAO_3 = 306;
 const int FUNCTION_DEST_ICAO_4 = 307;
 const int FUNCTION_DEST_ICAO_5 = 308;
+
+const int FUNCTION_RMB_POPUP = 309;
 
 // Radar Background
 const int SCREEN_BACKGROUND = 501;

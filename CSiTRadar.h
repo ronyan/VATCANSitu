@@ -36,6 +36,7 @@ struct ACData {
     bool isJurisdictional{ FALSE };
     bool isOnScreen{ FALSE };
     bool isDestAprt{ FALSE };
+    bool isQuickLooked{ false };
 
     int tagWidth{ 65 }; 
     string CID;
@@ -52,6 +53,7 @@ struct buttonStates {
     bool ptlAll{ FALSE };
     int haloRad;
     bool quickLook{ FALSE };
+    bool quickLookDelta{ false };
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
     bool destAirport{ false };
@@ -63,6 +65,8 @@ struct buttonStates {
     bool mvaDisp{ false };
 
     set<string> activeArpt;
+    map<string, bool> nearbyCJS;
+    
 
     bool SFIMode{};
     bool handoffMode{};
@@ -181,6 +185,8 @@ public:
     inline virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
     inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
     static void updateActiveRunways(CRadarScreen* rad);
+    inline virtual void OnControllerPositionUpdate(CController Controller);
+    inline virtual void OnControllerDisconnect(CController Controller);
 
     static void RegisterButton(RECT rect) {
 
