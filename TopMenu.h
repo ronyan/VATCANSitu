@@ -283,6 +283,39 @@ public:
         return rect1;
     };
 
+    static RECT MakeTextLeft(HDC hdc, POINT p, int width, int height, const char* btext)
+    {
+        CDC dc;
+        dc.Attach(hdc);
+
+        CFont font;
+        LOGFONT lgfont;
+
+        memset(&lgfont, 0, sizeof(LOGFONT));
+        lgfont.lfWeight = 700;
+        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+        lgfont.lfHeight = 12;
+        font.CreateFontIndirect(&lgfont);
+
+        dc.SelectObject(font);
+        dc.SetTextColor(RGB(230, 230, 230));
+
+        // text rectangle
+        RECT rect1;
+        rect1.left = p.x;
+        rect1.right = p.x + width;
+        rect1.top = p.y;
+        rect1.bottom = p.y + height;
+
+        dc.DrawText(CString(btext), &rect1, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+        DeleteObject(font);
+
+        dc.Detach();
+
+        return rect1;
+    };
+
     static RECT MakeDropDown(HDC hdc, POINT p, int width, int height, const char* btext) {
         CDC dc;
         dc.Attach(hdc);

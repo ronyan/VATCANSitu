@@ -1001,17 +1001,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					but_quickLook = { {828, 55}, "Select All", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_quickLook);
 					ButtonToScreen(this, but, "Select All", BUTTON_MENU_QUICK_LOOK);
+					
+					int deltax = 0;
+					int deltay = 0;
 
 					for (auto cjs : menuState.nearbyCJS) {
 
-						int deltax = 0;
-						but_quickLook = { {295+deltax, radarea.top + 10}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
+
+						but_quickLook = { {295+deltax, radarea.top + 12 + deltay}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
 						but = TopMenu::DrawBut(&dc, but_quickLook);
 						ButtonToScreen(this, but, cjs.first.c_str(), BUTTON_MENU_QL_CJS);
 
-						TopMenu::MakeText(dc, { 307+deltax, radarea.top + 9 }, 20, 10, cjs.first.c_str());
+						TopMenu::MakeTextLeft(dc, { 308 + deltax, radarea.top + 11 + deltay }, 20, 10, cjs.first.c_str());
 
-						deltax += 30;
+						deltax += 38;
+
+						if (deltax >= 350) { deltax = 0; deltay += 26; }
 					}
 				}
 
