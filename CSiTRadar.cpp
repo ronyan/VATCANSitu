@@ -1922,7 +1922,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 		for (auto &aircraft : ac) {
 			if (aircraft.second.isJurisdictional && !aircraft.second.isOnScreen) {
-				if (!!acLists[LIST_OFF_SCREEN].collapsed) {
+				if (!acLists[LIST_OFF_SCREEN].collapsed) {
 					dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
 					dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT);
 					listArcft.top += 13;
@@ -1933,7 +1933,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 		if (showArrow) {
 			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
-			if (!!acLists[LIST_OFF_SCREEN].collapsed)
+			if (!acLists[LIST_OFF_SCREEN].collapsed)
 			{
 				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
 				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
