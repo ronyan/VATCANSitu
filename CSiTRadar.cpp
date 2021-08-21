@@ -1758,14 +1758,14 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string
 	AddScreenObject(itemtype, btext.c_str(), rect, 0, "");
 }
 
-void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
+void CSiTRadar::updateActiveRunways(int i) {
 	vector<string> activerwys{};
 
-	rad->GetPlugIn()->SelectActiveSectorfile();
+	m_pRadScr->GetPlugIn()->SelectActiveSectorfile();
 	CSiTRadar::menuState.activeArpt.clear();
 	// Active runway highlighting for ground screens
-	for (CSectorElement runway = rad->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
-		runway = rad->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
+	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
+		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
 
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
@@ -1785,7 +1785,7 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 		string name = sectorElement.GetName();
 
 		if (name.find("ACTIVE") != string::npos) {
-			rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
+			m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
 
 			if (CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName") != NULL) {
 				string DisplayType = CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName");
@@ -1799,13 +1799,13 @@ void CSiTRadar::updateActiveRunways(CRadarScreen* rad) {
 			for (const auto& rwy : activerwys) {
 
 				if (name.find(rwy) != string::npos) {
-					rad->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
+					m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
 				}
 			}
 		}
 	}
 
-	rad->RefreshMapContent();
+	m_pRadScr->RefreshMapContent();
 }
 
 void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
@@ -1819,7 +1819,7 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 		altFilterLow = atoi(filt);
 	}    
 
-	std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, this);
+	std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, 0);
 
 	// Find the position of ADSB radars
 	/*

@@ -186,7 +186,7 @@ public:
     void OnAsrContentToBeSaved();
     inline virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
     inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
-    static void updateActiveRunways(CRadarScreen* rad);
+    static void updateActiveRunways(int i);
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
 

@@ -416,5 +416,7 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
 
 void SituPlugin::OnAirportRunwayActivityChanged()
 {
-    CSiTRadar::updateActiveRunways(CSiTRadar::m_pRadScr);
+    if (CSiTRadar::m_pRadScr != nullptr) {
+        CSiTRadar::updateActiveRunways(0);
+    }
 }
