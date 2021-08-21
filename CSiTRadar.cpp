@@ -84,13 +84,22 @@ CSiTRadar::CSiTRadar()
 
 
 	try {
-		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
-		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
-		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
-
-		lastMetarRefresh = clock();
-		lastWxRefresh = clock();
+		if ( (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) ||
+			menuState.lastWxRefresh == 0) {
+			std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
+			std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			menuState.lastWxRefresh = clock();
+		}
+		if ((((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) || 
+			menuState.lastMetarRefresh == 0) {
+			std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
+			menuState.lastMetarRefresh = clock();
+		}
+		if ((((clock() - menuState.lastAtisRefresh) / CLOCKS_PER_SEC) > 120) ||
+			menuState.lastAtisRefresh == 0) {
+			std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
+			menuState.lastAtisRefresh = clock();
+		}
 	}
 	catch (...) {
 		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "WX Parser", string("PNG Failed to Parse").c_str(), true, false, false, false, false);
@@ -159,27 +168,29 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		halfSecTick = !halfSecTick;
 	}
 
-	if (((clock() - lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
+	if (phase == REFRESH_PHASE_BEFORE_TAGS) {
+		if (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
 
-		// autorefresh weather download every 10 minutes
-		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-		lastWxRefresh = clock();
-	}
+			// autorefresh weather download every 10 minutes
+			std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			menuState.lastWxRefresh = clock();
+		}
 
-	if (((clock() - lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
-		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
-		lastMetarRefresh = clock();
-	}
+		if (((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
+			std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
+			menuState.lastMetarRefresh = clock();
+		}
 
-	if (((clock() - lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
-		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
-		lastAtisRefresh = clock();
-	}
+		if (((clock() - menuState.lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
+			std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
+			menuState.lastAtisRefresh = clock();
+		}
 
-	if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
-		menuState.handoffMode = FALSE;
-		CSiTRadar::menuState.jurisdictionIndex = 0;
-		SituPlugin::SendKeyboardPresses({ 0x01 });
+		if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
+			menuState.handoffMode = FALSE;
+			CSiTRadar::menuState.jurisdictionIndex = 0;
+			SituPlugin::SendKeyboardPresses({ 0x01 });
+		}
 	}
 #pragma endregion 
 
@@ -1480,10 +1491,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		menuState.wxHigh = !menuState.wxHigh;
 		RefreshMapContent();
 		
-		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+		if (menuState.lastWxRefresh == 0 || (clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC > 600) {
 			
 			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-			lastWxRefresh = clock();
+			menuState.lastWxRefresh = clock();
 		}
 	}
 
@@ -1493,9 +1504,9 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		menuState.wxAll = !menuState.wxAll;
 		RefreshMapContent();
 
-		if (lastWxRefresh == 0 || (clock() - lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+		if (menuState.lastWxRefresh == 0 || (clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC > 600) {
 			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-			lastWxRefresh = clock();
+			menuState.lastWxRefresh = clock();
 		}
 	}
 	
@@ -1794,8 +1805,6 @@ void CSiTRadar::updateActiveRunways(int i) {
 			}
 		}
 	}
-
-	m_pRadScr->RefreshMapContent();
 }
 
 void CSiTRadar::DisplayActiveRunways() {
