@@ -8,7 +8,6 @@
 #include "PPS.h"
 #include "wxRadar.h"
 #include <chrono>
-#include <future>
 
 using namespace Gdiplus;
 
@@ -87,8 +86,9 @@ CSiTRadar::CSiTRadar()
 	try {
 		std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 		std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
-		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, this);
-		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, this);
+		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
+		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
+
 		lastMetarRefresh = clock();
 		lastWxRefresh = clock();
 	}
@@ -145,6 +145,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	RECT radarea = GetRadarArea();
 
+	// Get threaded messages
+	for (auto &message : wxRadar::asyncMessages) {
+		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Warning", message.reponseMessage.c_str(), true, false, false, false, false);
+	}
+	wxRadar::asyncMessages.clear();
+
+#pragma region timers
 	// time based functions
 	double time = ((double)clock() - (double)halfSec) / ((double)CLOCKS_PER_SEC);
 	if (time >= 0.5) {
@@ -160,12 +167,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (((clock() - lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
-		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, this);
+		std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
 		lastMetarRefresh = clock();
 	}
 
 	if (((clock() - lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
-		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, this);
+		std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
 		lastAtisRefresh = clock();
 	}
 
@@ -174,6 +181,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		CSiTRadar::menuState.jurisdictionIndex = 0;
 		SituPlugin::SendKeyboardPresses({ 0x01 });
 	}
+#pragma endregion 
 
 	// set up the drawing renderer
 	CDC dc;

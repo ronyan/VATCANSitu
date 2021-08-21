@@ -8,6 +8,7 @@ int wxRadar::zoomLevel;
 string wxRadar::ts;
 std::map<string, string> wxRadar::arptAltimeter;
 std::map<string, string> wxRadar::arptAtisLetter;
+std::vector<CAsyncResponse> wxRadar::asyncMessages;
 
 void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& filename) //designed for loading files from hard disk in an std::vector
 {
@@ -188,4 +189,73 @@ int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
         
     }
     return 0;   
+}
+
+void wxRadar::parseVatsimATIS(int i) {
+    CURL* vatsimURL = curl_easy_init();
+    CURL* atisVatsimStatusJson = curl_easy_init();
+    string strVatsimURL;
+    string jsAtis;
+    CAsyncResponse result;
+
+    if (vatsimURL) {
+        curl_easy_setopt(vatsimURL, CURLOPT_URL, "http://status.vatsim.net/status.json");
+        curl_easy_setopt(vatsimURL, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(vatsimURL, CURLOPT_WRITEDATA, &strVatsimURL);
+        curl_easy_setopt(vatsimURL, CURLOPT_TIMEOUT_MS, 1500L);
+        CURLcode res;
+        res = curl_easy_perform(vatsimURL);
+        if (res == CURLE_OPERATION_TIMEDOUT) {
+            result.reponseMessage = "VATSIM Datafeed URL Fetch Timed Out";
+            result.responseCode = 1;
+            //asyncMessages.insert(result);
+            return;
+        }
+        curl_easy_cleanup(vatsimURL);
+    }
+
+    string dataURL;
+
+    try {
+        json jsVatsimURL = json::parse(strVatsimURL);
+        dataURL = jsVatsimURL["data"]["v3"][0];
+    }
+    catch (exception& e) { string error = e.what(); }
+
+    if (atisVatsimStatusJson) {
+        curl_easy_setopt(atisVatsimStatusJson, CURLOPT_URL, dataURL.c_str());
+        curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEDATA, &jsAtis);
+        curl_easy_setopt(atisVatsimStatusJson, CURLOPT_TIMEOUT_MS, 1500L);
+        CURLcode res;
+        res = curl_easy_perform(atisVatsimStatusJson);
+        if (res == CURLE_OPERATION_TIMEDOUT) {
+            result.reponseMessage = "VATSIM Datafeed Timed Out - ATIS letter may be incorrect";
+            result.responseCode = 1;
+            asyncMessages.push_back(result);
+            return;
+        }
+        else {
+            arptAtisLetter.clear();
+        }
+        curl_easy_cleanup(atisVatsimStatusJson);
+    }
+    else { return; }
+
+    try {
+        json jsVatsimAtis = json::parse(jsAtis.c_str());
+
+
+        if (!jsVatsimAtis["atis"].empty()) {
+            for (auto& atis : jsVatsimAtis["atis"]) {
+                if (!atis["atis_code"].is_null()) {
+                    string airport = atis["callsign"];
+                    arptAtisLetter[airport.substr(0, 4)] = atis["atis_code"];
+                }
+            }
+        }
+    }
+    catch (exception& e) { result.reponseMessage = e.what(); result.responseCode = 1; asyncMessages.push_back(result); return; }
+
+    return;
 }

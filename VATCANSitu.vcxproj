@@ -193,6 +193,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ACTag.cpp" />
+    <ClCompile Include="CAsyncResponse.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
     <ClCompile Include="pch.cpp">
@@ -213,6 +214,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ACTag.h" />
+    <ClInclude Include="CAsyncResponse.h" />
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="HaloTool.h" />

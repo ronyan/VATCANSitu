@@ -8,6 +8,8 @@
 #include <sstream>
 #include "json.hpp"
 #include "curl/curl.h"
+#include "CAsyncResponse.h"
+#include <set>
 
 using namespace Gdiplus;
 
@@ -559,6 +561,8 @@ public:
     static void parseRadarPNG(CRadarScreen* rad); 
     static int renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
 
+    static vector<CAsyncResponse> asyncMessages;
+
     static void GetRainViewerJSON(CRadarScreen* rad) {
 
         CURL* rainViewerJson = curl_easy_init();
@@ -584,9 +588,10 @@ public:
         }
     }
 
-    static void parseVatsimMetar(CRadarScreen* rad) {
+    static void parseVatsimMetar(int i) {
         CURL* metarCurlHandle = curl_easy_init();
         string metarString;
+        CAsyncResponse response;
 
         if (metarCurlHandle) {
             curl_easy_setopt(metarCurlHandle, CURLOPT_URL, "http://metar.vatsim.net/metar.php?id=cy");
@@ -596,7 +601,9 @@ public:
             CURLcode res;
             res = curl_easy_perform(metarCurlHandle);
             if (res == CURLE_OPERATION_TIMEDOUT) {
-                rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", "METAR Fetch Timed Out", true, true, true, false, false);
+                response.reponseMessage = "METAR Fetch Timed Out";
+                response.responseCode = 1;
+                wxRadar::asyncMessages.push_back(response);
             }
             curl_easy_cleanup(metarCurlHandle);
         }
@@ -619,72 +626,14 @@ public:
                 arptAltimeter[icao] = altimeter;
             }
         }
-        catch (exception& e) { string error = e.what(); }
+        catch (exception& e) { 
+            response.reponseMessage = e.what();
+            response.responseCode = 1;
+            wxRadar::asyncMessages.push_back(response); }
 
     }
 
-    static void parseVatsimATIS(CRadarScreen* rad) {
-        CURL* vatsimURL = curl_easy_init();
-        CURL* atisVatsimStatusJson = curl_easy_init();
-        string strVatsimURL;
-        string jsAtis;
-
-        if (vatsimURL) {
-            curl_easy_setopt(vatsimURL, CURLOPT_URL, "http://status.vatsim.net/status.json");
-            curl_easy_setopt(vatsimURL, CURLOPT_WRITEFUNCTION, write_data);
-            curl_easy_setopt(vatsimURL, CURLOPT_WRITEDATA, &strVatsimURL);
-            curl_easy_setopt(vatsimURL, CURLOPT_TIMEOUT_MS, 1500L);
-            CURLcode res;
-            res = curl_easy_perform(vatsimURL);
-            if (res == CURLE_OPERATION_TIMEDOUT) {
-                rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Warning", "VATSIM Datafeed URL Fetch Timed Out", true, true, true, false, false);
-                return;
-            }
-            curl_easy_cleanup(vatsimURL);
-        }
-
-        string dataURL;
-
-        try {
-            json jsVatsimURL = json::parse(strVatsimURL);
-            dataURL = jsVatsimURL["data"]["v3"][0];
-        }
-        catch (exception& e) { string error = e.what(); }
-
-        if (atisVatsimStatusJson) {
-            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_URL, dataURL.c_str());
-            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEFUNCTION, write_data);
-            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_WRITEDATA, &jsAtis);
-            curl_easy_setopt(atisVatsimStatusJson, CURLOPT_TIMEOUT_MS, 1500L);
-            CURLcode res;
-            res = curl_easy_perform(atisVatsimStatusJson);
-            if (res == CURLE_OPERATION_TIMEDOUT) {
-                rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Warning", "VATSIM Datafeed Timed Out  -- ATIS letter may be incorrect", true, true, true, false, false);
-                return;
-            }
-            else {
-                arptAtisLetter.clear();
-            }
-            curl_easy_cleanup(atisVatsimStatusJson);
-        } 
-        else { return; }
-
-        try {
-            json jsVatsimAtis = json::parse(jsAtis.c_str());
-
-
-            if (!jsVatsimAtis["atis"].empty()) {
-                for (auto& atis : jsVatsimAtis["atis"]) {
-                    if (!atis["atis_code"].is_null()) {
-                        string airport = atis["callsign"];
-                        arptAtisLetter[airport.substr(0, 4)] = atis["atis_code"];
-                    }
-                }
-            }
-        }
-        catch (exception& e) { string error = e.what(); return; }
-
-    }
+    static void parseVatsimATIS(int i);
 
     static double pixel2lat(int y, int zoom) {
         double pixels = 256 * pow(2, zoom);

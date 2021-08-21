@@ -42,6 +42,9 @@
     <ClCompile Include="picopng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CAsyncResponse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VATCANSitu.def">
@@ -95,6 +98,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="wxRadar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CAsyncResponse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

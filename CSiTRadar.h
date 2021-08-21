@@ -14,6 +14,8 @@
 #include "constants.h"
 #include "pch.h"
 #include "wxRadar.h"
+#include "CAsyncResponse.h"
+#include <future>
 
 using namespace EuroScopePlugIn;
 using namespace std;
