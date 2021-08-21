@@ -1763,6 +1763,8 @@ void CSiTRadar::updateActiveRunways(int i) {
 
 	m_pRadScr->GetPlugIn()->SelectActiveSectorfile();
 	CSiTRadar::menuState.activeArpt.clear();
+	menuState.activeRunwaysList.clear();
+	menuState.activeRunways.clear();
 	// Active runway highlighting for ground screens
 	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
@@ -1776,7 +1778,6 @@ void CSiTRadar::updateActiveRunways(int i) {
 			activerwys.push_back(airportrwy);
 
 		}
-
 	}
 
 	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_GEO); sectorElement.IsValid();
@@ -1785,24 +1786,34 @@ void CSiTRadar::updateActiveRunways(int i) {
 		string name = sectorElement.GetName();
 
 		if (name.find("ACTIVE") != string::npos) {
-			m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), false);
-
-			if (CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName") != NULL) {
-				string DisplayType = CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName");
-				// Only toggle highlighting on non-radar screens
-				if (strcmp(DisplayType.c_str(), "VFR") == 0 ||
-					strcmp(DisplayType.c_str(), "IFR") == 0) {
-					continue;
-				}
-			}
-
+			menuState.activeRunwaysList.push_back(sectorElement);
 			for (const auto& rwy : activerwys) {
-
 				if (name.find(rwy) != string::npos) {
-					m_pRadScr->ShowSectorFileElement(sectorElement, sectorElement.GetComponentName(0), true);
+					menuState.activeRunways.push_back(sectorElement);
 				}
 			}
 		}
+	}
+
+	m_pRadScr->RefreshMapContent();
+}
+
+void CSiTRadar::DisplayActiveRunways() {
+
+	for (auto rwy : menuState.activeRunwaysList) {
+		m_pRadScr->ShowSectorFileElement(rwy, rwy.GetComponentName(0), false);
+	}
+
+	for (auto rwy : menuState.activeRunways) {
+		if (CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName") != NULL) {
+			string DisplayType = CSiTRadar::m_pRadScr->GetDataFromAsr("DisplayTypeName");
+			// Only toggle highlighting on non-radar screens
+			if (strcmp(DisplayType.c_str(), "VFR") == 0 ||
+				strcmp(DisplayType.c_str(), "IFR") == 0) {
+				continue;
+			}
+		}
+		m_pRadScr->ShowSectorFileElement(rwy, rwy.GetComponentName(0), true);
 	}
 
 	m_pRadScr->RefreshMapContent();
@@ -1818,8 +1829,12 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
 		altFilterLow = atoi(filt);
 	}    
+	
+	if (menuState.activeRunwaysList.empty()) {
+		std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, 0);
+	}
 
-	std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, 0);
+	DisplayActiveRunways();
 
 	// Find the position of ADSB radars
 	/*

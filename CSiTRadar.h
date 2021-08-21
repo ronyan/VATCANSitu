@@ -82,6 +82,9 @@ struct buttonStates {
     bool destVFR;
     bool destDME;
 
+    vector<CSectorElement> activeRunways;
+    vector<CSectorElement> activeRunwaysList;
+
     bool mouseMMB{ false };
 };
 
@@ -187,6 +190,7 @@ public:
     inline virtual void OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan);
     inline virtual void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
     static void updateActiveRunways(int i);
+    static void DisplayActiveRunways();
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
 

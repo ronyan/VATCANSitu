@@ -419,4 +419,5 @@ void SituPlugin::OnAirportRunwayActivityChanged()
     if (CSiTRadar::m_pRadScr != nullptr) {
         CSiTRadar::updateActiveRunways(0);
     }
+    CSiTRadar::DisplayActiveRunways();
 }
