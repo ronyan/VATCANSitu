@@ -90,13 +90,12 @@ CSiTRadar::CSiTRadar()
 			std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			menuState.lastWxRefresh = clock();
 		}
-		if ((((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) || 
-			menuState.lastMetarRefresh == 0) {
+		// on intial load, only do once so that asr loading is not slowed (update will happen "on refresh" afterwards)
+		if (menuState.lastMetarRefresh == 0) {
 			std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
 			menuState.lastMetarRefresh = clock();
 		}
-		if ((((clock() - menuState.lastAtisRefresh) / CLOCKS_PER_SEC) > 120) ||
-			menuState.lastAtisRefresh == 0) {
+		if (menuState.lastAtisRefresh == 0) {
 			std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
 			menuState.lastAtisRefresh = clock();
 		}
