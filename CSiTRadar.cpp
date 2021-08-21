@@ -304,7 +304,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					RequestRefresh();
 				}
-				
+
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList(acLists[LIST_OFF_SCREEN].p, &dc, mAcData, LIST_OFF_SCREEN);
 
@@ -334,13 +334,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() ||  // Do not filter aircraft being tracked by me
 						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0
 						) {
-						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100 
+						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
 							&& !menuState.filterBypassAll
 							&& !isDest) {
 							continue;
 						}
 
-						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100 
+						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
 							&& !menuState.filterBypassAll
 							&& !isDest) {
 							continue;
@@ -350,7 +350,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					POINT p = ConvertCoordFromPositionToPixel(radarTarget.GetPosition().GetPosition());
 
 					// Check if target is on the display area
-					if(p.y < GetRadarArea().top || 
+					if (p.y < GetRadarArea().top ||
 						p.y > GetRadarArea().bottom ||
 						p.x < GetRadarArea().left ||
 						p.x > GetRadarArea().right)
@@ -416,7 +416,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
 					}
 					else if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
-						!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) 
+						!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())
 						&& CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked) {
 
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
@@ -622,7 +622,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				}
 
+			}
 
+			if (phase == REFRESH_PHASE_AFTER_LISTS) {
 				// Draw the CSiT Tools Menu; starts at rad area top left then moves right
 				// this point moves to the origin of each subsequent area
 				POINT menutopleft = CPoint(radarea.left, radarea.top);
