@@ -141,6 +141,8 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
+	std::future<void> fb, fc, fd;
+
 	if (m_pRadScr != this) {
 		m_pRadScr = this;
 	}
@@ -171,17 +173,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		if (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
 
 			// autorefresh weather download every 10 minutes
-			std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			menuState.lastWxRefresh = clock();
 		}
 
 		if (((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
-			std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
+			fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
 			menuState.lastMetarRefresh = clock();
 		}
 
 		if (((clock() - menuState.lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
-			std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
+			fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
 			menuState.lastAtisRefresh = clock();
 		}
 
