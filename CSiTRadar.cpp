@@ -92,11 +92,16 @@ CSiTRadar::CSiTRadar()
 		}
 		// on intial load, only do once so that asr loading is not slowed (update will happen "on refresh" afterwards)
 		if (menuState.lastMetarRefresh == 0) {
-			std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
+
+			std::thread tc(wxRadar::parseVatsimMetar, 0);
+			tc.detach();
+			//std::future<void> fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
 			menuState.lastMetarRefresh = clock();
 		}
 		if (menuState.lastAtisRefresh == 0) {
-			std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
+			std::thread td(wxRadar::parseVatsimATIS, 0);
+			td.detach();
+			//std::future<void> fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
 			menuState.lastAtisRefresh = clock();
 		}
 	}
@@ -178,12 +183,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		}
 
 		if (((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
-			fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
+			std::thread tc(wxRadar::parseVatsimMetar, 0);
+			tc.detach();
+			// fc = std::async(std::launch::async, wxRadar::parseVatsimMetar, 0);
 			menuState.lastMetarRefresh = clock();
 		}
 
 		if (((clock() - menuState.lastAtisRefresh) / CLOCKS_PER_SEC) > 120) { // update ATIS letter every 2 mins
-			fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
+			std::thread td(wxRadar::parseVatsimATIS, 0);
+			td.detach();
+			// fd = std::async(std::launch::async, wxRadar::parseVatsimATIS, 0);
 			menuState.lastAtisRefresh = clock();
 		}
 
@@ -1843,7 +1852,9 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	}    
 	
 	if (menuState.activeRunwaysList.empty()) {
-		std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, 0);
+		std::thread rwyupdate(CSiTRadar::updateActiveRunways, 0);
+		rwyupdate.detach();
+		//std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, 0);
 	}
 
 	DisplayActiveRunways();
