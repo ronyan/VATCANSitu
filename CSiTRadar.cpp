@@ -2003,27 +2003,31 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		listArpt.left = p.x;
 		listArpt.top = p.y + 13;
 
-		
-		for (auto& arpt : CSiTRadar::menuState.activeArpt) {
-			string arptString = arpt.substr(1, 3);
+		if (wxRadar::altimeterMutex.try_lock_shared()) {
+			for (auto& arpt : CSiTRadar::menuState.activeArpt) {
+				string arptString = arpt.substr(1, 3);
 
-			if (wxRadar::arptAltimeter.find(arpt.c_str()) != wxRadar::arptAltimeter.end()) {
-				arptString += " - " + wxRadar::arptAltimeter.at(arpt.c_str());
-			}
-			else {
-				arptString += " - ****";
-			}
+				if (wxRadar::arptAltimeter.find(arpt.c_str()) != wxRadar::arptAltimeter.end()) {
+					arptString += " - " + wxRadar::arptAltimeter.at(arpt.c_str());
+				}
+				else {
+					arptString += " - ****";
+				}
 
-			if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
-				arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
-			}
-			if (!acLists[LIST_TIME_ATIS].collapsed) {
-				dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
-				dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT);
-				listArpt.top += 13;
-			}
+				wxRadar::atisLetterMutex.try_lock_shared();
+				if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
+					arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
+				}
+				wxRadar::atisLetterMutex.unlock_shared();
 
-			showArrow = true;
+				if (!acLists[LIST_TIME_ATIS].collapsed) {
+					dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
+					dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT);
+					listArpt.top += 13;
+				}
+				showArrow = true;
+			}
+			wxRadar::altimeterMutex.unlock_shared();
 		}
 		
 

@@ -16,6 +16,7 @@
 #include "wxRadar.h"
 #include "CAsyncResponse.h"
 #include <future>
+#include <shared_mutex>
 
 using namespace EuroScopePlugIn;
 using namespace std;

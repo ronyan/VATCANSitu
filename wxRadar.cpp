@@ -9,6 +9,8 @@ string wxRadar::ts;
 std::map<string, string> wxRadar::arptAltimeter;
 std::map<string, string> wxRadar::arptAtisLetter;
 std::vector<CAsyncResponse> wxRadar::asyncMessages;
+std::shared_mutex wxRadar::altimeterMutex;
+std::shared_mutex wxRadar::atisLetterMutex;
 
 void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& filename) //designed for loading files from hard disk in an std::vector
 {
@@ -191,6 +193,56 @@ int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
     return 0;   
 }
 
+void wxRadar::parseVatsimMetar(int i) {
+    
+    CURL* metarCurlHandle = curl_easy_init();
+    string metarString;
+    CAsyncResponse response;
+
+    if (metarCurlHandle) {
+        curl_easy_setopt(metarCurlHandle, CURLOPT_URL, "http://metar.vatsim.net/metar.php?id=cy");
+        curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEDATA, &metarString);
+        curl_easy_setopt(metarCurlHandle, CURLOPT_TIMEOUT_MS, 2500L);
+        CURLcode res;
+        res = curl_easy_perform(metarCurlHandle);
+        if (res == CURLE_OPERATION_TIMEDOUT) {
+            response.reponseMessage = "METAR Fetch Timed Out";
+            response.responseCode = 1;
+            wxRadar::asyncMessages.push_back(response);
+        }
+        curl_easy_cleanup(metarCurlHandle);
+    }
+
+    altimeterMutex.lock();
+
+    try {
+        std::istringstream in(metarString);
+        regex altimeterSettingRegex("A[0-9]{4}");
+        smatch altimeterSetting;
+        string altimeter;
+
+        for (string line; getline(in, line);) {
+            string icao = line.substr(0, 4);
+            if (regex_search(line, altimeterSetting, altimeterSettingRegex)) {
+                altimeter = altimeterSetting[0].str().substr(1, 4);
+            }
+            else
+            {
+                altimeter = "****";
+            }
+            arptAltimeter[icao] = altimeter;
+        }
+    }
+    catch (exception& e) {
+        response.reponseMessage = e.what();
+        response.responseCode = 1;
+        wxRadar::asyncMessages.push_back(response);
+    }
+
+    altimeterMutex.unlock();
+}
+
 void wxRadar::parseVatsimATIS(int i) {
     CURL* vatsimURL = curl_easy_init();
     CURL* atisVatsimStatusJson = curl_easy_init();
@@ -242,9 +294,10 @@ void wxRadar::parseVatsimATIS(int i) {
     }
     else { return; }
 
+
     try {
         json jsVatsimAtis = json::parse(jsAtis.c_str());
-
+        atisLetterMutex.lock();
 
         if (!jsVatsimAtis["atis"].empty()) {
             for (auto& atis : jsVatsimAtis["atis"]) {
@@ -254,6 +307,7 @@ void wxRadar::parseVatsimATIS(int i) {
                 }
             }
         }
+        atisLetterMutex.unlock();
     }
     catch (exception& e) { result.reponseMessage = e.what(); result.responseCode = 1; asyncMessages.push_back(result); return; }
 
