@@ -297,7 +297,7 @@ void wxRadar::parseVatsimATIS(int i) {
 
     try {
         json jsVatsimAtis = json::parse(jsAtis.c_str());
-        atisLetterMutex.lock();
+        std::unique_lock<shared_mutex> lock(atisLetterMutex);
 
         if (!jsVatsimAtis["atis"].empty()) {
             for (auto& atis : jsVatsimAtis["atis"]) {
@@ -307,7 +307,7 @@ void wxRadar::parseVatsimATIS(int i) {
                 }
             }
         }
-        atisLetterMutex.unlock();
+        lock.unlock();
     }
     catch (exception& e) { result.reponseMessage = e.what(); result.responseCode = 1; asyncMessages.push_back(result); return; }
 

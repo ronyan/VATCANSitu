@@ -2014,11 +2014,12 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					arptString += " - ****";
 				}
 
-				wxRadar::atisLetterMutex.try_lock_shared();
-				if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
-					arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
+				if (wxRadar::atisLetterMutex.try_lock_shared()) {
+					if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
+						arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
+					}
+					wxRadar::atisLetterMutex.unlock_shared();
 				}
-				wxRadar::atisLetterMutex.unlock_shared();
 
 				if (!acLists[LIST_TIME_ATIS].collapsed) {
 					dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
