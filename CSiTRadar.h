@@ -85,6 +85,8 @@ struct buttonStates {
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;
+    map<string, string> arptAltimeterOld;
+    map<string, string> arptAtisLetterOld;
 
     clock_t lastWxRefresh = 0;
     clock_t lastMetarRefresh = 0;

@@ -2003,7 +2003,24 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		listArpt.left = p.x;
 		listArpt.top = p.y + 13;
 
-		if (wxRadar::altimeterMutex.try_lock_shared()) {
+		std::shared_lock<shared_mutex> atisLock(wxRadar::atisLetterMutex, defer_lock);
+		std::shared_lock<shared_mutex> altimLock(wxRadar::altimeterMutex, defer_lock);
+	
+		if (atisLock.try_lock()) {
+			if (wxRadar::arptAtisLetter != menuState.arptAtisLetterOld) {
+				menuState.arptAtisLetterOld = wxRadar::arptAtisLetter;
+			}
+			atisLock.unlock();
+		}
+
+		if (altimLock.try_lock()) {
+			if (wxRadar::arptAltimeter != menuState.arptAltimeterOld) {
+				menuState.arptAltimeterOld = wxRadar::arptAltimeter;
+			}
+			altimLock.unlock();
+		}
+
+		if (altimLock.try_lock()) {
 			for (auto& arpt : CSiTRadar::menuState.activeArpt) {
 				string arptString = arpt.substr(1, 3);
 
@@ -2014,11 +2031,16 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					arptString += " - ****";
 				}
 
-				if (wxRadar::atisLetterMutex.try_lock_shared()) {
+				if (atisLock.try_lock()) {
 					if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
 						arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
 					}
-					wxRadar::atisLetterMutex.unlock_shared();
+					atisLock.unlock();
+				}
+				else { // Get the cached version of the ATIS letter
+					if (menuState.arptAtisLetterOld.find(arpt.c_str()) != menuState.arptAtisLetterOld.end()) {
+						arptString += " - " + menuState.arptAtisLetterOld.at(arpt.c_str());
+					}
 				}
 
 				if (!acLists[LIST_TIME_ATIS].collapsed) {
@@ -2028,7 +2050,38 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 				}
 				showArrow = true;
 			}
-			wxRadar::altimeterMutex.unlock_shared();
+			altimLock.unlock();
+		}
+		else {
+			for (auto& arpt : CSiTRadar::menuState.activeArpt) {
+				string arptString = arpt.substr(1, 3);
+
+				if (menuState.arptAltimeterOld.find(arpt.c_str()) != menuState.arptAltimeterOld.end()) {
+					arptString += " - " + menuState.arptAltimeterOld.at(arpt.c_str());
+				}
+				else {
+					arptString += " - ****";
+				}
+
+				if (atisLock.try_lock()) {
+					if (wxRadar::arptAtisLetter.find(arpt.c_str()) != wxRadar::arptAtisLetter.end()) {
+						arptString += " - " + wxRadar::arptAtisLetter.at(arpt.c_str());
+					}
+					atisLock.unlock();
+				}
+				else { // Get the cached version of the ATIS letter
+					if (menuState.arptAtisLetterOld.find(arpt.c_str()) != menuState.arptAtisLetterOld.end()) {
+						arptString += " - " + menuState.arptAtisLetterOld.at(arpt.c_str());
+					}
+				}
+
+				if (!acLists[LIST_TIME_ATIS].collapsed) {
+					dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT | DT_CALCRECT);
+					dc->DrawText(arptString.c_str(), &listArpt, DT_LEFT);
+					listArpt.top += 13;
+				}
+				showArrow = true;
+			}
 		}
 		
 
