@@ -97,7 +97,10 @@ struct buttonStates {
     bool MB3menu{ false };
     POINT MB3clickedPt{ 0,0 };
     RECT MB3hoverRect{};
+    RECT MB3primRect{};
+    bool MB3SecondaryMenuOn{ false };
     bool MB3hoverOn{ false };
+    string MB3SecondaryMenuType{};
 };
 
 class CAircraftList {
@@ -289,6 +292,56 @@ public:
         POINT Pt,
         RECT Area,
         int Button);
+
+    bool ModifySFI(string c, CFlightPlan fp) {
+        string scratchpad;
+        string newstring;
+        scratchpad = fp.GetControllerAssignedData().GetScratchPadString();
+        
+        if (!strcmp(c.c_str(), "CLR")) {
+            if (scratchpad.size() == 1) {
+                newstring = "";
+            }
+            else if (scratchpad.size() == 2 && scratchpad.at(0) == ' ') {
+                newstring = "";
+            }
+            else if (scratchpad.size() > 2) {
+                if (scratchpad.at(0) == ' ' && scratchpad.at(2) == ' ') {
+                    newstring = scratchpad.substr(3);
+                }
+                else {
+                    newstring = scratchpad;
+                }
+
+            }
+
+        }
+        else {
+            if (!scratchpad.empty()) {
+                if (scratchpad.size() == 1) {
+                    newstring = " " + c + " " + scratchpad;
+                }
+                else if (scratchpad.size() == 2 && scratchpad.at(0) == ' ') {
+                    newstring = scratchpad.replace(1, 1, c);
+                }
+                else if (scratchpad.size() > 2) {
+                    if (scratchpad.at(0) == ' ' && scratchpad.at(2) == ' ') {
+                        newstring = scratchpad.replace(1, 1, c);
+                    }
+                    else {
+                        newstring = " " + c + " " + scratchpad;
+                    }
+
+                }
+            }
+            else {
+                newstring = " " + c;
+            }
+        }
+        fp.GetControllerAssignedData().SetScratchPadString(newstring.c_str());
+        fp.GetFlightPlanData().AmendFlightPlan();
+        return true;
+    }
 
 protected:
     void ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string& btext, int itemtype);

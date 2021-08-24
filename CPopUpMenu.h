@@ -2,17 +2,29 @@
 #include "SituPlugin.h"
 #include "CSiTRadar.h"
 #include <vector>
+#include <map>
 
 struct SPopUpElement
 {
 	string m_text;
-	bool m_isHeader;
+	int m_isHeaderFooter;
 	bool m_hasArrow;
+	string m_function;
+	int m_width;
 	RECT elementRect;
-	SPopUpElement(string t, bool header, bool hasarrow) {
+	SPopUpElement(string t, string function, int header, bool hasarrow) {
 		m_text = t;
-		m_isHeader = header;
+		m_isHeaderFooter = header;
 		m_hasArrow = hasarrow;
+		m_function = function;
+		m_width = 105;
+	}
+	SPopUpElement(string t, string function, int header, bool hasarrow, int width) {
+		m_text = t;
+		m_isHeaderFooter = header;
+		m_hasArrow = hasarrow;
+		m_function = function;
+		m_width = width;
 	}
 };
 
@@ -37,6 +49,6 @@ public:
 	void highlightSelection(CDC* dc, RECT rect);
 	void populateMenu();
 	void drawElement(SPopUpElement& element, POINT p);
-	
+	void populateSecondaryMenu(string type);
 };
 

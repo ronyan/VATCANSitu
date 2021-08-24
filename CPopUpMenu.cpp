@@ -7,21 +7,22 @@ RECT CPopUpMenu::totalRect;
 void CPopUpMenu::drawPopUpMenu(CDC* dc)
 {
     m_dc = dc;
-
+    int width = 0;
     int sDC = m_dc->SaveDC();
 
     POINT p = m_origin;
-    populateMenu();
+    
     for (auto& menuItem : m_listElements) {
        drawElement(menuItem, p);
-       p.y -= 22;
+       p.y -= 20;
+       if (width !=  menuItem.m_width) { width = menuItem.m_width; }
     }
 
     RECT MB3MenuBack;
     MB3MenuBack.left = m_origin.x;
     MB3MenuBack.bottom = m_origin.y;
     MB3MenuBack.top = p.y;
-    MB3MenuBack.right = m_origin.x + 100;
+    MB3MenuBack.right = m_origin.x + width;
 
     CopyRect(&CPopUpMenu::totalRect, &MB3MenuBack);
 
@@ -53,12 +54,41 @@ void CPopUpMenu::populateMenu()
     string autoHOTarget = "H/O";
     autoHOTarget += " -> ";
     autoHOTarget += m_rad->GetPlugIn()->ControllerSelect(m_rad->GetPlugIn()->FlightPlanSelect(m_fp->GetCallsign()).GetCoordinatedNextController()).GetPositionId();
-    this->m_listElements.emplace_back(SPopUpElement("Mod SFI", 0, 1));
-    this->m_listElements.emplace_back(SPopUpElement("Flt. Plan", 0, 1));
-    this->m_listElements.emplace_back(SPopUpElement("H/O -> CJS", 0, 1));
-    this->m_listElements.emplace_back(SPopUpElement(autoHOTarget, 0, 0));
-    this->m_listElements.emplace_back(SPopUpElement(this->m_fp->GetCallsign(), 1, 0));
+    this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
+    this->m_listElements.emplace_back(SPopUpElement("Flt. Plan", "FltPlan", 0, 0));
+    if (m_fp->GetTrackingControllerIsMe()) {
+        this->m_listElements.emplace_back(SPopUpElement("H/O -> CJS", "ManHandoff", 0, 1));
+        if (strcmp(autoHOTarget.c_str(), "H/O -> ")) {
+            this->m_listElements.emplace_back(SPopUpElement(autoHOTarget, "AutoHandoff", 0, 0));
+        }
+    }
+    if (!strcmp(m_fp->GetTrackingControllerId(), "")) {
+        this->m_listElements.emplace_back(SPopUpElement("Take Jurisdiction", "AssumeTrack", 0, 0));
+    }
+    this->m_listElements.emplace_back(SPopUpElement(this->m_fp->GetCallsign(), this->m_fp->GetCallsign(), 1, 0));
+    
+}
 
+void CPopUpMenu::populateSecondaryMenu(string type) {
+    if (!strcmp(type.c_str(), "ManHandoff")) {
+
+        std::map<string, bool>::reverse_iterator it;
+        this->m_listElements.emplace_back(SPopUpElement("EXP", "EXP", 2, 0, 40));
+        for (it = CSiTRadar::menuState.nearbyCJS.rbegin(); it != CSiTRadar::menuState.nearbyCJS.rend(); it++) {
+            this->m_listElements.emplace_back(SPopUpElement(it->first, it->first, 0, 0, 40));
+        }
+        this->m_listElements.emplace_back(SPopUpElement("CJS", "CJS", 1, 0, 40));
+    }
+    if (!strcmp(type.c_str(), "ModSFI")) {
+        string sfi = "HZTNRL";
+        this->m_listElements.emplace_back(SPopUpElement("EXP", "EXP", 0, 0, 40));
+        this->m_listElements.emplace_back(SPopUpElement("CLR", "CLR", 2, 0, 40));
+        for (char& c : sfi) {
+            string letter;
+            letter = c;
+            this->m_listElements.emplace_back(SPopUpElement(letter, letter, 0, 0, 40));
+        }
+    }
 }
 
 void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
@@ -68,7 +98,7 @@ void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
     LOGFONT lgfont;
 
     memset(&lgfont, 0, sizeof(LOGFONT));
-    lgfont.lfWeight = 700;
+    lgfont.lfWeight = 500;
     strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
     lgfont.lfHeight = 14;
     font.CreateFontIndirect(&lgfont);
@@ -91,18 +121,22 @@ void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
     // button rectangle
     RECT rect1;
     rect1.left = p.x;
-    rect1.right = p.x + 100;
-    rect1.top = p.y - 22;
+    rect1.right = p.x + element.m_width;
+    rect1.top = p.y - 20;
     rect1.bottom = p.y;
 
     element.elementRect = rect1;
     // 3d apperance calls
     m_dc->Rectangle(&rect1);
-    if (element.m_isHeader) {
+    if (element.m_isHeaderFooter == 1) {
         m_dc->Draw3dRect(&rect1, pcolortl, pcolorbr);
     }
+    else if (element.m_isHeaderFooter == 2)
+    {
+        m_dc->Draw3dRect(&rect1, pcolorbr, pressedcolor);
+    }
 
-    if (element.m_isHeader) {
+    if (element.m_isHeaderFooter == 1) {
         m_dc->DrawText(element.m_text.c_str(), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
     }
     else {
@@ -110,8 +144,21 @@ void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
         m_dc->DrawText(element.m_text.c_str(), &rect1, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
     }
 
-    CSiTRadar::m_pRadScr->AddScreenObject(BUTTON_MENU_RMB_MENU, "Test", rect1, true, "Test");
-        //>AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_text.c_str(), rect1, false, "");
+    if (element.m_hasArrow) {
+        HPEN targetPentl = CreatePen(PS_SOLID, 1, pcolortl);
+        HPEN targetPenbr = CreatePen(PS_SOLID, 1, pcolorbr);
+        m_dc->SelectObject(targetPentl);
+
+        m_dc->MoveTo({ rect1.right - 6, rect1.top +9 });
+        m_dc->LineTo({ rect1.right - 12, rect1.top + 6 });
+        m_dc->LineTo({ rect1.right - 12, rect1.top + 14 });
+        m_dc->SelectObject(targetPenbr);
+        m_dc->LineTo({ rect1.right - 5, rect1.top + 12 });
+
+        DeleteObject(targetPentl);
+        DeleteObject(targetPenbr);
+        
+    }
 
     DeleteObject(targetPen);
     DeleteObject(targetBrush);

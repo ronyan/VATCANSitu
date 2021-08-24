@@ -297,6 +297,9 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             Pt.y < CPopUpMenu::totalRect.top ||
             Pt.y > CPopUpMenu::totalRect.bottom) {
             CSiTRadar::menuState.MB3hoverOn = false;
+            if (CSiTRadar::m_pRadScr != nullptr) {
+                CSiTRadar::m_pRadScr->RequestRefresh();
+            }
         }
 
         if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn)) {
@@ -341,7 +344,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.5.2.1",
+		"0.5.3.0",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

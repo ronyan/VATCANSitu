@@ -79,6 +79,7 @@ const int BUTTON_MENU_QL_CJS = 234;
 
 
 const int BUTTON_MENU_RMB_MENU = 240;
+const int BUTTON_MENU_RMB_MENU_SECONDARY = 241;
 
 // Menu Modules
 const int MODULE_1_X = 0;

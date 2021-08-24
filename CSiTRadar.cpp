@@ -638,13 +638,32 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				if (menuState.MB3menu) {
 					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
+					acPopup.populateMenu();
+					acPopup.m_origin.y += (acPopup.m_listElements.size() * 20) / 2;
+					if ((acPopup.m_origin.y - (acPopup.m_listElements.size() * 20)) < (radarea.top + 60)) { acPopup.m_origin.y = radarea.top + 65 + (acPopup.m_listElements.size() * 20); }
 					acPopup.drawPopUpMenu(&dc);
 					for (auto& element : acPopup.m_listElements) {
-						AddScreenObject(BUTTON_MENU_RMB_MENU, "Popup", element.elementRect, false, element.m_text.c_str());
+						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
 					}
 
 					if (menuState.MB3hoverOn) {
-						acPopup.highlightSelection(&dc, menuState.MB3hoverRect);
+						acPopup.highlightSelection(&dc, menuState.MB3primRect);
+						if (menuState.MB3SecondaryMenuOn) {
+							CPopUpMenu secondaryMenu({ acPopup.totalRect.right, menuState.MB3primRect.bottom }, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
+							secondaryMenu.populateSecondaryMenu(menuState.MB3SecondaryMenuType);
+
+							// Move back onto screen if necessary
+
+							secondaryMenu.m_origin.y += (secondaryMenu.m_listElements.size()*20) / 2;
+							if ((secondaryMenu.m_origin.y - (secondaryMenu.m_listElements.size() * 20)) < (radarea.top + 60)) { secondaryMenu.m_origin.y = radarea.top + 65 + (secondaryMenu.m_listElements.size() * 20); }
+							if (secondaryMenu.m_origin.y > GetChatArea().top) { secondaryMenu.m_origin.y = GetChatArea().top + 5; }
+							secondaryMenu.drawPopUpMenu(&dc);
+
+							for (auto& element : secondaryMenu.m_listElements) {
+								AddScreenObject(BUTTON_MENU_RMB_MENU_SECONDARY, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
+							}
+							secondaryMenu.highlightSelection(&dc, menuState.MB3hoverRect); // highlight the primary menu item
+						}
 					}
 
 				}
@@ -1287,6 +1306,32 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 	if (menuState.mouseMMB) { return; }
 
+	if (ObjectType == BUTTON_MENU_RMB_MENU) {
+		if (!strcmp(sObjectId, "AutoHandoff")) {
+			GetPlugIn()->FlightPlanSelectASEL().InitiateHandoff(GetPlugIn()->FlightPlanSelectASEL().GetCoordinatedNextController());
+			menuState.MB3menu = false;
+		}
+		if (!strcmp(sObjectId, "FltPlan")) {
+			menuState.MB3menu = false;
+			StartTagFunction(GetPlugIn()->FlightPlanSelectASEL().GetCallsign(), NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, Pt, Area);
+		}
+		if (!strcmp(sObjectId, "AssumeTrack")) {
+			menuState.MB3menu = false;
+			GetPlugIn()->FlightPlanSelectASEL().StartTracking();
+		}
+	}
+
+	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
+		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "ManHandoff")) {
+			GetPlugIn()->FlightPlanSelectASEL().InitiateHandoff(GetPlugIn()->ControllerSelectByPositionId(sObjectId).GetCallsign());
+			menuState.MB3menu = false;
+		}
+		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "ModSFI")) {
+			ModifySFI(sObjectId, GetPlugIn()->FlightPlanSelectASEL());
+			menuState.MB3menu = false;
+		}
+	}
+
 	if (ObjectType == AIRCRAFT_SYMBOL) {
 		
 		CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
@@ -1692,11 +1737,36 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU) {
 		menuState.MB3hoverRect = Area;
+		menuState.MB3primRect = Area;
 		menuState.MB3hoverOn = true;
+
+		if (!strcmp(sObjectId, "ManHandoff")  ||
+			!strcmp(sObjectId, "ModSFI")) {
+			menuState.MB3SecondaryMenuOn = true;
+			menuState.MB3SecondaryMenuType = sObjectId;
+		}
+		else {
+			menuState.MB3SecondaryMenuOn = false;
+			menuState.MB3SecondaryMenuType = sObjectId;
+		}
+
 		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
 			CSiTRadar::m_pRadScr->RequestRefresh();
 		}
 	}
+
+	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
+		menuState.MB3hoverRect = Area;
+		menuState.MB3hoverOn = true;
+
+		menuState.MB3SecondaryMenuOn = true;
+
+		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
+			CSiTRadar::m_pRadScr->RequestRefresh();
+		}
+	}
+	
+
 
 }
 
@@ -1989,6 +2059,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	string CJS = FlightPlan.GetTrackingControllerId();
 
 	ACData acdata;
+	if (FlightPlan.GetTrackingControllerIsMe()) {
+		acdata.tagType = 1;
+	}
 	acdata.hasVFRFP = isVFR;
 	acdata.isADSB = isADSB;
 	acdata.isRVSM = isRVSM;
