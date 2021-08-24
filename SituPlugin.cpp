@@ -281,16 +281,38 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    
+    POINT Pt;
+    MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
+    Pt.x = mouseStruct->pt.x;
+    Pt.y = mouseStruct->pt.y;
+    
+    RECT winRect{};
+    GetWindowRect(GetActiveWindow(), &winRect);
+
     if (nCode == HC_ACTION) {
 
-        if (CSiTRadar::menuState.handoffMode) { 
+        if (Pt.x < CPopUpMenu::totalRect.left ||
+            Pt.x > CPopUpMenu::totalRect.right ||
+            Pt.y < CPopUpMenu::totalRect.top ||
+            Pt.y > CPopUpMenu::totalRect.bottom) {
+            CSiTRadar::menuState.MB3hoverOn = false;
+            if (CSiTRadar::m_pRadScr != nullptr) {
+                CSiTRadar::m_pRadScr->RequestRefresh();
+            }
+        }
+
+        if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn)) {
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
 
                 CSiTRadar::menuState.handoffMode = false;
+                CSiTRadar::menuState.MB3menu = false;
+                CSiTRadar::m_pRadScr->RequestRefresh();
 
+                return -1;
             }
-            return -1;
+            return 0;
 
         } // untoggle h/o if a click happens
 
@@ -322,7 +344,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.5.2.1",
+		"0.5.3.0",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {

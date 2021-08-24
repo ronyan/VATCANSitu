@@ -94,6 +94,7 @@
       <PreprocessorDefinitions>CURL_STATICLIB;WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)\curl;$(ProjectDir)\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -194,6 +195,7 @@
   <ItemGroup>
     <ClCompile Include="ACTag.cpp" />
     <ClCompile Include="CAsyncResponse.cpp" />
+    <ClCompile Include="CPopUpMenu.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
     <ClCompile Include="pch.cpp">
@@ -215,6 +217,7 @@
   <ItemGroup>
     <ClInclude Include="ACTag.h" />
     <ClInclude Include="CAsyncResponse.h" />
+    <ClInclude Include="CPopUpMenu.h" />
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="HaloTool.h" />
