@@ -635,6 +635,20 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			if (phase == REFRESH_PHASE_AFTER_LISTS) {
+
+				if (menuState.MB3menu) {
+					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
+					acPopup.drawPopUpMenu(&dc);
+					for (auto& element : acPopup.m_listElements) {
+						AddScreenObject(BUTTON_MENU_RMB_MENU, "Popup", element.elementRect, false, element.m_text.c_str());
+					}
+
+					if (menuState.MB3hoverOn) {
+						acPopup.highlightSelection(&dc, menuState.MB3hoverRect);
+					}
+
+				}
+
 				// Draw the CSiT Tools Menu; starts at rad area top left then moves right
 				// this point moves to the origin of each subsequent area
 				POINT menutopleft = CPoint(radarea.left, radarea.top);
@@ -1247,6 +1261,23 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	dc.Detach();
 }
 
+void CSiTRadar::OnClickScreenObject(int ObjectType,
+	const char* sObjectId,
+	POINT Pt,
+	RECT Area,
+	int Button)
+{
+
+	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
+
+		if (Button == BUTTON_RIGHT) {
+			menuState.MB3menu = true;
+			menuState.MB3clickedPt = Pt;
+		}
+	}
+}
+
 void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	const char* sObjectId,
 	POINT Pt,
@@ -1554,7 +1585,9 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		}
 
 		if (Button == BUTTON_RIGHT) {
-			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_CALLSIGN, sObjectId, NULL, TAG_ITEM_FUNCTION_HANDOFF_POPUP_MENU, Pt, Area);
+			//CPopUpMenu acPopup(Pt, &GetPlugIn()->FlightPlanSelect(sObjectId), m_pRadScr);
+			//acPopup.drawPopUpMenu(CSiTRadar::m_dcPtr);
+			//StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_CALLSIGN, sObjectId, NULL, TAG_ITEM_FUNCTION_HANDOFF_POPUP_MENU, Pt, Area);
 		}
 	}
 
@@ -1650,6 +1683,21 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == LIST_OFF_SCREEN) {
 		acLists[LIST_OFF_SCREEN].collapsed = !acLists[LIST_OFF_SCREEN].collapsed;
 	}
+}
+
+void CSiTRadar::OnOverScreenObject(int ObjectType,
+	const char* sObjectId,
+	POINT Pt,
+	RECT Area) {
+
+	if (ObjectType == BUTTON_MENU_RMB_MENU) {
+		menuState.MB3hoverRect = Area;
+		menuState.MB3hoverOn = true;
+		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
+			CSiTRadar::m_pRadScr->RequestRefresh();
+		}
+	}
+
 }
 
 void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released) {

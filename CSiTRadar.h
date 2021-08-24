@@ -17,6 +17,7 @@
 #include "CAsyncResponse.h"
 #include <future>
 #include <shared_mutex>
+#include "CPopUpMenu.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -93,6 +94,10 @@ struct buttonStates {
     clock_t lastAtisRefresh = 0;
 
     bool mouseMMB{ false };
+    bool MB3menu{ false };
+    POINT MB3clickedPt{ 0,0 };
+    RECT MB3hoverRect{};
+    bool MB3hoverOn{ false };
 };
 
 class CAircraftList {
@@ -213,11 +218,22 @@ public:
         RECT Area,
         int Button);
 
+    inline virtual void OnClickScreenObject(int ObjectType,
+        const char* sObjectId,
+        POINT Pt,
+        RECT Area,
+        int Button);
+
     void CSiTRadar::OnMoveScreenObject(int ObjectType, 
         const char* sObjectId, 
         POINT Pt, 
         RECT Area, 
         bool Released);
+
+    inline  virtual void    OnOverScreenObject(int ObjectType,
+        const char* sObjectId,
+        POINT Pt,
+        RECT Area);
 
     void OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area);
 

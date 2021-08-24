@@ -77,6 +77,9 @@ const int BUTTON_MENU_DEST_VFR = 233;
 
 const int BUTTON_MENU_QL_CJS = 234;
 
+
+const int BUTTON_MENU_RMB_MENU = 240;
+
 // Menu Modules
 const int MODULE_1_X = 0;
 const int MODULE_1_Y = 2;

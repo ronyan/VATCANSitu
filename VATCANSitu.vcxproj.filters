@@ -45,6 +45,9 @@
     <ClCompile Include="CAsyncResponse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPopUpMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VATCANSitu.def">
@@ -101,6 +104,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CAsyncResponse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPopUpMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

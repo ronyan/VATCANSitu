@@ -281,16 +281,35 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    
+    POINT Pt;
+    MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
+    Pt.x = mouseStruct->pt.x;
+    Pt.y = mouseStruct->pt.y;
+    
+    RECT winRect{};
+    GetWindowRect(GetActiveWindow(), &winRect);
+
     if (nCode == HC_ACTION) {
 
-        if (CSiTRadar::menuState.handoffMode) { 
+        if (Pt.x < CPopUpMenu::totalRect.left ||
+            Pt.x > CPopUpMenu::totalRect.right ||
+            Pt.y < CPopUpMenu::totalRect.top ||
+            Pt.y > CPopUpMenu::totalRect.bottom) {
+            CSiTRadar::menuState.MB3hoverOn = false;
+        }
+
+        if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn)) {
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
 
                 CSiTRadar::menuState.handoffMode = false;
+                CSiTRadar::menuState.MB3menu = false;
+                CSiTRadar::m_pRadScr->RequestRefresh();
 
+                return -1;
             }
-            return -1;
+            return 0;
 
         } // untoggle h/o if a click happens
 
