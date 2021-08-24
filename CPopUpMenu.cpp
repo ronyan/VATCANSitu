@@ -54,14 +54,22 @@ void CPopUpMenu::populateMenu()
     string autoHOTarget = "H/O";
     autoHOTarget += " -> ";
     autoHOTarget += m_rad->GetPlugIn()->ControllerSelect(m_rad->GetPlugIn()->FlightPlanSelect(m_fp->GetCallsign()).GetCoordinatedNextController()).GetPositionId();
-    this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
+    if (m_fp->GetTrackingControllerIsMe()) {
+        this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
+    }
     this->m_listElements.emplace_back(SPopUpElement("Flt. Plan", "FltPlan", 0, 0));
     if (m_fp->GetTrackingControllerIsMe()) {
-        this->m_listElements.emplace_back(SPopUpElement("H/O -> CJS", "ManHandoff", 0, 1));
-        if (strcmp(autoHOTarget.c_str(), "H/O -> ")) {
-            this->m_listElements.emplace_back(SPopUpElement(autoHOTarget, "AutoHandoff", 0, 0));
+        if (strcmp(m_fp->GetHandoffTargetControllerId(), "")) {
+            this->m_listElements.emplace_back(SPopUpElement("H/O Recall", "AssumeTrack", 0, 0));
+        }
+        else {
+            this->m_listElements.emplace_back(SPopUpElement("H/O -> CJS", "ManHandoff", 0, 1));
+            if (strcmp(autoHOTarget.c_str(), "H/O -> ")) {
+                this->m_listElements.emplace_back(SPopUpElement(autoHOTarget, "AutoHandoff", 0, 0));
+            }
         }
     }
+
     if (!strcmp(m_fp->GetTrackingControllerId(), "")) {
         this->m_listElements.emplace_back(SPopUpElement("Take Jurisdiction", "AssumeTrack", 0, 0));
     }
@@ -80,7 +88,7 @@ void CPopUpMenu::populateSecondaryMenu(string type) {
         this->m_listElements.emplace_back(SPopUpElement("CJS", "CJS", 1, 0, 40));
     }
     if (!strcmp(type.c_str(), "ModSFI")) {
-        string sfi = "HZTNRL";
+        string sfi = "KFDHWXOSTNRL";
         this->m_listElements.emplace_back(SPopUpElement("EXP", "EXP", 0, 0, 40));
         this->m_listElements.emplace_back(SPopUpElement("CLR", "CLR", 2, 0, 40));
         for (char& c : sfi) {
@@ -140,7 +148,7 @@ void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
         m_dc->DrawText(element.m_text.c_str(), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
     }
     else {
-        rect1.left += 10;
+        rect1.left += 5;
         m_dc->DrawText(element.m_text.c_str(), &rect1, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
     }
 

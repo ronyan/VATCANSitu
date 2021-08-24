@@ -449,8 +449,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					// Once the handoff is complete, 
 					if (mAcData[callSign].isHandoff == TRUE && strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
 						mAcData[callSign].isHandoff = FALSE;
-						// record the time of handoff acceptance
-						hoAcceptedTime[callSign] = clock();
+						// record the time of handoff acceptance unless the handoff is recalled by yourself
+						if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
+							hoAcceptedTime[callSign] = clock();
+						}
 					}
 
 					// Post handoff blinking and then close the tag

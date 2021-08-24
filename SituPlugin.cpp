@@ -310,6 +310,9 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 CSiTRadar::menuState.MB3menu = false;
                 CSiTRadar::m_pRadScr->RequestRefresh();
 
+                if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
+                    SituPlugin::SendKeyboardPresses({ 0x01 });
+                }
                 return -1;
             }
             return 0;
