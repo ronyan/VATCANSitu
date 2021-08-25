@@ -113,7 +113,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     if (CSiTRadar::menuState.handoffMode == TRUE  
                         || CSiTRadar::menuState.SFIMode == TRUE) {
                         
-                        CSiTRadar::menuState.SFIMode == false;
+                        CSiTRadar::menuState.SFIMode = false;
                         CSiTRadar::menuState.handoffMode = FALSE;
                         CSiTRadar::menuState.jurisdictionIndex = 0;
                         CSiTRadar::m_pRadScr->RequestRefresh();

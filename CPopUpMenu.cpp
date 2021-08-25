@@ -68,6 +68,7 @@ void CPopUpMenu::populateMenu()
                 this->m_listElements.emplace_back(SPopUpElement(autoHOTarget, "AutoHandoff", 0, 0));
             }
         }
+        this->m_listElements.emplace_back(SPopUpElement("Release", "DropTrack", 0, 0));
     }
 
     if (!strcmp(m_fp->GetTrackingControllerId(), "")) {
@@ -88,9 +89,10 @@ void CPopUpMenu::populateSecondaryMenu(string type) {
         this->m_listElements.emplace_back(SPopUpElement("CJS", "CJS", 1, 0, 40));
     }
     if (!strcmp(type.c_str(), "ModSFI")) {
-        string sfi = "KFDHWXOSTNRL";
+        string sfi = CSiTRadar::menuState.SFIPrefString;
         this->m_listElements.emplace_back(SPopUpElement("EXP", "EXP", 0, 0, 40));
         this->m_listElements.emplace_back(SPopUpElement("CLR", "CLR", 2, 0, 40));
+        std::reverse(sfi.begin(), sfi.end());
         for (char& c : sfi) {
             string letter;
             letter = c;
