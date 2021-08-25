@@ -60,6 +60,10 @@ CSiTRadar::CSiTRadar()
 			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
 			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
 
+			if (!j["prefSFI"].is_null()) {
+				menuState.SFIPrefStringSetting = j["prefSFI"];
+			}
+
 		}
 		// write defaults if no file
 		else {
@@ -74,6 +78,8 @@ CSiTRadar::CSiTRadar()
 
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
+
+			j["prefSFI"] = menuState.SFIPrefStringSetting;
 
 			settings_file << j;
 		}
@@ -648,7 +654,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
 					acPopup.populateMenu();
 					acPopup.m_origin.y += (acPopup.m_listElements.size() * 20) / 2;
-					if ((acPopup.m_origin.y - (acPopup.m_listElements.size() * 20)) < (radarea.top + 60)) { acPopup.m_origin.y = radarea.top + 65 + (acPopup.m_listElements.size() * 20); }
+					if ((acPopup.m_origin.y - ((int)acPopup.m_listElements.size() * 20)) < (radarea.top + 60)) { acPopup.m_origin.y = radarea.top + 65 + (acPopup.m_listElements.size() * 20); }
 					acPopup.drawPopUpMenu(&dc);
 					for (auto& element : acPopup.m_listElements) {
 						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
@@ -662,8 +668,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 							// Move back onto screen if necessary
 
-							secondaryMenu.m_origin.y += (secondaryMenu.m_listElements.size()*20) / 2;
-							if ((secondaryMenu.m_origin.y - (secondaryMenu.m_listElements.size() * 20)) < (radarea.top + 60)) { secondaryMenu.m_origin.y = radarea.top + 65 + (secondaryMenu.m_listElements.size() * 20); }
+							secondaryMenu.m_origin.y += ((int)secondaryMenu.m_listElements.size()*20) / 2;
+							if ((secondaryMenu.m_origin.y - ((int)secondaryMenu.m_listElements.size() * 20)) < (radarea.top + 60)) { secondaryMenu.m_origin.y = radarea.top + 65 + (secondaryMenu.m_listElements.size() * 20); }
 							if (secondaryMenu.m_origin.y > GetChatArea().top) { secondaryMenu.m_origin.y = GetChatArea().top + 5; }
 							secondaryMenu.drawPopUpMenu(&dc);
 
@@ -1298,6 +1304,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 
 		if (Button == BUTTON_RIGHT) {
+			menuState.ResetSFIOptions();
 			menuState.MB3menu = true;
 			menuState.MB3clickedPt = Pt;
 			menuState.MB3primRect = { 0,0,0,0 };
@@ -1329,6 +1336,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			menuState.MB3menu = false;
 			GetPlugIn()->FlightPlanSelectASEL().StartTracking();
 		}
+		if (!strcmp(sObjectId, "DropTrack")) {
+			menuState.MB3menu = false;
+			GetPlugIn()->FlightPlanSelectASEL().EndTracking();
+		}
 	}
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
@@ -1338,7 +1349,9 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		}
 		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "ModSFI")) {
 			ModifySFI(sObjectId, GetPlugIn()->FlightPlanSelectASEL());
-			menuState.MB3menu = false;
+			if (strcmp(sObjectId, "EXP")) {
+				menuState.MB3menu = false;
+			}
 		}
 	}
 

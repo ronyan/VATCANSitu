@@ -101,6 +101,21 @@ struct buttonStates {
     bool MB3SecondaryMenuOn{ true };
     bool MB3hoverOn{ false };
     string MB3SecondaryMenuType{};
+    string SFIPrefString{};
+    string SFIPrefStringSetting{};
+
+    void ResetSFIOptions() {
+    if (SFIPrefStringSetting.size() == 0) {
+        // default if not set via settings file
+        SFIPrefString = "ABCDEFGHIJ";
+    }
+    else {
+        SFIPrefString = SFIPrefStringSetting;
+    }
+    };
+
+
+    void ExpandSFIOptions() { SFIPrefString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; };
 };
 
 class CAircraftList {
@@ -293,12 +308,13 @@ public:
         RECT Area,
         int Button);
 
-    bool ModifySFI(string c, CFlightPlan fp) {
+    static bool ModifySFI(string c, CFlightPlan fp) {
         string scratchpad;
         string newstring;
         scratchpad = fp.GetControllerAssignedData().GetScratchPadString();
         
         if (!strcmp(c.c_str(), "EXP")) {
+            CSiTRadar::menuState.ExpandSFIOptions();
             return false;
         }
         else if (!strcmp(c.c_str(), "CLR")) {
