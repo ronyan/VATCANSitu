@@ -10,6 +10,7 @@ const int TAG_FUNC_IFR_RELEASED = 5002;
 
 bool held = false;
 bool injected = false;
+bool kbF1 = false;
 bool kbF3 = false;
 bool kbF4 = false;
 size_t jurisdictionIndex = 0;
@@ -80,6 +81,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             case VK_F1: {
 
                 if (GetAsyncKeyState(VK_F1) & 0x8000) {
+                    kbF1 = true;
                     if (CSiTRadar::m_pRadScr->GetPlugIn()->RadarTargetSelectASEL().IsValid()) {
                         SituPlugin::SendKeyboardPresses({ 0x01 });
                     }
@@ -98,6 +100,9 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             case VK_F4: {
                 if (GetAsyncKeyState(VK_F4) & 0x8000) {
                     kbF4 = true;
+                    if (CSiTRadar::m_pRadScr->GetPlugIn()->RadarTargetSelectASEL().IsValid()) {
+                        SituPlugin::SendKeyboardPresses({ 0x01 });
+                    }
                     return -1;
                 }
             }
@@ -105,8 +110,10 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             case VK_ESCAPE: {
                 
                 if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
-                    if (CSiTRadar::menuState.handoffMode == TRUE) {
+                    if (CSiTRadar::menuState.handoffMode == TRUE  
+                        || CSiTRadar::menuState.SFIMode == TRUE) {
                         
+                        CSiTRadar::menuState.SFIMode == false;
                         CSiTRadar::menuState.handoffMode = FALSE;
                         CSiTRadar::menuState.jurisdictionIndex = 0;
                         CSiTRadar::m_pRadScr->RequestRefresh();
@@ -148,46 +155,51 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     switch (wParam) {
                     case VK_F1: {
                         // Toggle on hand-off mode
-                        if (CSiTRadar::menuState.handoffMode == FALSE ||
-                            CSiTRadar::menuState.jurisdictionalAC.size() != oldJurisdictionSize) {
-                            oldJurisdictionSize = CSiTRadar::menuState.jurisdictionalAC.size();
-                            CSiTRadar::menuState.jurisdictionIndex = 0;
-                        }
+                        if (kbF1) {
+                            if (CSiTRadar::menuState.handoffMode == FALSE ||
+                                CSiTRadar::menuState.jurisdictionalAC.size() != oldJurisdictionSize) {
+                                oldJurisdictionSize = CSiTRadar::menuState.jurisdictionalAC.size();
+                                CSiTRadar::menuState.jurisdictionIndex = 0;
+                            }
 
-                        CSiTRadar::menuState.handoffMode = TRUE;
-                        CSiTRadar::menuState.handoffModeStartTime = clock();
+                            CSiTRadar::menuState.handoffMode = TRUE;
+                            CSiTRadar::menuState.SFIMode = FALSE;
+                            CSiTRadar::menuState.handoffModeStartTime = clock();
 
-                        // ASEL the next aircraft in the handoff priority list
-                        if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
-                            if (CSiTRadar::menuState.jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
-                                CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()));
-                                // if plane is being handed off to me, use F3 to accept handoff instead of F4 to deny
-                                if (
-                                    strcmp(
-                                        CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()).GetHandoffTargetControllerId(),
-                                           CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
-                                    )
+                            // ASEL the next aircraft in the handoff priority list
+                            if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
+                                if (CSiTRadar::menuState.jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
+                                    CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()));
+                                    // if plane is being handed off to me, use F3 to accept handoff instead of F4 to deny
+                                    if (
+                                        strcmp(
+                                            CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()).GetHandoffTargetControllerId(),
+                                            CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
+                                        )
                                     {
 
-                                    SituPlugin::SendKeyboardPresses({ 0x3D }); // send F3
+                                        SituPlugin::SendKeyboardPresses({ 0x3D }); // send F3
+                                    }
+                                    else {
+
+                                        SituPlugin::SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
+                                    }
+                                    CSiTRadar::menuState.jurisdictionIndex++;
                                 }
                                 else {
-
-                                    SituPlugin::SendKeyboardPresses({ 0x3E }); // send F4 in keyboard presses
+                                    CSiTRadar::menuState.jurisdictionIndex = 0;
+                                    CSiTRadar::menuState.handoffMode = FALSE;
+                                    SituPlugin::SendKeyboardPresses({ 0x01 });
                                 }
-                                CSiTRadar::menuState.jurisdictionIndex++;
                             }
-                            else {
-                                CSiTRadar::menuState.jurisdictionIndex = 0;
-                                CSiTRadar::menuState.handoffMode = FALSE;
-                                SituPlugin::SendKeyboardPresses({ 0x01 });
-                            }
+
+                            CSiTRadar::m_pRadScr->RequestRefresh();
+
+                            held = false;
+                            kbF1 = false;
+                            return -1;
                         }
-
-                        CSiTRadar::m_pRadScr->RequestRefresh();
-
-                        held = false;
-                        return -1;
+                        return 0;
                     }
 
                     case VK_F3:
@@ -211,6 +223,38 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
                     case VK_F4:
                     {
+                        if (kbF4) {
+                            if (CSiTRadar::menuState.SFIMode == FALSE ||
+                                CSiTRadar::menuState.jurisdictionalAC.size() != oldJurisdictionSize) {
+                                oldJurisdictionSize = CSiTRadar::menuState.jurisdictionalAC.size();
+                                CSiTRadar::menuState.jurisdictionIndex = 0;
+                            }
+
+                            CSiTRadar::menuState.SFIMode = TRUE;
+                            CSiTRadar::menuState.handoffMode = FALSE;
+                            CSiTRadar::menuState.handoffModeStartTime = clock();
+
+                            // ASEL the next aircraft in the handoff priority list
+                            if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
+                                if (CSiTRadar::menuState.jurisdictionIndex < CSiTRadar::menuState.jurisdictionalAC.size()) {
+
+                                    // Cycle through jurisdictional aircraft and ASEL them
+                                    CSiTRadar::m_pRadScr->GetPlugIn()->SetASELAircraft(CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(CSiTRadar::menuState.jurisdictionalAC.at(CSiTRadar::menuState.jurisdictionIndex).c_str()));
+                                    CSiTRadar::menuState.jurisdictionIndex++;
+                                }
+                                else {
+                                    CSiTRadar::menuState.jurisdictionIndex = 0;
+                                    CSiTRadar::menuState.SFIMode = FALSE;
+                                    //SituPlugin::SendKeyboardPresses({ 0x01 });
+                                }
+                            }
+
+                            CSiTRadar::m_pRadScr->RequestRefresh();
+
+                            held = false;
+                            kbF4 = false;
+                            return -1;
+                        }
                         return 0;
                     }
 
@@ -302,11 +346,12 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             }
         }
 
-        if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn)) {
+        if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn) || CSiTRadar::menuState.SFIMode) {
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
 
                 CSiTRadar::menuState.handoffMode = false;
+                CSiTRadar::menuState.SFIMode = false;
                 CSiTRadar::menuState.MB3menu = false;
                 CSiTRadar::m_pRadScr->RequestRefresh();
 

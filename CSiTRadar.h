@@ -98,7 +98,7 @@ struct buttonStates {
     POINT MB3clickedPt{ 0,0 };
     RECT MB3hoverRect{};
     RECT MB3primRect{};
-    bool MB3SecondaryMenuOn{ false };
+    bool MB3SecondaryMenuOn{ true };
     bool MB3hoverOn{ false };
     string MB3SecondaryMenuType{};
 };
@@ -298,7 +298,10 @@ public:
         string newstring;
         scratchpad = fp.GetControllerAssignedData().GetScratchPadString();
         
-        if (!strcmp(c.c_str(), "CLR")) {
+        if (!strcmp(c.c_str(), "EXP")) {
+            return false;
+        }
+        else if (!strcmp(c.c_str(), "CLR")) {
             if (scratchpad.size() == 1) {
                 newstring = "";
             }
