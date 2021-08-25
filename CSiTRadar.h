@@ -308,7 +308,7 @@ public:
         RECT Area,
         int Button);
 
-    bool ModifySFI(string c, CFlightPlan fp) {
+    static bool ModifySFI(string c, CFlightPlan fp) {
         string scratchpad;
         string newstring;
         scratchpad = fp.GetControllerAssignedData().GetScratchPadString();
