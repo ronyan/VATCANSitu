@@ -61,7 +61,7 @@ CSiTRadar::CSiTRadar()
 			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
 
 			if (!j["prefSFI"].is_null()) {
-				menuState.SFIPrefStringSetting = j["prefSFI"];
+				menuState.SFIPrefStringDefault = j["prefSFI"];
 			}
 
 		}
@@ -79,7 +79,8 @@ CSiTRadar::CSiTRadar()
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-			j["prefSFI"] = menuState.SFIPrefStringSetting;
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
 
 			settings_file << j;
 		}
@@ -140,6 +141,8 @@ CSiTRadar::~CSiTRadar()
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
 			settings_file << j;
 		}
 	}
@@ -156,7 +159,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 	if (m_pRadScr != this) {
 		m_pRadScr = this;
+
+		const char* filt;
+		if ((filt = GetDataFromAsr("prefSFI")) != NULL) {
+			menuState.SFIPrefStringASRSetting = filt;
+		}
+		else {
+			menuState.SFIPrefStringASRSetting = menuState.SFIPrefStringDefault;
+		}
 	}
+
+
 	// get cursor position and screen info
 	POINT p;
 
@@ -653,7 +666,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				if (menuState.MB3menu) {
 					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
 					acPopup.populateMenu();
-					acPopup.m_origin.y += (acPopup.m_listElements.size() * 20) / 2;
+					acPopup.m_origin.y += (acPopup.m_listElements.size() * 20);
 					if ((acPopup.m_origin.y - ((int)acPopup.m_listElements.size() * 20)) < (radarea.top + 60)) { acPopup.m_origin.y = radarea.top + 65 + (acPopup.m_listElements.size() * 20); }
 					acPopup.drawPopUpMenu(&dc);
 					for (auto& element : acPopup.m_listElements) {
@@ -1353,6 +1366,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				menuState.MB3menu = false;
 			}
 		}
+		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "SetComm")) {
+			menuState.MB3menu = false;
+			GetPlugIn()->FlightPlanSelectASEL().GetControllerAssignedData().SetCommunicationType(*sObjectId);
+		}
 	}
 
 	if (ObjectType == AIRCRAFT_SYMBOL) {
@@ -1767,7 +1784,8 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 		menuState.MB3SecondaryMenuType = sObjectId;
 
 		if (!strcmp(sObjectId, "ManHandoff")  ||
-			!strcmp(sObjectId, "ModSFI")) {
+			!strcmp(sObjectId, "ModSFI") ||
+			!strcmp(sObjectId, "SetComm") ) {
 			menuState.MB3SecondaryMenuOn = true;
 			menuState.MB3SecondaryMenuType = sObjectId;
 		}
@@ -1989,8 +2007,8 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	}
 	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
 		altFilterLow = atoi(filt);
-	}    
-	
+	} 
+
 	if (menuState.activeRunwaysList.empty()) {
 		std::thread rwyupdate(CSiTRadar::updateActiveRunways, 0);
 		rwyupdate.detach();
