@@ -57,6 +57,7 @@ void CPopUpMenu::populateMenu()
     if (m_fp->GetTrackingControllerIsMe()) {
         this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
     }
+    this->m_listElements.emplace_back(SPopUpElement("Comm. Type", "SetComm", 0, 1));
     this->m_listElements.emplace_back(SPopUpElement("Flt. Plan", "FltPlan", 0, 0));
     if (m_fp->GetTrackingControllerIsMe()) {
         if (strcmp(m_fp->GetHandoffTargetControllerId(), "")) {
@@ -98,6 +99,11 @@ void CPopUpMenu::populateSecondaryMenu(string type) {
             letter = c;
             this->m_listElements.emplace_back(SPopUpElement(letter, letter, 0, 0, 40));
         }
+    }
+    if (!strcmp(type.c_str(), "SetComm")) {
+        this->m_listElements.emplace_back(SPopUpElement("V", "V", 0, 0, 40));
+        this->m_listElements.emplace_back(SPopUpElement("R", "R", 0, 0, 40));
+        this->m_listElements.emplace_back(SPopUpElement("T", "T", 0, 0, 40));
     }
 }
 

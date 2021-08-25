@@ -102,15 +102,16 @@ struct buttonStates {
     bool MB3hoverOn{ false };
     string MB3SecondaryMenuType{};
     string SFIPrefString{};
-    string SFIPrefStringSetting{};
+    string SFIPrefStringASRSetting{};
+    string SFIPrefStringDefault{ "ABCDEFGHIJ" };
 
     void ResetSFIOptions() {
-    if (SFIPrefStringSetting.size() == 0) {
+    if (SFIPrefStringASRSetting.size() == 0) {
         // default if not set via settings file
-        SFIPrefString = "ABCDEFGHIJ";
+        SFIPrefString = SFIPrefStringDefault;
     }
     else {
-        SFIPrefString = SFIPrefStringSetting;
+        SFIPrefString = SFIPrefStringASRSetting;
     }
     };
 

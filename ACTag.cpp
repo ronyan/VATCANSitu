@@ -277,96 +277,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	boldfont.CreateFontIndirect(&lgfont);
 	dc->SelectObject(font);
 
-	// Draw Connector
-
-	int doglegX = 0;
-	int doglegY = 0;
-
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
-		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2) {
-
-		POINT connector{ 0,0 };
-		int tagOffsetX = 0;
-		int tagOffsetY = 0;
-
-		// get the tag off set from the TagOffset<map>
-		POINT pTag = tOffset->find(rt->GetCallsign())->second;
-
-		tagOffsetX = pTag.x;
-		tagOffsetY = pTag.y;
-
-		bool blinking = FALSE;
-		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
-			&& strcmp(fp->GetHandoffTargetControllerId(), "") != 0) { blinking = TRUE; }
-		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
-
-		if (rt->IsValid()) {
-			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
-		}
-
-		// determine if the tag is to the left or the right of the PPS
-
-		if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
-		if (pTag.x < 0) { connector.x = (int)p.x + tagOffsetX - 3 + CSiTRadar::mAcData[rt->GetCallsign()].tagWidth; }
-		connector.y = p.y + tagOffsetY + 7;
-
-		// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
-		// get the angle between the line between the PPS and connector and horizontal
-
-		// if vertical (don't divide by 0!)
-		double theta = 30;
-		double phi = 0;
-
-		if (connector.x - p.x != 0) {
-
-			double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
-			double y = abs(p.y - connector.y); // also cast as double for atan
-
-			phi = atan(y / x);
-
-			// logic for if phi is a certain value; unit circle! (with fudge factor)
-			if (phi >= 0 && phi < PI / 6) { theta = 30; }
-			else if (phi >= PI / 6 && phi < PI / 4) { theta = 45; }
-			else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
-
-			theta = theta * PI / 180; // to radians
-			doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
-
-			// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
-			doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
-
-			if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
-			if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); }
-			if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
-			if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
-		}
-		else {
-			doglegX = p.x; // if direction on top or below
-			doglegY = p.y + tagOffsetY + 7;
-		}
-
-		// Draw the angled line and draw the horizontal line
-		HPEN targetPen;
-		COLORREF conColor = C_PPS_YELLOW;
-		if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
-		targetPen = CreatePen(PS_SOLID, 1, conColor);
-		dc->SelectObject(targetPen);
-		dc->SelectStockObject(NULL_BRUSH);
-
-		dc->MoveTo(p.x, p.y);
-		dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
-		dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
-
-		// ADSB circle
-		if (CSiTRadar::mAcData[rt->GetCallsign()].isADSB) {
-			dc->Ellipse((int)doglegX - 3, (int)doglegY - 3, (int)doglegX + 4, (int)doglegY + 4);
-		}
-
-		DeleteObject(targetPen);
-
-	}
-
-	// Draw Connector Ends
+	RECT rline1; // bring scope out to allow connector to be drawn
 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
 		( CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1)) {
@@ -381,7 +292,6 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 
 		// Line 1
-		RECT rline1;
 		rline1.top = line1.y;
 		rline1.left = line1.x;
 		rline1.bottom = line2.y;
@@ -447,22 +357,6 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		// add some padding for the SFI + long callsigns
 		if (sfi.size() == 0) { CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 12; }
 		else { CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 6; }
-
-
-		// draw extension if tag is to the left of the PPS
-		if (rline1.right < (int)doglegX) {
-			HPEN targetPen;
-			COLORREF conColor = C_PPS_YELLOW;
-			if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
-			targetPen = CreatePen(PS_SOLID, 1, conColor);
-			dc->SelectObject(targetPen);
-
-			dc->MoveTo(rline1.right + 5, rline1.top + 7);
-			dc->LineTo((int)doglegX, (int)doglegY);
-
-			DeleteObject(targetPen);
-		}
-
 
 		// Line 2
 		RECT rline2;
@@ -607,6 +501,112 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 	}
 
+	// Draw Connector
+
+	int doglegX = 0;
+	int doglegY = 0;
+
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
+		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2) {
+
+		POINT connector{ 0,0 };
+		int tagOffsetX = 0;
+		int tagOffsetY = 0;
+
+		// get the tag off set from the TagOffset<map>
+		POINT pTag = tOffset->find(rt->GetCallsign())->second;
+
+		tagOffsetX = pTag.x;
+		tagOffsetY = pTag.y;
+
+		bool blinking = FALSE;
+		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
+			&& strcmp(fp->GetHandoffTargetControllerId(), "") != 0) {
+			blinking = TRUE;
+		}
+		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
+
+		if (rt->IsValid()) {
+			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
+		}
+
+		// determine if the tag is to the left or the right of the PPS
+
+		if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
+		if (pTag.x < 0) { connector.x = rline1.right + 3; }
+		connector.y = p.y + tagOffsetY + 7;
+
+		// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
+		// get the angle between the line between the PPS and connector and horizontal
+
+		// if vertical (don't divide by 0!)
+		double theta = 30;
+		double phi = 0;
+
+		if (connector.x - p.x != 0) {
+
+			double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
+			double y = abs(p.y - connector.y); // also cast as double for atan
+
+			phi = atan(y / x);
+
+			// logic for if phi is a certain value; unit circle! (with fudge factor)
+			if (phi >= 0 && phi < PI / 6) { theta = 30; }
+			else if (phi >= PI / 6 && phi < PI / 4) { theta = 45; }
+			else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
+
+			theta = theta * PI / 180; // to radians
+			doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
+
+			// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
+			doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
+
+			if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
+			if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); }
+			if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
+			if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
+		}
+		else {
+			doglegX = p.x; // if direction on top or below
+			doglegY = p.y + tagOffsetY + 7;
+		}
+
+		// draw extension if tag is to the left of the PPS
+		if (rline1.right < (int)doglegX) {
+			HPEN targetPen;
+			COLORREF conColor = C_PPS_YELLOW;
+			if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+			targetPen = CreatePen(PS_SOLID, 1, conColor);
+			dc->SelectObject(targetPen);
+
+			dc->MoveTo(rline1.right + 5, rline1.top + 7);
+			dc->LineTo((int)doglegX, (int)doglegY);
+
+			DeleteObject(targetPen);
+		}
+
+		// Draw the angled line and draw the horizontal line
+		HPEN targetPen;
+		COLORREF conColor = C_PPS_YELLOW;
+		if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+		targetPen = CreatePen(PS_SOLID, 1, conColor);
+		dc->SelectObject(targetPen);
+		dc->SelectStockObject(NULL_BRUSH);
+
+		dc->MoveTo(p.x, p.y);
+		dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
+		dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
+
+		// ADSB circle
+		if (CSiTRadar::mAcData[rt->GetCallsign()].isADSB) {
+			dc->Ellipse((int)doglegX - 3, (int)doglegY - 3, (int)doglegX + 4, (int)doglegY + 4);
+		}
+
+		DeleteObject(targetPen);
+
+	}
+
+	// Draw Connector Ends
 	
 	// BRAVO TAGS
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
