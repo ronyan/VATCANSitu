@@ -198,6 +198,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 		if (((clock() - menuState.handoffModeStartTime) / CLOCKS_PER_SEC) > 10 && menuState.handoffMode) {
 			menuState.handoffMode = FALSE;
+			menuState.SFIMode = false;
 			CSiTRadar::menuState.jurisdictionIndex = 0;
 			SituPlugin::SendKeyboardPresses({ 0x01 });
 		}
@@ -524,6 +525,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
+						dc.SetTextColor(cjsColor);
 						DeleteObject(font);
 					}
 
@@ -534,7 +536,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 
 					// Draw the Selected Aircraft Box
-					if (CSiTRadar::menuState.handoffMode) {
+					if (CSiTRadar::menuState.handoffMode || CSiTRadar::menuState.SFIMode) {
 						if (strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
 							HPEN targetPen;
 							RECT selectBox{};
@@ -566,8 +568,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							rectHO.right = p.x + 20;
 							rectHO.top = p.y + 8;
 							rectHO.bottom = p.y + 28;
-
-							dc.DrawText("H/O", &rectHO, DT_CENTER);
+							if (menuState.handoffMode) {
+								dc.DrawText("H/O", &rectHO, DT_CENTER);
+							}
+							if (menuState.SFIMode) {
+								dc.DrawText("SFI", &rectHO, DT_CENTER);
+							}
 
 							DeleteObject(font);
 							DeleteObject(targetPen);
@@ -647,10 +653,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					for (auto& element : acPopup.m_listElements) {
 						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
 					}
-
-					if (menuState.MB3hoverOn) {
-						acPopup.highlightSelection(&dc, menuState.MB3primRect);
+					acPopup.highlightSelection(&dc, menuState.MB3hoverRect);
+						
 						if (menuState.MB3SecondaryMenuOn) {
+							acPopup.highlightSelection(&dc, menuState.MB3primRect);
 							CPopUpMenu secondaryMenu({ acPopup.totalRect.right, menuState.MB3primRect.bottom }, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
 							secondaryMenu.populateSecondaryMenu(menuState.MB3SecondaryMenuType);
 
@@ -666,7 +672,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							}
 							secondaryMenu.highlightSelection(&dc, menuState.MB3hoverRect); // highlight the primary menu item
 						}
-					}
 
 				}
 
@@ -1295,6 +1300,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (Button == BUTTON_RIGHT) {
 			menuState.MB3menu = true;
 			menuState.MB3clickedPt = Pt;
+			menuState.MB3primRect = { 0,0,0,0 };
+			menuState.MB3hoverRect = { 0,0,0,0 };
+			menuState.MB3SecondaryMenuOn = false;
 		}
 	}
 }
@@ -1742,13 +1750,12 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 		menuState.MB3primRect = Area;
 		menuState.MB3hoverOn = true;
 
+		menuState.MB3SecondaryMenuOn = false;
+		menuState.MB3SecondaryMenuType = sObjectId;
+
 		if (!strcmp(sObjectId, "ManHandoff")  ||
 			!strcmp(sObjectId, "ModSFI")) {
 			menuState.MB3SecondaryMenuOn = true;
-			menuState.MB3SecondaryMenuType = sObjectId;
-		}
-		else {
-			menuState.MB3SecondaryMenuOn = false;
 			menuState.MB3SecondaryMenuType = sObjectId;
 		}
 
@@ -1761,7 +1768,7 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 		menuState.MB3hoverRect = Area;
 		menuState.MB3hoverOn = true;
 
-		menuState.MB3SecondaryMenuOn = true;
+		//menuState.MB3SecondaryMenuOn = true;
 
 		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
 			CSiTRadar::m_pRadScr->RequestRefresh();

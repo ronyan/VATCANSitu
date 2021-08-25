@@ -420,6 +420,11 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline1.left = rline1.right;
 		rline1.right = rline1.left + 8;
 
+		if (CSiTRadar::menuState.SFIMode &&
+			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+			dc->SetTextColor(C_PPS_YELLOW);
+		}
+
 		// Show Communication Type if not Voice
 		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		if (commType.size() > 0) {
