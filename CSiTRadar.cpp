@@ -160,9 +160,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	if (m_pRadScr != this) {
 		m_pRadScr = this;
 
-		const char* filt;
-		if ((filt = GetDataFromAsr("prefSFI")) != NULL) {
-			menuState.SFIPrefStringASRSetting = filt;
+		const char* sfi;
+		if ((sfi = GetDataFromAsr("prefSFI")) != NULL) {
+			menuState.SFIPrefStringASRSetting = sfi;
 		}
 		else {
 			menuState.SFIPrefStringASRSetting = menuState.SFIPrefStringDefault;
@@ -2016,6 +2016,15 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	}
 
 	DisplayActiveRunways();
+
+
+	const char* sfi;
+	if ((sfi = GetDataFromAsr("prefSFI")) != NULL) {
+		menuState.SFIPrefStringASRSetting = sfi;
+	}
+	else {
+		menuState.SFIPrefStringASRSetting = menuState.SFIPrefStringDefault;
+	}
 
 	// Find the position of ADSB radars
 	/*
