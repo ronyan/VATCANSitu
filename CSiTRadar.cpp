@@ -2320,7 +2320,10 @@ void CSiTRadar::OnControllerPositionUpdate(CController Controller)
 	for (CController ctrl = CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectFirst(); ctrl.IsValid(); ctrl = CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectNext(ctrl))
 	{
 		if (ctrl.GetPositionIdentified()) {
-			CSiTRadar::menuState.nearbyCJS.insert(pair<string, bool>(ctrl.GetPositionId(), false));
+			string cjs = ctrl.GetPositionId();
+			if (cjs.size() <= 2) {
+				CSiTRadar::menuState.nearbyCJS.insert(pair<string, bool>(ctrl.GetPositionId(), false));
+			}
 		}
 	}
 }
