@@ -12,22 +12,28 @@ struct ObjectManager {
 };
 
 struct SListBoxElement {
-	int m_ListBoxIndex;
+	static unsigned long m_elementIDcount;
+	int m_elementID;
 	int m_width;
 	int m_height;
 	int m_listElementHeight;
 	bool m_selected_{ false };
 	string m_ListBoxElementText;
 	RECT m_ListBoxRect;
-	
+
 	SListBoxElement(int width, string text) {
 		m_width = width;
 		m_ListBoxElementText = text;
+		m_elementID = m_elementIDcount;
+		m_elementIDcount++;
 	}
 	SListBoxElement(int width, string text, bool selected) {
 		m_width = width;
 		m_ListBoxElementText = text;
 		m_selected_ = selected;
+
+		m_elementID = m_elementIDcount;
+		m_elementIDcount++;
 	}
 	void Select() {
 		m_selected_ = true;
@@ -44,14 +50,15 @@ struct SListBox {
 	int m_width;
 	int m_ListBoxID;
 	int m_windowID_;
+	int m_ListBoxIndex;
 	CDC* m_dc;
 
 	vector<SListBoxElement> listBox_;
 	void PopulateListBox(){
-		listBox_.clear();
 		listBox_.emplace_back(SListBoxElement(300,"RNAV"));
 		listBox_.emplace_back(SListBoxElement(300,"AFK"));
-		listBox_.emplace_back(SListBoxElement(300,"VECTORS", true));
+		listBox_.emplace_back(SListBoxElement(300,"VECTORS"));
+		listBox_.emplace_back(SListBoxElement(300, ""));
 		listBox_.emplace_back(SListBoxElement(300, ""));
 		listBox_.emplace_back(SListBoxElement(300, ""));
 		listBox_.emplace_back(SListBoxElement(300, ""));

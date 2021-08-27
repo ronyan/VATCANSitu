@@ -2,6 +2,7 @@
 #include "CAppWindows.h"
 
 unsigned long CAppWindows::windowIDs_ = 0;
+unsigned long SListBoxElement::m_elementIDcount = 0;
 
 CAppWindows::CAppWindows()
 {
@@ -26,13 +27,13 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp) {
 
 		SWindowButton blank, submit, cancel;
 
-		submit.location = { 90, 218 };
+		submit.location = { 90, 210 };
 		submit.m_height = 25;
 		submit.m_width = 60;
 		submit.text = "Submit";
 		submit.windowID = m_windowId_;
 
-		cancel.location = { 155, 218 };
+		cancel.location = { 155, 210 };
 		cancel.m_height = 25;
 		cancel.m_width = 60;
 		cancel.text = "Cancel";
@@ -146,7 +147,8 @@ void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT 
 	for (auto& element : listBox_) {
 		m_dc->SelectObject(targetBrush);
 		this->m_width = element.m_width;
-		RECT r = { winOrigin.x + 4, winOrigin.y + deltay, winOrigin.x + m_width - 16, winOrigin.y + deltay + 20 };
+		RECT r = { winOrigin.x + 16, winOrigin.y + deltay, winOrigin.x + m_width - 16, winOrigin.y + deltay + 20 };
+		CopyRect(&element.m_ListBoxRect, &r);
 
 		if (element.m_selected_) {
 			m_dc->SetTextColor(C_MENU_GREY1);
@@ -163,8 +165,8 @@ void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT 
 		r.top += deltay;
 		deltay += 20;
 	}
-	RECT totalListBox{ winOrigin.x + 4, winOrigin.y,  winOrigin.x + m_width - 16, winOrigin.y + listBox_.size() * 20 };
-	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY3, C_MENU_GREY4);
+	RECT totalListBox{ winOrigin.x + 16, winOrigin.y,  winOrigin.x + m_width - 16, winOrigin.y + listBox_.size() * 20 };
+	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);

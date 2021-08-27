@@ -667,6 +667,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						windowFuncStr = to_string(elem.windowID) + " " + elem.text;
 						AddScreenObject(window.second.m_winType, windowFuncStr.c_str(), elem.m_WindowButtonRect, true, windowFuncStr.c_str());
 					}
+
+					for (auto& listbox : window.second.m_listboxes_) {
+						for (auto& lbE : listbox.listBox_) {
+							string windowFuncStr;
+							windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(lbE.m_elementID);
+							AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
+						}
+					}
 					
 				}
 
@@ -1348,14 +1356,36 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 	}
+
+	if (ObjectType == WINDOW_LIST_BOX_ELEMENT) {
+		string s, win, le;
+		s = sObjectId;
+		string::size_type pos = s.find(" ");
+		if (pos != s.npos) {
+			win = s.substr(0, pos);
+			le = s.substr(pos + 1);
+		}
+		auto window = GetAppWindow(stoi(win));
+		
+		for (auto &lb : window->m_listboxes_) {
+			for (auto &lelem : lb.listBox_) {
+				if (lelem.m_elementID == stoi(le)) {
+					lelem.m_selected_ = true;
+				}
+				else {
+					lelem.m_selected_ = false;
+				}
+			}
+		}
+	}
 }
 
 
 
 
-CAppWindows CSiTRadar::GetAppWindow(int winID) {
+CAppWindows* CSiTRadar::GetAppWindow(int winID) {
 	if (menuState.radarScrWindows.count(winID) != 0) {
-		return menuState.radarScrWindows.at(winID);
+		return &menuState.radarScrWindows.at(winID);
 	}	
 }
 

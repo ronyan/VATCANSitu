@@ -231,7 +231,7 @@ public:
     static void DisplayActiveRunways();
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
-    static CAppWindows GetAppWindow(int winID);
+    static CAppWindows* GetAppWindow(int winID);
 
     static void RegisterButton(RECT rect) {
 
