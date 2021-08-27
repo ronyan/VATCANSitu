@@ -28,4 +28,5 @@ public:
     virtual void OnAirportRunwayActivityChanged();
 
     static void SendKeyboardPresses(std::vector<WORD> message);
+
 };

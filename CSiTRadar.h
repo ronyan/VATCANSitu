@@ -12,12 +12,17 @@
 #include <gdiplus.h>
 #include <deque>
 #include "constants.h"
-#include "pch.h"
 #include "wxRadar.h"
 #include "CAsyncResponse.h"
 #include <future>
 #include <shared_mutex>
 #include "CPopUpMenu.h"
+#include "CAppWindows.h"
+#include "HaloTool.h"
+#include "constants.h"
+#include "TopMenu.h"
+#include "ACTag.h"
+#include "PPS.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -48,6 +53,11 @@ struct ACData {
     int destLabelType{ 0 };
 };
 
+struct SFocusItem {
+    bool m_focus_on;
+    STextField* m_focused_tf;
+};
+
 struct buttonStates {
     bool haloTool;
     bool ptlTool;
@@ -73,6 +83,7 @@ struct buttonStates {
     
 
     bool SFIMode{};
+    SFocusItem focusedItem;
     bool handoffMode{};
     deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
     clock_t handoffModeStartTime{};
@@ -115,8 +126,10 @@ struct buttonStates {
     }
     };
 
-
     void ExpandSFIOptions() { SFIPrefString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; };
+
+    map<int, CAppWindows> radarScrWindows;
+
 };
 
 class CAircraftList {
@@ -224,6 +237,7 @@ public:
     static void DisplayActiveRunways();
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
+    static CAppWindows* GetAppWindow(int winID);
 
     static void RegisterButton(RECT rect) {
 
@@ -358,6 +372,37 @@ public:
                 newstring = " " + c;
             }
         }
+        fp.GetControllerAssignedData().SetScratchPadString(newstring.c_str());
+        fp.GetFlightPlanData().AmendFlightPlan();
+        return true;
+    }
+
+    static bool ModifyCtrlRemarks(string c, CFlightPlan fp) {
+        string scratchpad;
+        string newstring;
+        scratchpad = fp.GetControllerAssignedData().GetScratchPadString();
+
+        if (!scratchpad.empty()) {
+            if (scratchpad.size() == 1) {
+                newstring = c;
+            }
+            else if (scratchpad.size() == 2 && scratchpad.at(0) == ' ') {
+                newstring = scratchpad + " " + c;
+            }
+            else if (scratchpad.size() > 2) {
+                if (scratchpad.at(0) == ' ' && scratchpad.at(2) == ' ') {
+                    newstring = scratchpad.substr(0, 3) + c;
+                }
+                else {
+                    newstring = c;
+                }
+
+            }
+        }
+        else {
+            newstring = c;
+        }
+
         fp.GetControllerAssignedData().SetScratchPadString(newstring.c_str());
         fp.GetFlightPlanData().AmendFlightPlan();
         return true;

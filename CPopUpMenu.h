@@ -17,7 +17,7 @@ struct SPopUpElement
 		m_isHeaderFooter = header;
 		m_hasArrow = hasarrow;
 		m_function = function;
-		m_width = 105;
+		m_width = 115;
 	}
 	SPopUpElement(string t, string function, int header, bool hasarrow, int width) {
 		m_text = t;
