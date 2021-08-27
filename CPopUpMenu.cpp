@@ -106,6 +106,9 @@ void CPopUpMenu::populateSecondaryMenu(string type) {
         this->m_listElements.emplace_back(SPopUpElement("R", "R", 0, 0, 40));
         this->m_listElements.emplace_back(SPopUpElement("T", "T", 0, 0, 40));
     }
+    if (!this->m_listElements.empty()) {
+        m_width_ = m_listElements.at(0).m_width;
+    }
 }
 
 void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {

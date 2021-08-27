@@ -711,6 +711,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							secondaryMenu.m_origin.y += ((int)secondaryMenu.m_listElements.size()*20) / 2;
 							if ((secondaryMenu.m_origin.y - ((int)secondaryMenu.m_listElements.size() * 20)) < (radarea.top + 60)) { secondaryMenu.m_origin.y = radarea.top + 65 + (secondaryMenu.m_listElements.size() * 20); }
 							if (secondaryMenu.m_origin.y > GetChatArea().top) { secondaryMenu.m_origin.y = GetChatArea().top + 5; }
+							// draw on other side of primary menu if it would be off the right side of the screen
+							if (secondaryMenu.m_origin.x + secondaryMenu.m_width_ > radarea.right) {
+								secondaryMenu.m_origin.x = acPopup.m_origin.x - (secondaryMenu.m_width_);
+							}
 							secondaryMenu.drawPopUpMenu(&dc);
 
 							for (auto& element : secondaryMenu.m_listElements) {

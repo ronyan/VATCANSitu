@@ -38,6 +38,7 @@ public:
 	CDC* m_dc;
 	static RECT prevRect;
 	static RECT totalRect;
+	int m_width_;
 
 	CPopUpMenu(POINT p, CFlightPlan* fp, CRadarScreen* rad) {
 		m_origin = p;
