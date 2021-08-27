@@ -1,5 +1,7 @@
 # VATCANSitu
 
+![Screenshot 2021-08-27 171902](https://user-images.githubusercontent.com/2171625/131189934-80145874-57b6-494c-a060-a2ae9929c155.png)
+
 VATCANSitu is a EuroScope Plugin to simulate tools from NAVCANsuite
 
 The author of this plugin has NO AFFILIATION with NavCanada. This tool is for simulation use only on the VATSIM network and not for real world aviation. 
@@ -76,8 +78,6 @@ Installation notes: Disable the default ES symbology for correlated targets in t
 - hotfix for 0.2 retargetted character encoding for better compatibility
 - Added the range display
 - Added Controller jurisdiction symbol that updates depending on the position you log in as.
-
-![Screenshot](https://i.imgur.com/CKYPSyb.png)
 
 Compatible with Euroscope beta r24 or higher (plugin was compiled using VS toolset 2019)
 https://www.euroscope.hu/wp/2020/04/12/3-2-1-24/
