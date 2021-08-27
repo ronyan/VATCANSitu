@@ -106,8 +106,8 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
 
 int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
 
-    SolidBrush lightPrecip(Color(64, 0, 32, 120));
-    SolidBrush heavyPrecip(Color(128, 0, 32, 120));
+    HatchBrush lightPrecipHatch(HatchStyleDarkUpwardDiagonal, Color(64, 0, 43, 255), Color(0, 0, 0, 0));
+    HatchBrush heavyPrecipHatch(HatchStyleDarkUpwardDiagonal, Color(128, 0, 32, 255), Color(0, 0, 0, 0));
 
     int alldBZ = 60;
     int highdBZ = 80;
@@ -156,11 +156,11 @@ int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
 
                         Point defradarPixel[4] = { defp1, p2, p3, defp4 };
 
-                        g->FillPolygon(&heavyPrecip, defradarPixel, 4);
+                        g->FillPolygon(&heavyPrecipHatch, defradarPixel, 4);
                         deferDraw = false;
                     }
                     else {
-                        g->FillPolygon(&heavyPrecip, radarPixel, 4);
+                        g->FillPolygon(&heavyPrecipHatch, radarPixel, 4);
                     }
                 }
 
@@ -178,11 +178,11 @@ int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
 
                         Point defradarPixel[4] = { defp1, p2, p3, defp4 };
 
-                        g->FillPolygon(&lightPrecip, defradarPixel, 4);
+                        g->FillPolygon(&lightPrecipHatch, defradarPixel, 4);
                         deferDraw = false;
                     }
                     else {
-                        g->FillPolygon(&lightPrecip, radarPixel, 4);
+                        g->FillPolygon(&lightPrecipHatch, radarPixel, 4);
                     }
                 }
 
