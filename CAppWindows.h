@@ -41,9 +41,29 @@ struct SListBoxElement {
 };
 
 struct STextField {
-	
+	static unsigned long m_textFieldIDcount;
+	unsigned long m_textFieldID;
+	int m_width;
+	int m_height;
+	bool m_focused{ false };
+	string m_text;
+	RECT m_textRect;
+	POINT m_location_;
 
+	STextField() {
+		m_textFieldID = m_textFieldIDcount;
 
+		m_textFieldIDcount++;
+	}
+	STextField(POINT loc, int width, int height) {
+		m_location_ = loc;
+		m_width = width;
+		m_height = height;
+		m_textFieldID = m_textFieldIDcount;
+
+		m_textFieldIDcount++;
+	}
+	void RenderTextField(CDC* m_dc, POINT origin);
 };
 
 struct SListBox {
@@ -58,7 +78,6 @@ struct SListBox {
 		listBox_.emplace_back(SListBoxElement(300,"RNAV"));
 		listBox_.emplace_back(SListBoxElement(300,"AFK"));
 		listBox_.emplace_back(SListBoxElement(300,"VECTORS"));
-		listBox_.emplace_back(SListBoxElement(300, ""));
 		listBox_.emplace_back(SListBoxElement(300, ""));
 		listBox_.emplace_back(SListBoxElement(300, ""));
 		listBox_.emplace_back(SListBoxElement(300, ""));
@@ -141,9 +160,10 @@ public:
 	bool m_visible_;
 	vector<SListBox> m_listboxes_;
 	vector<SWindowButton> m_buttons_;
+	vector<STextField> m_textfields_;
 
 	CAppWindows();
-	CAppWindows(POINT origin, int winType, CFlightPlan fp);
+	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	SWindowElements DrawWindow(CDC* dc);
 	void AddWindow(POINT origin, int winType, CFlightPlan* fp);
 	void CloseWindow(int winID);

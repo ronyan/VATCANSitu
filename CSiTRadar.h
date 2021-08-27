@@ -53,6 +53,11 @@ struct ACData {
     int destLabelType{ 0 };
 };
 
+struct SFocusItem {
+    bool m_focus_on;
+    STextField* m_focused_tf;
+};
+
 struct buttonStates {
     bool haloTool;
     bool ptlTool;
@@ -78,6 +83,7 @@ struct buttonStates {
     
 
     bool SFIMode{};
+    SFocusItem focusedItem;
     bool handoffMode{};
     deque<string> jurisdictionalAC{}; // AC under jurisdiction + active handoffs to jurisdiction
     clock_t handoffModeStartTime{};

@@ -55,6 +55,30 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     if (CSiTRadar::m_pRadScr == nullptr) { return CallNextHookEx(NULL, nCode, wParam, lParam); }
 
+    if (CSiTRadar::menuState.focusedItem.m_focus_on) {
+        if (!(lParam & 0x40000000)) {
+            if (wParam >= 0x30 && wParam < 0x5A) {
+                char l = MapVirtualKeyA(wParam, 2);
+
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back(l);
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_OEM_2) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('/');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_BACK) {
+                if (!CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.empty()) {
+                    CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.pop_back();
+                    CSiTRadar::m_pRadScr->RequestRefresh();
+                }
+                return -1;
+            }
+        }
+    }
+
     if (CSiTRadar::menuState.SFIMode) {
         if (wParam > 0x40 && wParam < 0x5A) {
             char l = MapVirtualKeyA(wParam,2);
@@ -65,6 +89,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
             CSiTRadar::menuState.SFIMode = false;
             return -1;
         }
+
     }
 
     if (

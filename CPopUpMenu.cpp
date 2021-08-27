@@ -59,7 +59,7 @@ void CPopUpMenu::populateMenu()
         this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
         this->m_listElements.emplace_back(SPopUpElement("Comm. Type", "SetComm", 0, 1));
     }
-    this->m_listElements.emplace_back(SPopUpElement("Flt. Plan", "FltPlan", 0, 0));
+    this->m_listElements.emplace_back(SPopUpElement("Flight Plan", "FltPlan", 0, 0));
     if (m_fp->GetTrackingControllerIsMe()) {
         if (strcmp(m_fp->GetHandoffTargetControllerId(), "")) {
             this->m_listElements.emplace_back(SPopUpElement("H/O Recall", "AssumeTrack", 0, 0));

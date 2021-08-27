@@ -164,6 +164,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		}
 	}
 
+	// if no windows are open, there can be no focused textfield
+	if (menuState.radarScrWindows.empty()) {
+		menuState.focusedItem.m_focus_on = false;
+	}
+
 
 	// get cursor position and screen info
 	POINT p;
@@ -675,6 +680,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
 						}
 					}
+
+					for (auto& tf : window.second.m_textfields_) {
+						string windowFuncStr;
+						windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(tf.m_textFieldID);
+						AddScreenObject(WINDOW_TEXT_FIELD, windowFuncStr.c_str(), tf.m_textRect, true, windowFuncStr.c_str());
+					}
 					
 				}
 
@@ -682,7 +693,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
 					acPopup.populateMenu();
 					acPopup.m_origin.y += (acPopup.m_listElements.size() * 20);
-					if ((acPopup.m_origin.y - ((int)acPopup.m_listElements.size() * 20)) < (radarea.top + 60)) { acPopup.m_origin.y = radarea.top + 65 + (acPopup.m_listElements.size() * 20); }
+					if (acPopup.m_origin.y > radarea.bottom) { acPopup.m_origin.y = radarea.bottom; }
+					if ((acPopup.m_origin.x + 120) > radarea.right) { acPopup.m_origin.x = radarea.right - 120; }
 					acPopup.drawPopUpMenu(&dc);
 					for (auto& element : acPopup.m_listElements) {
 						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
@@ -1358,10 +1370,23 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 		if (!strcmp(func.c_str(), "Submit")) {
 			string c; 
-			for (const auto& lb : window->m_listboxes_) {
-				for (const auto& lelem : lb.listBox_) {
-					if (lelem.m_selected_) {
-						c = lelem.m_ListBoxElementText;
+			// if the textbox is selected, else go with the choice in menu
+			if (menuState.focusedItem.m_focus_on) {
+				c = menuState.focusedItem.m_focused_tf->m_text;
+			}
+			else {
+				for (const auto& lb : window->m_listboxes_) {
+					for (const auto& lelem : lb.listBox_) {
+						if (lelem.m_selected_) {
+							c = lelem.m_ListBoxElementText;
+							ModifyCtrlRemarks(c, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+							menuState.radarScrWindows.erase(stoi(id));
+
+							return;
+						}
+						else {
+							c = "";
+						}
 					}
 				}
 			}
@@ -1391,6 +1416,30 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 		}
 	}
+	if (ObjectType == WINDOW_TEXT_FIELD) {
+		string s, win, tf;
+		s = sObjectId;
+		string::size_type pos = s.find(" ");
+		if (pos != s.npos) {
+			win = s.substr(0, pos);
+			tf = s.substr(pos + 1);
+		}
+
+		// Only one text field can be focused in whole app
+		for (auto& window : menuState.radarScrWindows) {
+			for (auto& tf : window.second.m_textfields_) {
+				if (window.first == atoi(win.c_str())) {
+					tf.m_focused = !tf.m_focused;
+					menuState.focusedItem.m_focus_on = tf.m_focused;
+					menuState.focusedItem.m_focused_tf = &tf;
+				}
+				else {
+					tf.m_focused = false;
+				}
+			}
+		}
+	}
+
 }
 
 
@@ -1399,7 +1448,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 CAppWindows* CSiTRadar::GetAppWindow(int winID) {
 	if (menuState.radarScrWindows.count(winID) != 0) {
 		return &menuState.radarScrWindows.at(winID);
-	}	
+	}
+	return nullptr;
 }
 
 void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
@@ -1430,7 +1480,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		}
 		if (!strcmp(sObjectId, "CtrlRemarks")) {
 			menuState.MB3menu = false;
-			CAppWindows ctrl({ Pt.x - 150, Pt.y - 125 }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL());
+			CAppWindows ctrl({ Pt.x - 150, Pt.y - 125 }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
 			menuState.radarScrWindows[ctrl.m_windowId_] = ctrl ;
 		}
 	}
