@@ -12,12 +12,17 @@
 #include <gdiplus.h>
 #include <deque>
 #include "constants.h"
-#include "pch.h"
 #include "wxRadar.h"
 #include "CAsyncResponse.h"
 #include <future>
 #include <shared_mutex>
 #include "CPopUpMenu.h"
+#include "CAppWindows.h"
+#include "HaloTool.h"
+#include "constants.h"
+#include "TopMenu.h"
+#include "ACTag.h"
+#include "PPS.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -115,8 +120,10 @@ struct buttonStates {
     }
     };
 
-
     void ExpandSFIOptions() { SFIPrefString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; };
+
+    map<int, CAppWindows> radarScrWindows;
+
 };
 
 class CAircraftList {
@@ -224,6 +231,7 @@ public:
     static void DisplayActiveRunways();
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
+    static CAppWindows GetAppWindow(int winID);
 
     static void RegisterButton(RECT rect) {
 

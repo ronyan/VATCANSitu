@@ -114,3 +114,10 @@ const int LIST_TIME_ATIS = 8001;
 // Module 2 : distances relative to module origin
 const int HALO_TOOL_X = 0;
 const int HALO_TOOL_Y = 0;
+
+// Appwindows
+const int WINDOW_TITLE_BAR = 3000;
+
+
+const int WINDOW_FLIGHT_PLAN = 6000;
+const int WINDOW_CTRL_REMARKS = 6001;

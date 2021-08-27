@@ -194,6 +194,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ACTag.cpp" />
+    <ClCompile Include="CAppWindows.cpp" />
     <ClCompile Include="CAsyncResponse.cpp" />
     <ClCompile Include="CPopUpMenu.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
@@ -216,6 +217,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ACTag.h" />
+    <ClInclude Include="CAppWindows.h" />
     <ClInclude Include="CAsyncResponse.h" />
     <ClInclude Include="CPopUpMenu.h" />
     <ClInclude Include="CSiTRadar.h" />

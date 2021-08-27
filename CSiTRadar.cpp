@@ -1,13 +1,5 @@
 #include "pch.h"
 #include "CSiTRadar.h"
-#include "HaloTool.h"
-#include "constants.h"
-#include "TopMenu.h"
-#include "SituPlugin.h"
-#include "ACTag.h"
-#include "PPS.h"
-#include "wxRadar.h"
-#include <chrono>
 
 using namespace Gdiplus;
 
@@ -120,6 +112,9 @@ CSiTRadar::CSiTRadar()
 
 	time = clock();
 	oldTime = clock();
+
+	//CAppWindows win({ 300,450 }, WINDOW_CTRL_REMARKS);
+	//menuState.radarScrWindows[win.m_windowId_] = win;
 }
 
 CSiTRadar::~CSiTRadar()
@@ -662,6 +657,18 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			if (phase == REFRESH_PHASE_AFTER_LISTS) {
+
+				for (auto window : menuState.radarScrWindows) {
+					SWindowElements r = window.second.DrawWindow(&dc);
+					AddScreenObject(WINDOW_TITLE_BAR, to_string(window.second.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.second.m_windowId_).c_str());
+					
+					for (auto &elem : window.second.m_buttons_) {
+						string windowFuncStr;
+						windowFuncStr = to_string(elem.windowID) + " " + elem.text;
+						AddScreenObject(window.second.m_winType, windowFuncStr.c_str(), elem.m_WindowButtonRect, true, windowFuncStr.c_str());
+					}
+					
+				}
 
 				if (menuState.MB3menu) {
 					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
@@ -1325,6 +1332,31 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.MB3SecondaryMenuOn = false;
 		}
 	}
+
+	if (ObjectType == WINDOW_CTRL_REMARKS) {
+		string s, id, func;
+		// find window ID, then function from the string
+		s = sObjectId;
+		string::size_type pos = s.find(" ");
+		if (pos != s.npos) {
+			id = s.substr(0, pos);
+			func = s.substr(pos+1);
+		}
+
+		auto window = GetAppWindow(stoi(id));
+		if (!strcmp(func.c_str(), "Cancel")) {
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+	}
+}
+
+
+
+
+CAppWindows CSiTRadar::GetAppWindow(int winID) {
+	if (menuState.radarScrWindows.count(winID) != 0) {
+		return menuState.radarScrWindows.at(winID);
+	}	
 }
 
 void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
@@ -1352,6 +1384,11 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "DropTrack")) {
 			menuState.MB3menu = false;
 			GetPlugIn()->FlightPlanSelectASEL().EndTracking();
+		}
+		if (!strcmp(sObjectId, "CtrlRemarks")) {
+			menuState.MB3menu = false;
+			CAppWindows ctrl({ Pt.x - 150, Pt.y - 125 }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL());
+			menuState.radarScrWindows[ctrl.m_windowId_] = ctrl ;
 		}
 	}
 
@@ -1902,6 +1939,13 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		}
 		if (ObjectType == LIST_OFF_SCREEN) {
 			acLists[LIST_OFF_SCREEN].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+
+		if (ObjectType == WINDOW_TITLE_BAR) {
+			if (menuState.radarScrWindows.count(stoi(sObjectId)) != 0) {
+				menuState.radarScrWindows.at(stoi(sObjectId)).m_origin 
+					= { Area.left , Area.top};
+			}
 		}
 	}
 }
