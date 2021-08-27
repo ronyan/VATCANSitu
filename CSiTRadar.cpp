@@ -1355,6 +1355,19 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (!strcmp(func.c_str(), "Cancel")) {
 			menuState.radarScrWindows.erase(stoi(id));
 		}
+
+		if (!strcmp(func.c_str(), "Submit")) {
+			string c; 
+			for (const auto& lb : window->m_listboxes_) {
+				for (const auto& lelem : lb.listBox_) {
+					if (lelem.m_selected_) {
+						c = lelem.m_ListBoxElementText;
+					}
+				}
+			}
+			ModifyCtrlRemarks(c, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			menuState.radarScrWindows.erase(stoi(id));
+		}
 	}
 
 	if (ObjectType == WINDOW_LIST_BOX_ELEMENT) {

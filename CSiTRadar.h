@@ -371,6 +371,37 @@ public:
         return true;
     }
 
+    static bool ModifyCtrlRemarks(string c, CFlightPlan fp) {
+        string scratchpad;
+        string newstring;
+        scratchpad = fp.GetControllerAssignedData().GetScratchPadString();
+
+        if (!scratchpad.empty()) {
+            if (scratchpad.size() == 1) {
+                newstring = c;
+            }
+            else if (scratchpad.size() == 2 && scratchpad.at(0) == ' ') {
+                newstring = scratchpad + " " + c;
+            }
+            else if (scratchpad.size() > 2) {
+                if (scratchpad.at(0) == ' ' && scratchpad.at(2) == ' ') {
+                    newstring = scratchpad.substr(0, 3) + c;
+                }
+                else {
+                    newstring = c;
+                }
+
+            }
+        }
+        else {
+            newstring = c;
+        }
+
+        fp.GetControllerAssignedData().SetScratchPadString(newstring.c_str());
+        fp.GetFlightPlanData().AmendFlightPlan();
+        return true;
+    }
+
 protected:
     void ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string& btext, int itemtype);
     void DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType);

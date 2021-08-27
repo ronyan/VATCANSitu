@@ -13,6 +13,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp) {
 	m_origin = origin;
 	m_winType = winType;
 	m_windowId_ = windowIDs_;
+	m_callsign = fp.GetCallsign();
 
 	if (winType == WINDOW_CTRL_REMARKS) {
 		string s;

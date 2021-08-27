@@ -135,6 +135,7 @@ public:
 	int m_winType;
 	int m_width{ 200 };
 	int m_height{ 200 };
+	string m_callsign{};
 	POINT m_origin;
 	string windowTitle;
 	bool m_visible_;
