@@ -1480,8 +1480,19 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		}
 		if (!strcmp(sObjectId, "CtrlRemarks")) {
 			menuState.MB3menu = false;
-			CAppWindows ctrl({ Pt.x - 150, Pt.y - 125 }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
-			menuState.radarScrWindows[ctrl.m_windowId_] = ctrl ;
+			// Check if there is already a window, bring it to the mouse
+			bool exists = false;
+			for (auto& win : menuState.radarScrWindows) {
+				if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()))
+				{
+					win.second.m_origin = { Pt.x - 150, Pt.y - 125 };
+					exists = true;}
+			}
+			// If not draw it
+			if (!exists) {
+				CAppWindows ctrl({ Pt.x - 150, Pt.y - 125 }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
+				menuState.radarScrWindows[ctrl.m_windowId_] = ctrl;
+			}
 		}
 	}
 
