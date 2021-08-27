@@ -8,16 +8,6 @@ The author of this plugin has NO AFFILIATION with NavCanada. This tool is for si
 
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
 
-Additional Features in the Nightly Build:
-
-1. Keyboard command for PTL all (F3) and Bypass all filters (F9)
-
-Planned features for future updates:
-1. Configuration for tags and H/O Persist and H/O warn.
-2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
-under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
-3. Keyboard commands (F commands)
-
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
 ### Latest Version 0.4.5.0 03APR2021
