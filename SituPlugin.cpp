@@ -16,6 +16,9 @@ bool kbF4 = false;
 size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
 
+POINT SituPlugin::prevMousePt = { 0,0 };
+POINT SituPlugin::prevMouseDelta = { 0,0 };
+
 HHOOK appHook;
 HHOOK mouseHook;
 
@@ -381,19 +384,45 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     GetWindowRect(GetActiveWindow(), &windowRect);
     Pt.x = mouseStruct->pt.x - windowRect.left;
     Pt.y = mouseStruct->pt.y - windowRect.top;
+
+    int deltaPx, deltaPy;
+    deltaPx = abs(Pt.x - SituPlugin::prevMousePt.x);
+    deltaPy = abs(Pt.y - SituPlugin::prevMousePt.y);
+
+    SituPlugin::prevMouseDelta = { deltaPx, deltaPy };
+    SituPlugin::prevMousePt = Pt;
     
     RECT winRect{};
     GetWindowRect(GetActiveWindow(), &winRect);
 
     if (nCode == HC_ACTION) {
 
-        if (Pt.x < CPopUpMenu::totalRect.left ||
-            Pt.x > CPopUpMenu::totalRect.right ||
-            Pt.y < CPopUpMenu::totalRect.top ||
-            Pt.y > CPopUpMenu::totalRect.bottom) {
-            CSiTRadar::menuState.MB3hoverOn = false;
-            if (CSiTRadar::m_pRadScr != nullptr) {
-                CSiTRadar::m_pRadScr->RequestRefresh();
+        if (wParam == WM_MOUSEMOVE) {
+            if (CSiTRadar::menuState.MB3hoverOn) {
+
+                if (Pt.x < CPopUpMenu::totalRect.left ||
+                    Pt.x > CPopUpMenu::totalRect.right ||
+                    Pt.y < CPopUpMenu::totalRect.top ||
+                    Pt.y > CPopUpMenu::totalRect.bottom) {
+                    CSiTRadar::menuState.MB3hoverOn = false;
+                    if (CSiTRadar::m_pRadScr != nullptr) {
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+                    }
+                }
+            }
+            if (CSiTRadar::menuState.haloCursor) {
+
+                // wake on first move
+                if (SituPlugin::prevMouseDelta.x < 5 && SituPlugin::prevMouseDelta.y < 5) {
+                    if (CSiTRadar::m_pRadScr != nullptr) {
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+                    }
+                }
+                if (deltaPx > 5 || deltaPy > 5) {
+                    if (CSiTRadar::m_pRadScr != nullptr) {
+                        CSiTRadar::m_pRadScr->RequestRefresh();
+                    }
+                }
             }
         }
 

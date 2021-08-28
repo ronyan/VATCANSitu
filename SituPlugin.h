@@ -28,5 +28,7 @@ public:
     virtual void OnAirportRunwayActivityChanged();
 
     static void SendKeyboardPresses(std::vector<WORD> message);
+    static POINT prevMousePt;
+    static POINT prevMouseDelta;
 
 };

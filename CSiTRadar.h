@@ -71,6 +71,7 @@ struct buttonStates {
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
     bool destAirport{ false };
+    bool haloCursor{ false };
 
 
     bool wxAll{ FALSE };

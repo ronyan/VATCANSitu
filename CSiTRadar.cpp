@@ -341,9 +341,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
 				// Draw the mouse halo before menu, so it goes behind it
-				if (mousehalo == TRUE) {
+				if (menuState.haloCursor == true) {
 					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
-					RequestRefresh();
 				}
 
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
@@ -713,7 +712,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					acPopup.highlightSelection(&dc, menuState.MB3hoverRect);
 						
 						if (menuState.MB3SecondaryMenuOn) {
-							acPopup.highlightSelection(&dc, menuState.MB3primRect);
+							acPopup.highlightSelection(&dc, menuState.MB3primRect); // Highlight the first level menu option
 							CPopUpMenu secondaryMenu({ acPopup.totalRect.right, menuState.MB3primRect.bottom }, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
 							secondaryMenu.populateSecondaryMenu(menuState.MB3SecondaryMenuType);
 
@@ -731,7 +730,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							for (auto& element : secondaryMenu.m_listElements) {
 								AddScreenObject(BUTTON_MENU_RMB_MENU_SECONDARY, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
 							}
-							secondaryMenu.highlightSelection(&dc, menuState.MB3hoverRect); // highlight the primary menu item
+							if (menuState.MB3hoverOn) {
+								secondaryMenu.highlightSelection(&dc, menuState.MB3hoverRect);
+							}
 						}
 
 				}
@@ -1236,7 +1237,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					// End PTL options
 
 					elementOrigin.x = 370;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", mousehalo);
+					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", menuState.haloCursor);
 					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Display");
 					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halo Cursor");
 					AddScreenObject(BUTTON_MENU_HALO_MOUSE, "Mouse", r, 0, "");
@@ -1650,7 +1651,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == BUTTON_MENU_HALO_MOUSE) {
-		mousehalo = !mousehalo;
+		menuState.haloCursor = !menuState.haloCursor;
 	}
 
 	if (ObjectType == BUTTON_MENU_PTL_OPTIONS) {
@@ -1946,32 +1947,32 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 	RECT Area) {
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU) {
-		menuState.MB3hoverRect = Area;
-		menuState.MB3primRect = Area;
-		menuState.MB3hoverOn = true;
-
-		menuState.MB3SecondaryMenuOn = false;
-		menuState.MB3SecondaryMenuType = sObjectId;
-
-		if (!strcmp(sObjectId, "ManHandoff")  ||
-			!strcmp(sObjectId, "ModSFI") ||
-			!strcmp(sObjectId, "SetComm") ) {
-			menuState.MB3SecondaryMenuOn = true;
-			menuState.MB3SecondaryMenuType = sObjectId;
-		}
 
 		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
+
+			menuState.MB3hoverRect = Area;
+			menuState.MB3primRect = Area;
+			menuState.MB3hoverOn = true;
+
+			menuState.MB3SecondaryMenuOn = false;
+			menuState.MB3SecondaryMenuType = sObjectId;
+
+			if (!strcmp(sObjectId, "ManHandoff")  ||
+				!strcmp(sObjectId, "ModSFI") ||
+				!strcmp(sObjectId, "SetComm") ) {
+				menuState.MB3SecondaryMenuOn = true;
+				menuState.MB3SecondaryMenuType = sObjectId;
+			}
+
 			CSiTRadar::m_pRadScr->RequestRefresh();
 		}
 	}
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
-		menuState.MB3hoverRect = Area;
-		menuState.MB3hoverOn = true;
-
-		//menuState.MB3SecondaryMenuOn = true;
-
 		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
+
+			menuState.MB3hoverRect = Area;
+			menuState.MB3hoverOn = true;
 			CSiTRadar::m_pRadScr->RequestRefresh();
 		}
 	}
