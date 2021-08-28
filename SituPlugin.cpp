@@ -365,8 +365,10 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     
     POINT Pt;
     MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
-    Pt.x = mouseStruct->pt.x;
-    Pt.y = mouseStruct->pt.y;
+    RECT windowRect;
+    GetWindowRect(GetActiveWindow(), &windowRect);
+    Pt.x = mouseStruct->pt.x - windowRect.left;
+    Pt.y = mouseStruct->pt.y - windowRect.top;
     
     RECT winRect{};
     GetWindowRect(GetActiveWindow(), &winRect);
@@ -401,7 +403,6 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
         } // untoggle h/o if a click happens
 
-        MOUSEHOOKSTRUCT* mouseStruct = (MOUSEHOOKSTRUCT*)lParam;
         switch (wParam) {
         case WM_MBUTTONDOWN: {
             CSiTRadar::menuState.mouseMMB = true;
