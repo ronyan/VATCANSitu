@@ -1,20 +1,12 @@
 # VATCANSitu
 
+![Screenshot 2021-08-27 171902](https://user-images.githubusercontent.com/2171625/131189934-80145874-57b6-494c-a060-a2ae9929c155.png)
+
 VATCANSitu is a EuroScope Plugin to simulate tools from NAVCANsuite
 
 The author of this plugin has NO AFFILIATION with NavCanada. This tool is for simulation use only on the VATSIM network and not for real world aviation. 
 
 The latest nightly build is available at appveyor (click the badge below, then "Artifact" and download the dll). Will have the most up to date development features.
-
-Additional Features in the Nightly Build:
-
-1. Keyboard command for PTL all (F3) and Bypass all filters (F9)
-
-Planned features for future updates:
-1. Configuration for tags and H/O Persist and H/O warn.
-2. Flights of interest (FOI) will show with an alpha tag -- "A flight of Interest. A flight of Interest (FOI) is a target that is not yet
-under the jurisdiction of this workstation, ... but this Master sector will be the first internal sector to have jurisdiction for the flight of Interest. The flight will not be affected by altitude filters."
-3. Keyboard commands (F commands)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ronyan/VATCANSitu?branch=master)](https://ci.appveyor.com/project/ronyan/vatcansitu)
 
@@ -76,8 +68,6 @@ Installation notes: Disable the default ES symbology for correlated targets in t
 - hotfix for 0.2 retargetted character encoding for better compatibility
 - Added the range display
 - Added Controller jurisdiction symbol that updates depending on the position you log in as.
-
-![Screenshot](https://i.imgur.com/CKYPSyb.png)
 
 Compatible with Euroscope beta r24 or higher (plugin was compiled using VS toolset 2019)
 https://www.euroscope.hu/wp/2020/04/12/3-2-1-24/
