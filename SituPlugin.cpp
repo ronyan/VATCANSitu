@@ -17,7 +17,8 @@ size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
 
 POINT SituPlugin::prevMousePt = { 0,0 };
-POINT SituPlugin::prevMouseDelta = { 0,0 };
+int SituPlugin::prevMouseDelta = 0;
+bool SituPlugin::mouseAtRest = false;
 
 HHOOK appHook;
 HHOOK mouseHook;
@@ -389,7 +390,6 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     deltaPx = abs(Pt.x - SituPlugin::prevMousePt.x);
     deltaPy = abs(Pt.y - SituPlugin::prevMousePt.y);
 
-    SituPlugin::prevMouseDelta = { deltaPx, deltaPy };
     SituPlugin::prevMousePt = Pt;
     
     RECT winRect{};
@@ -411,17 +411,29 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 }
             }
             if (CSiTRadar::menuState.haloCursor) {
+                SituPlugin::prevMouseDelta++;
+                // if starting from stationary, refresh right away
+                if (deltaPx == 0 && deltaPy == 0)
+                {
+                    SituPlugin::mouseAtRest = true;
+                }
+                else {
+                    SituPlugin::mouseAtRest = false;
+                }
 
-                // wake on first move
-                if (SituPlugin::prevMouseDelta.x < 5 && SituPlugin::prevMouseDelta.y < 5) {
+                if (SituPlugin::mouseAtRest) {
+                    // if at rest, trigger a refresh on first move
                     if (CSiTRadar::m_pRadScr != nullptr) {
                         CSiTRadar::m_pRadScr->RequestRefresh();
                     }
                 }
-                if (deltaPx > 5 || deltaPy > 5) {
+
+                // only draw every n WM_MOUSEMOVES
+                if (SituPlugin::prevMouseDelta > 4) {
                     if (CSiTRadar::m_pRadScr != nullptr) {
                         CSiTRadar::m_pRadScr->RequestRefresh();
                     }
+                    SituPlugin::prevMouseDelta = 0;
                 }
             }
         }

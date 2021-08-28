@@ -343,6 +343,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				// Draw the mouse halo before menu, so it goes behind it
 				if (menuState.haloCursor == true) {
 					HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
+					SituPlugin::prevMouseDelta = 0; // sync refrehes
 				}
 
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
@@ -1950,8 +1951,8 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 
 		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
 
-			menuState.MB3hoverRect = Area;
-			menuState.MB3primRect = Area;
+			CopyRect(&menuState.MB3hoverRect, &Area);
+			CopyRect(&menuState.MB3primRect, &Area);
 			menuState.MB3hoverOn = true;
 
 			menuState.MB3SecondaryMenuOn = false;
@@ -1971,14 +1972,11 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
 		if (!EqualRect(&Area, &CPopUpMenu::prevRect)) {
 
-			menuState.MB3hoverRect = Area;
+			CopyRect(&menuState.MB3hoverRect, &Area);
 			menuState.MB3hoverOn = true;
 			CSiTRadar::m_pRadScr->RequestRefresh();
 		}
 	}
-	
-
-
 }
 
 void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released) {
