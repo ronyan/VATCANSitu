@@ -43,6 +43,7 @@ struct SListBoxElement {
 struct STextField {
 	static unsigned long m_textFieldIDcount;
 	unsigned long m_textFieldID;
+	unsigned long m_parentWindowID;
 	int m_width;
 	int m_height;
 	bool m_focused{ false };
@@ -165,6 +166,7 @@ public:
 	CAppWindows();
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	SWindowElements DrawWindow(CDC* dc);
+
 	void AddWindow(POINT origin, int winType, CFlightPlan* fp);
 	void CloseWindow(int winID);
 };

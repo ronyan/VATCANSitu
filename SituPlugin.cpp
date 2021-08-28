@@ -56,6 +56,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (CSiTRadar::m_pRadScr == nullptr) { return CallNextHookEx(NULL, nCode, wParam, lParam); }
 
     if (CSiTRadar::menuState.focusedItem.m_focus_on) {
+        CAppWindows* parentWin = CSiTRadar::GetAppWindow(CSiTRadar::menuState.focusedItem.m_focused_tf->m_parentWindowID);
         if (!(lParam & 0x40000000)) {
             if (wParam >= 0x30 && wParam < 0x5A) {
                 char l = MapVirtualKeyA(wParam, 2);
@@ -75,6 +76,17 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     CSiTRadar::m_pRadScr->RequestRefresh();
                 }
                 return -1;
+            }
+            if (wParam == VK_RETURN) {
+                if (parentWin->m_winType == WINDOW_HANDOFF_EXT_CJS) {
+              
+                    CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(parentWin->m_callsign.c_str()).InitiateHandoff(
+                        CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectByPositionId(CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.c_str()).GetCallsign()
+                    );
+                    CSiTRadar::CloseWindow(parentWin->m_windowId_);
+                    CSiTRadar::m_pRadScr->RequestRefresh();
+                    return -1;
+                }
             }
         }
     }

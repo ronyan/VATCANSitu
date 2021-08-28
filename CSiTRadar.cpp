@@ -168,7 +168,18 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	if (menuState.radarScrWindows.empty()) {
 		menuState.focusedItem.m_focus_on = false;
 	}
-
+	else {
+	// see if any focused items are set
+		menuState.focusedItem.m_focus_on = false;
+		for (auto& win : menuState.radarScrWindows) {
+			for (auto& tf : win.second.m_textfields_) {
+				if(tf.m_focused) {
+					menuState.focusedItem.m_focus_on = true;
+					menuState.focusedItem.m_focused_tf = &tf;
+				}
+			}
+		}
+	}
 
 	// get cursor position and screen info
 	POINT p;
@@ -1343,6 +1354,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	RECT Area,
 	int Button)
 {
+	string s, id, func;
+	// find window ID, then function from the string
+	s = sObjectId;
+	string::size_type pos = s.find(" ");
+	if (pos != s.npos) {
+		id = s.substr(0, pos);
+		func = s.substr(pos + 1);
+	}
 
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
@@ -1357,15 +1376,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
-	if (ObjectType == WINDOW_CTRL_REMARKS) {
-		string s, id, func;
-		// find window ID, then function from the string
-		s = sObjectId;
-		string::size_type pos = s.find(" ");
-		if (pos != s.npos) {
-			id = s.substr(0, pos);
-			func = s.substr(pos+1);
+	if (ObjectType == WINDOW_HANDOFF_EXT_CJS) {
+
+		if (!strcmp(func.c_str(), "Cancel")) {
+			menuState.radarScrWindows.erase(stoi(id));
 		}
+	}
+
+	if (ObjectType == WINDOW_CTRL_REMARKS) {
 
 		auto window = GetAppWindow(stoi(id));
 		if (!strcmp(func.c_str(), "Cancel")) {
@@ -1487,14 +1505,16 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			// Check if there is already a window, bring it to the mouse
 			bool exists = false;
 			for (auto& win : menuState.radarScrWindows) {
-				if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()))
+				if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign())
+					&& win.second.m_winType == WINDOW_CTRL_REMARKS)
 				{
-					win.second.m_origin = { Pt.x - 150, Pt.y - 125 };
-					exists = true;}
+					win.second.m_origin = { Pt.x, Pt.y };
+					exists = true;
+				}
 			}
 			// If not draw it
 			if (!exists) {
-				CAppWindows ctrl({ Pt.x - 150, Pt.y - 125 }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
+				CAppWindows ctrl({ Pt.x, Pt.y}, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
 				menuState.radarScrWindows[ctrl.m_windowId_] = ctrl;
 			}
 		}
@@ -1504,6 +1524,11 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "ManHandoff")) {
 			GetPlugIn()->FlightPlanSelectASEL().InitiateHandoff(GetPlugIn()->ControllerSelectByPositionId(sObjectId).GetCallsign());
 			menuState.MB3menu = false;
+			if (!strcmp(sObjectId, "EXP")) {
+				ClearFocusedTextFields();
+				CAppWindows extCJS(Pt, WINDOW_HANDOFF_EXT_CJS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
+				menuState.radarScrWindows[extCJS.m_windowId_] = extCJS;
+			}
 		}
 		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "ModSFI")) {
 			ModifySFI(sObjectId, GetPlugIn()->FlightPlanSelectASEL());

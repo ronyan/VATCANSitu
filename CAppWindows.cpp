@@ -58,6 +58,34 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 		m_textfields_.push_back(freetext);
 	}
 
+	if (winType == WINDOW_HANDOFF_EXT_CJS) {
+		s += " H/O:";
+		windowTitle = s.c_str();
+		m_width = 105;
+		m_height = 50;
+
+		SWindowButton cancel;
+		cancel.location = { 40, 24 };
+		cancel.m_height = 20;
+		cancel.m_width = 50;
+		cancel.text = "Cancel";
+		cancel.windowID = m_windowId_;
+		m_buttons_.push_back(cancel);
+
+		STextField cjsText;
+		cjsText.m_location_ = { 8,24 };
+		cjsText.m_height = 19;
+		cjsText.m_width = 30;
+		cjsText.m_focused = true;
+		cjsText.m_parentWindowID = m_windowId_;
+		m_textfields_.push_back(cjsText);
+
+
+	}
+
+	m_origin.x = origin.x - m_width / 2;
+	m_origin.y = origin.y - m_height / 2;
+
 	if (origin.x < radarea.left) { m_origin.x = radarea.left; }
 	if ((origin.x + m_width) > radarea.right) { m_origin.x = radarea.right - m_width; }
 	if (origin.y < radarea.top + 60) { m_origin.y = radarea.top + 60; }
@@ -219,6 +247,7 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	m_dc->Rectangle(&r);
 	if (m_focused) {
 		m_dc->Draw3dRect(&r, RGB(0,200,0), RGB(0, 200, 0));
+
 	}
 	else {
 		m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);

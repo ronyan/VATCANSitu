@@ -377,6 +377,19 @@ public:
         return true;
     }
 
+    void ClearFocusedTextFields() {
+        for (auto& win : menuState.radarScrWindows) {
+            for (auto& tf : win.second.m_textfields_) {
+                tf.m_focused = false;
+            }
+        }
+    }
+    static void CloseWindow(int winID) {
+        if (menuState.radarScrWindows.count(winID) != 0) {
+            menuState.radarScrWindows.erase(winID);
+        }
+    }
+
     static bool ModifyCtrlRemarks(string c, CFlightPlan fp) {
         string scratchpad;
         string newstring;
