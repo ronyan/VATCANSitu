@@ -52,6 +52,9 @@ struct ACData {
     bool extAlt{ FALSE };
     int destLabelType{ 0 };
     deque<CPosition> prevPosition;
+    bool isPointOut;
+    bool POTarget;
+    string POString;
 };
 
 struct SFocusItem {

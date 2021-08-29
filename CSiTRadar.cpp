@@ -446,8 +446,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						&& isADSB) {
 						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
 
-						radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(callSign.c_str()));
-
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
 						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
 						CACTag::DrawHistoryDots(&dc, &radarTarget);
@@ -570,32 +568,33 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 
 					// Draw the Selected Aircraft Box
+					HPEN targetPen;
+					RECT selectBox{};
+					selectBox.left = p.x - 6;
+					selectBox.right = p.x + 7;
+					selectBox.top = p.y - 6;
+					selectBox.bottom = p.y + 7;
+
+					targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
+					dc.SelectObject(targetPen);
+					dc.SelectStockObject(NULL_BRUSH);
+					CFont font;
+					LOGFONT lgfont;
+
+					memset(&lgfont, 0, sizeof(LOGFONT));
+					lgfont.lfWeight = 500;
+					strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+					lgfont.lfHeight = 14;
+					font.CreateFontIndirect(&lgfont);
+
+					dc.SelectObject(font);
+					dc.SetTextColor(C_WHITE);
+
+
 					if (CSiTRadar::menuState.handoffMode || CSiTRadar::menuState.SFIMode) {
 						if (strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
-							HPEN targetPen;
-							RECT selectBox{};
-							selectBox.left = p.x - 6;
-							selectBox.right = p.x + 7;
-							selectBox.top = p.y - 6;
-							selectBox.bottom = p.y + 7;
-
-							targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
-							dc.SelectObject(targetPen);
-							dc.SelectStockObject(NULL_BRUSH);
 
 							dc.Rectangle(&selectBox);
-
-							CFont font;
-							LOGFONT lgfont;
-
-							memset(&lgfont, 0, sizeof(LOGFONT));
-							lgfont.lfWeight = 500;
-							strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-							lgfont.lfHeight = 14;
-							font.CreateFontIndirect(&lgfont);
-
-							dc.SelectObject(font);
-							dc.SetTextColor(C_WHITE);
 
 							RECT rectHO;
 							rectHO.left = p.x - 16;
@@ -609,10 +608,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								dc.DrawText("SFI", &rectHO, DT_CENTER);
 							}
 
-							DeleteObject(font);
-							DeleteObject(targetPen);
 						}
 					}
+					else if (mAcData[callSign].isPointOut) {
+
+					}
+
+
+					DeleteObject(font);
+					DeleteObject(targetPen);
 
 
 				}

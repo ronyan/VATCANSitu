@@ -110,7 +110,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
 		&& rad->GetPlugIn()->ControllerMyself().IsController()) { blinking = TRUE; }
 	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
-	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
+	if (CSiTRadar::hoAcceptedTime.find(fp->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
 
 	// Destination airport highlighting
 	auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), fp->GetFlightPlanData().GetDestination());
@@ -135,7 +135,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	string ssr = rt->GetPosition().GetSquawk();
 
 	// Line 1 Items
-	string cs = rt->GetCallsign();
+	string cs = fp->GetCallsign();
 	string wtSymbol = "";
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
@@ -196,7 +196,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	string destinationDist, destinationTime;
 	// if the destination airport is not in the sector file, have to use Euroscope's FP calculated distance and not a direct distance
 	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0) {
-		destinationDist = to_string((long)rt->GetCorrelatedFlightPlan().GetDistanceToDestination());
+		destinationDist = to_string((long)fp->GetDistanceToDestination());
 	}
 	// otherwise, the display should be direct distance which can be more accurate calculated if in the SCT file.
 	else {
@@ -389,8 +389,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		if (
 			// altitude differential 
-			(abs(alt - rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude()) > 200 &&
-			rt->GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() != 0) 
+			(abs(alt - fp->GetControllerAssignedData().GetClearedAltitude()) > 200 &&
+			fp->GetControllerAssignedData().GetClearedAltitude() != 0) 
 			
 			// or extended altitudes toggled on
 			|| (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt)) {
