@@ -438,6 +438,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					if (radarTarget.GetPosition().GetRadarFlags() != 0) {
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+						CACTag::DrawHistoryDots(&dc, &radarTarget);
 					}
 
 					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
@@ -446,7 +447,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
 						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
-
+						CACTag::DrawHistoryDots(&dc, &radarTarget);
 					}
 
 					// Tag Level Logic
@@ -623,8 +624,33 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
 						&& !mAcData[flightPlan.GetCallsign()].isADSB) {
 
+						// Store the points for history dots, only store new if position updated
+						if (mAcData[flightPlan.GetCallsign()].prevPosition.empty()) {
+
+							mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+
+						}
+
+						else {
+							if ((flightPlan.GetFPTrackPosition().GetPosition().m_Latitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Latitude) &&
+								(flightPlan.GetFPTrackPosition().GetPosition().m_Longitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Longitude)) {
+
+								if (mAcData[flightPlan.GetCallsign()].prevPosition.size() < menuState.numHistoryDots) {
+
+									mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+
+								}
+								else {
+
+									mAcData[flightPlan.GetCallsign()].prevPosition.pop_front();
+									mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+								}
+							}
+						}
+
 						CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
 						CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
+						CACTag::DrawHistoryDots(&dc, &flightPlan);
 
 						POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
 

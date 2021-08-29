@@ -51,6 +51,7 @@ struct ACData {
     string CID;
     bool extAlt{ FALSE };
     int destLabelType{ 0 };
+    deque<CPosition> prevPosition;
 };
 
 struct SFocusItem {
@@ -73,6 +74,7 @@ struct buttonStates {
     bool destAirport{ false };
     bool haloCursor{ false };
 
+    int numHistoryDots{ 4 };
 
     bool wxAll{ FALSE };
     bool wxHigh{ FALSE };

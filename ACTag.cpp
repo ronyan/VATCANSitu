@@ -1070,6 +1070,53 @@ void CACTag::DrawRTConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 
 }
 
+void CACTag::DrawHistoryDots(CDC* dc, CRadarTarget* rt)
+{
+	int sDC = dc->SaveDC();
+
+	CRadarTargetPositionData trailPt;
+	POINT dot;
+	trailPt = rt->GetPreviousPosition(rt->GetPosition());
+
+	HPEN targetPen;
+	COLORREF ppsColor = C_PPS_YELLOW;
+	if (!strcmp(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(),"V")) { ppsColor = C_PPS_ORANGE; }
+
+	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
+	dc->SelectObject(targetPen);
+	
+	for (int i = 0; i < CSiTRadar::menuState.numHistoryDots; i++) {
+		dot = CSiTRadar::m_pRadScr->ConvertCoordFromPositionToPixel(trailPt.GetPosition());
+		RECT r = { dot.x - 1, dot.y - 1, dot.x + 1,dot.y + 1 };
+		dc->Ellipse(&r);
+		trailPt = rt->GetPreviousPosition(trailPt);
+	}
+
+	DeleteObject(targetPen);
+	dc->RestoreDC(sDC);
+}
+
+void CACTag::DrawHistoryDots(CDC* dc, CFlightPlan* fp)
+{
+	int sDC = dc->SaveDC();
+
+	HPEN targetPen;
+	COLORREF ppsColor = C_PPS_ORANGE;
+	POINT dot;
+
+	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
+	dc->SelectObject(targetPen);
+
+	for(auto pos: CSiTRadar::mAcData[fp->GetCallsign()].prevPosition){
+		dot = CSiTRadar::m_pRadScr->ConvertCoordFromPositionToPixel(pos);
+		RECT r = { dot.x - 1, dot.y - 1, dot.x + 1,dot.y + 1 };
+		dc->Ellipse(&r);
+	}
+
+	DeleteObject(targetPen);
+	dc->RestoreDC(sDC);
+}
+
 /* DEBUG CODE
 
 	//debug
