@@ -542,6 +542,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		// if vertical (don't divide by 0!)
 		double theta = 30;
 		double phi = 0;
+		POINT leaderOrigin = p;
+		int PPSAreaRad = 9;
 
 		if (connector.x - p.x != 0) {
 
@@ -560,15 +562,73 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 			// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
 			doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
+			leaderOrigin.y = (int)(p.y - (PPSAreaRad)*sin(theta));
+			leaderOrigin.x = (int)(p.x + (PPSAreaRad)*cos(theta));
 
-			if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
-			if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); }
-			if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
-			if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
+			if (connector.x < p.x) { 
+				
+				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); 
+			
+				leaderOrigin.y = (int)(p.y - (PPSAreaRad)*sin(theta));
+				leaderOrigin.x = (int)(p.x - (PPSAreaRad)*cos(theta));
+			
+			} // quadrant 2
+			if (connector.y > p.y && connector.x > p.x) { 
+
+				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); 
+			
+				leaderOrigin.y = (int)(p.y + (PPSAreaRad)*sin(theta));
+				leaderOrigin.x = (int)(p.x + (PPSAreaRad)*cos(theta));
+			}
+
+			// Quadrant 3
+			if (connector.y > p.y && connector.x < p.x) { 
+				
+				doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); 
+				
+				leaderOrigin.y = (int)(p.y + (PPSAreaRad) * sin(theta));
+				leaderOrigin.x = (int)(p.x - (PPSAreaRad) * cos(theta));
+			}
+			
+			
+			if (phi >= PI / 3) { 
+				doglegX = p.x;
+
+				if (doglegY < p.y) {
+					leaderOrigin.x = p.x;
+					leaderOrigin.y = p.y - PPSAreaRad;
+				}
+				else {
+					leaderOrigin.x = p.x;
+					leaderOrigin.y = p.y + PPSAreaRad;
+				}
+			} // same as directly above or below
 		}
 		else {
-			doglegX = p.x; // if direction on top or below
+			doglegX = p.x; // if directly on top or below
 			doglegY = p.y + tagOffsetY + 7;
+
+			if (doglegY < p.y) {
+				leaderOrigin.x = p.x;
+				leaderOrigin.y = p.y - PPSAreaRad;
+			}
+			else {
+				leaderOrigin.x = p.x;
+				leaderOrigin.y = p.y + PPSAreaRad;
+			}
+		}
+
+		if ((int)doglegY == p.y) {
+			doglegX = p.x + tagOffsetX;
+			if (doglegX > p.x) {
+				leaderOrigin.x = p.x + PPSAreaRad;
+				leaderOrigin.y = p.y;
+			}
+			else
+			{
+				leaderOrigin.x = p.x - PPSAreaRad;
+				leaderOrigin.y = p.y;
+			}
 		}
 
 		// draw extension if tag is to the left of the PPS
@@ -593,7 +653,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->SelectObject(targetPen);
 		dc->SelectStockObject(NULL_BRUSH);
 
-		dc->MoveTo(p.x, p.y);
+		dc->MoveTo(leaderOrigin.x, leaderOrigin.y);
 		dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
 		dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
 
