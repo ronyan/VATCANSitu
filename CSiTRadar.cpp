@@ -445,6 +445,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (radarTarget.GetPosition().GetRadarFlags() == 0
 						&& isADSB) {
 						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
+
+						radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(callSign.c_str()));
+
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
 						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
 						CACTag::DrawHistoryDots(&dc, &radarTarget);
