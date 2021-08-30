@@ -634,17 +634,21 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								rectHighlight.top = p.y + 8;
 								rectHighlight.bottom = p.y + 28;
 
-								if (halfSecTick) {
-
 								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
-								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
+
+								if (halfSecTick) {
+									dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
+								}
 								rectHighlight.top = rectHighlight.bottom - 3;
 								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 
 								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
-								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
+								if (halfSecTick) {
+									dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
+								}
 								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
-							}
+
+								
 						}
 						else {
 							dc.Rectangle(&selectBox);
