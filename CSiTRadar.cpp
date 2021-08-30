@@ -2684,7 +2684,7 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 	string poString = FlightPlan.GetControllerAssignedData().GetFlightStripAnnotation(0);
 	string poAccept = FlightPlan.GetControllerAssignedData().GetFlightStripAnnotation(1);
 
-	// On receive PO
+	// On receive PO message
 	if (!strcmp(sTargetController, m_pRadScr->GetPlugIn()->ControllerMyself().GetCallsign())) {
 		if (poString.find("PO") != string::npos) {
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = true;
@@ -2696,6 +2696,9 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = "";
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = "";
 		}
+		if (!strcmp(poAccept.c_str(), "OK")) {
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POAcceptTime = clock();
+		}
 	}
 
 	// Sent PO
@@ -2703,9 +2706,6 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 		if (!poString.empty()) {
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutFromMe = true;
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString;
-		}
-		if (!strcmp(poAccept.c_str(), "OK")) {
-			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POAcceptTime = clock();
 		}
 	} 
 
