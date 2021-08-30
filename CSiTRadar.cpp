@@ -1483,9 +1483,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 
-	    SituPlugin::SendKeyboardString(".chat cytz_twr");
-		//SituPlugin::SendKeyboardPresses({ 0x1C });
-
 		if (Button == BUTTON_RIGHT) {
 			menuState.ResetSFIOptions();
 			menuState.MB3menu = true;

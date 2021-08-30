@@ -243,7 +243,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	// Initiate the default tag location, if no location is set already or find it in the map
 
 	if (tOffset->find(rt->GetCallsign()) == tOffset->end()) {
-		POINT pTag{ 30, -15 };
+		POINT pTag{ 20, -20 };
 		tOffset->insert(pair<string, POINT>(rt->GetCallsign(), pTag));
 
 		tagOffsetX = pTag.x;
