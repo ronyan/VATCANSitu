@@ -56,6 +56,12 @@ void CPopUpMenu::populateMenu()
     autoHOTarget += m_rad->GetPlugIn()->ControllerSelect(m_rad->GetPlugIn()->FlightPlanSelect(m_fp->GetCallsign()).GetCoordinatedNextController()).GetPositionId();
     if (m_fp->GetTrackingControllerIsMe()) {
         this->m_listElements.emplace_back(SPopUpElement("Controller Remarks", "CtrlRemarks", 0, 0));
+        if (CSiTRadar::mAcData[m_fp->GetCallsign()].pointOutFromMe) {
+            this->m_listElements.emplace_back(SPopUpElement("Recall Point Out", "RecallPointOut", 0, 0));
+        }
+        else {
+            this->m_listElements.emplace_back(SPopUpElement("Point Out", "PointOut", 0, 1));
+        }
         this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
         this->m_listElements.emplace_back(SPopUpElement("Comm. Type", "SetComm", 0, 1));
     }
@@ -81,7 +87,7 @@ void CPopUpMenu::populateMenu()
 }
 
 void CPopUpMenu::populateSecondaryMenu(string type) {
-    if (!strcmp(type.c_str(), "ManHandoff")) {
+    if (!strcmp(type.c_str(), "ManHandoff") || !strcmp(type.c_str(), "PointOut")) {
 
         std::map<string, bool>::reverse_iterator it;
         this->m_listElements.emplace_back(SPopUpElement("EXP", "EXP", 2, 0, 40));

@@ -83,6 +83,43 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 
 	}
 
+	if (winType == WINDOW_POINT_OUT) {
+		windowTitle = "Point Out";
+		m_height = 85;
+		m_width = 210;
+
+		SWindowButton submit, cancel;
+
+		submit.location = { 50, 50 };
+		submit.m_height = 25;
+		submit.m_width = 60;
+		submit.text = "Submit";
+		submit.windowID = m_windowId_;
+
+		cancel.location = { 112, 50 };
+		cancel.m_height = 25;
+		cancel.m_width = 60;
+		cancel.text = "Cancel";
+		cancel.windowID = m_windowId_;
+
+		m_buttons_.push_back(submit);
+		m_buttons_.push_back(cancel);
+
+		STextField cjsText;
+		cjsText.m_location_ = { 8,28 };
+		cjsText.m_height = 19;
+		cjsText.m_width = 38;
+		cjsText.m_parentWindowID = m_windowId_;
+		m_textfields_.push_back(cjsText);
+
+		STextField poMessage;
+		poMessage.m_location_ = { 48,28 };
+		poMessage.m_height = 19;
+		poMessage.m_width = 152;
+		poMessage.m_parentWindowID = m_windowId_;
+		m_textfields_.push_back(poMessage);
+	}
+
 	m_origin.x = origin.x - m_width / 2;
 	m_origin.y = origin.y - m_height / 2;
 

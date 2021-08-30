@@ -610,8 +610,55 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						}
 					}
-					else if (mAcData[callSign].isPointOut) {
+					else if (mAcData[callSign].pointOutToMe){
 
+						if (halfSecTick &&
+							mAcData[callSign].POAcceptTime == 0) { // change to flashing for point out events;
+							dc.Rectangle(&selectBox);
+							RECT rectHighlight;
+							string POString, POString2;
+							POString = "P/Out " + mAcData[callSign].POTarget;
+							POString2 = mAcData[callSign].POString;
+
+							rectHighlight.left = p.x - 9;
+							rectHighlight.right = p.x + 20;
+							rectHighlight.top = p.y + 8;
+							rectHighlight.bottom = p.y + 28;
+
+							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
+							rectHighlight.top = rectHighlight.bottom - 3;
+							AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
+
+							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
+							AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
+						}
+					}
+					else if (mAcData[callSign].pointOutFromMe) {
+						if ((clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) < 10 &&
+							(clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) > 0 &&
+							halfSecTick) {
+						} else {
+
+							dc.Rectangle(&selectBox);
+							RECT rectHighlight;
+							string POString, POString2;
+							POString = "P/Out " + mAcData[callSign].POTarget;
+							POString2 = mAcData[callSign].POString;
+
+							rectHighlight.left = p.x - 9;
+							rectHighlight.right = p.x + 20;
+							rectHighlight.top = p.y + 8;
+							rectHighlight.bottom = p.y + 28;
+
+							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
+							rectHighlight.top = rectHighlight.bottom - 3;
+
+							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
+						}
 					}
 
 
@@ -1411,6 +1458,12 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
+	if (ObjectType == HIGHLIGHT_POINT_OUT_ACCEPT) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		GetPlugIn()->FlightPlanSelectASEL().GetControllerAssignedData().SetFlightStripAnnotation(1, "OK");
+		GetPlugIn()->FlightPlanSelectASEL().PushFlightStrip(CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign());
+	}
+
 	if (ObjectType == WINDOW_HANDOFF_EXT_CJS) {
 
 		if (!strcmp(func.c_str(), "Cancel")) {
@@ -1452,6 +1505,24 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
+	if (ObjectType == WINDOW_POINT_OUT) {
+		auto window = GetAppWindow(stoi(id));
+		if (!strcmp(func.c_str(), "Cancel")) {
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+		if (!strcmp(func.c_str(), "Submit")) {
+			string poMsg = "PO " + window->m_textfields_.back().m_text;
+			SendPointOut (window->m_textfields_.front().m_text.c_str(), poMsg.c_str(), &GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			mAcData[window->m_callsign].pointOutFromMe = true;
+			mAcData[window->m_callsign].POTarget = window->m_textfields_.front().m_text;
+			mAcData[window->m_callsign].POString = window->m_textfields_.back().m_text;
+
+			menuState.radarScrWindows.erase(stoi(id));
+
+		}
+	}
+
 	if (ObjectType == WINDOW_LIST_BOX_ELEMENT) {
 		string s, win, le;
 		s = sObjectId;
@@ -1484,14 +1555,19 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 		// Only one text field can be focused in whole app
 		for (auto& window : menuState.radarScrWindows) {
-			for (auto& tf : window.second.m_textfields_) {
+			for (auto& textf : window.second.m_textfields_) {
 				if (window.first == atoi(win.c_str())) {
-					tf.m_focused = !tf.m_focused;
-					menuState.focusedItem.m_focus_on = tf.m_focused;
-					menuState.focusedItem.m_focused_tf = &tf;
+					if (textf.m_textFieldID == atoi(tf.c_str())) {
+						textf.m_focused = !textf.m_focused;
+						menuState.focusedItem.m_focus_on = textf.m_focused;
+						menuState.focusedItem.m_focused_tf = &textf;
+					}
+					else {
+						textf.m_focused = false;
+					}
 				}
 				else {
-					tf.m_focused = false;
+					textf.m_focused = false;
 				}
 			}
 		}
@@ -1553,6 +1629,16 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				menuState.radarScrWindows[ctrl.m_windowId_] = ctrl;
 			}
 		}
+		if (!strcmp(sObjectId, "RecallPointOut")) {
+			menuState.MB3menu = false;
+			mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].pointOutFromMe = false;
+			GetPlugIn()->FlightPlanSelectASEL().GetControllerAssignedData().SetFlightStripAnnotation(1, "");
+			SendPointOut(mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].POTarget.c_str(), "", &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()));
+
+			mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].POTarget = "";
+			mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].POString = "";
+
+		}
 	}
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
@@ -1574,6 +1660,35 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "SetComm")) {
 			menuState.MB3menu = false;
 			GetPlugIn()->FlightPlanSelectASEL().GetControllerAssignedData().SetCommunicationType(*sObjectId);
+		}
+		if (!strcmp(menuState.MB3SecondaryMenuType.c_str(), "PointOut")) {
+			menuState.MB3menu = false;
+			// Check if there is already a window, bring it to the mouse
+			bool exists = false;
+			for (auto& win : menuState.radarScrWindows) {
+				if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign())
+					&& win.second.m_winType == WINDOW_POINT_OUT)
+				{
+					win.second.m_origin = { Pt.x, Pt.y };
+					exists = true;
+				}
+			}
+			// If not draw it
+			if (!exists) {
+				CAppWindows poPrompt({ Pt.x, Pt.y }, WINDOW_POINT_OUT, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
+
+				ClearFocusedTextFields();
+
+				if (!strcmp(sObjectId, "EXP")) {
+					poPrompt.m_textfields_.front().m_focused = true;
+				}
+				else {
+					poPrompt.m_textfields_.back().m_focused = true;
+					poPrompt.m_textfields_.front().m_text = sObjectId;
+				}
+
+				menuState.radarScrWindows[poPrompt.m_windowId_] = poPrompt;
+			}
 		}
 	}
 
@@ -1993,7 +2108,8 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 
 			if (!strcmp(sObjectId, "ManHandoff")  ||
 				!strcmp(sObjectId, "ModSFI") ||
-				!strcmp(sObjectId, "SetComm") ) {
+				!strcmp(sObjectId, "SetComm") ||
+				!strcmp(sObjectId, "PointOut")) {
 				menuState.MB3SecondaryMenuOn = true;
 				menuState.MB3SecondaryMenuType = sObjectId;
 			}
@@ -2550,4 +2666,40 @@ void CSiTRadar::OnControllerDisconnect(CController Controller) {
 	if (CSiTRadar::menuState.nearbyCJS.find(Controller.GetPositionId()) != CSiTRadar::menuState.nearbyCJS.end()) {
 		CSiTRadar::menuState.nearbyCJS.erase(Controller.GetPositionId());
 	}
+}
+
+void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
+	const char* sSenderController,
+	const char* sTargetController) {
+
+	string poString = FlightPlan.GetControllerAssignedData().GetFlightStripAnnotation(0);
+	string poAccept = FlightPlan.GetControllerAssignedData().GetFlightStripAnnotation(1);
+
+	// On receive PO
+	if (!strcmp(sTargetController, m_pRadScr->GetPlugIn()->ControllerMyself().GetCallsign())) {
+		if (poString.find("PO") != string::npos) {
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = true;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = GetPlugIn()->ControllerSelect(sTargetController).GetPositionId();
+		}
+		if (poString.empty()) {
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = false;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = "";
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = "";
+		}
+	}
+
+	// Sent PO
+	if (!strcmp(sSenderController, m_pRadScr->GetPlugIn()->ControllerMyself().GetCallsign())) {
+		if (!poString.empty()) {
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutFromMe = true;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString;
+		}
+		if (!strcmp(poAccept.c_str(), "OK")) {
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POAcceptTime = clock();
+		}
+	} 
+
+
+
 }

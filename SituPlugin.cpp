@@ -74,6 +74,11 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 CSiTRadar::m_pRadScr->RequestRefresh();
                 return -1;
             }
+            if (wParam == VK_SPACE) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back(' ');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
             if (wParam == VK_BACK) {
                 if (!CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.empty()) {
                     CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.pop_back();

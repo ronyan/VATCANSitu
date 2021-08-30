@@ -52,9 +52,11 @@ struct ACData {
     bool extAlt{ FALSE };
     int destLabelType{ 0 };
     deque<CPosition> prevPosition;
-    bool isPointOut;
-    bool POTarget;
-    string POString;
+    bool pointOutToMe{ false };
+    bool pointOutFromMe{ false };
+    string POTarget{};
+    clock_t POAcceptTime{ clock() };
+    string POString{};
 };
 
 struct SFocusItem {
@@ -396,6 +398,13 @@ public:
         }
     }
 
+    static void SendPointOut(const char* target, const char* message, CFlightPlan* fp) {
+
+        fp->GetControllerAssignedData().SetFlightStripAnnotation(0, message);
+        fp->PushFlightStrip(CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectByPositionId(target).GetCallsign());
+
+    }
+
     static bool ModifyCtrlRemarks(string c, CFlightPlan fp) {
         string scratchpad;
         string newstring;
@@ -426,6 +435,9 @@ public:
         fp.GetFlightPlanData().AmendFlightPlan();
         return true;
     }
+    inline  virtual void  OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
+        const char* sSenderController,
+        const char* sTargetController);
 
 protected:
     void ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string& btext, int itemtype);
