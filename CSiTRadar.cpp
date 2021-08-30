@@ -485,6 +485,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						// record the time of handoff acceptance unless the handoff is recalled by yourself
 						if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
 							hoAcceptedTime[callSign] = clock();
+
+							// if jurisdiction changes, pointouts are cleared
+							GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetControllerAssignedData().SetFlightStripAnnotation(1, "");
+							SendPointOut(mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].POTarget.c_str(), "", &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()));
+
+							mAcData[callSign].pointOutFromMe = false;
+							mAcData[callSign].pointOutToMe = false;
+							mAcData[callSign].POTarget = "";
+							mAcData[callSign].POString = "";
 						}
 					}
 
