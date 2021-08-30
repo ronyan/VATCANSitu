@@ -636,3 +636,28 @@ void SituPlugin::OnAirportRunwayActivityChanged()
     }
     CSiTRadar::DisplayActiveRunways();
 }
+
+void SituPlugin::OnCompilePrivateChat(const char* sSenderCallsign,
+    const char* sReceiverCallsign,
+    const char* sChatMessage)
+{
+
+    string s, cs, msg;
+    s = sChatMessage;
+    string::size_type pos = s.find(" ");
+    if (pos != s.npos) {
+        cs = s.substr(0, pos);
+        msg = s.substr(pos + 1);
+    }
+
+    for (auto& c : cs) {
+        c = toupper(c);
+    }
+
+    if (CSiTRadar::mAcData[cs].pointOutFromMe) {
+        if (!strcmp(msg.c_str(), "ok")) {
+            CSiTRadar::mAcData[cs].POAcceptTime = clock();
+        }
+    }
+
+}

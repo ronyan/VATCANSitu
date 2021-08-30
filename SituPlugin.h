@@ -28,6 +28,8 @@ public:
 
     virtual void OnAirportRunwayActivityChanged();
 
+    inline virtual void OnCompilePrivateChat(const char* sSenderCallsign, const char* sReceiverCallsign, const char* sChatMessage);
+
     static void SendKeyboardPresses(std::vector<WORD> message);
     static void SendKeyboardString(std::string str);
     static POINT prevMousePt;

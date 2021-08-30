@@ -671,7 +671,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 					else if (mAcData[callSign].pointOutFromMe) {
-						if ((clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) < 10 &&
+						if ((clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) < 8 &&
 							(clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) > 0 &&
 							halfSecTick) {
 						} else {
@@ -1493,25 +1493,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
-	if (ObjectType == HIGHLIGHT_POINT_OUT_ACCEPT) {
-		CSiTRadar::mAcData[sObjectId].pointOutPendingApproval = false;
-		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
-		string poTarget = GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign();
-		for (auto &c : poTarget) {
-			c = std::tolower(c);
-		}
-		poTarget = ".chat " + poTarget;
-		string poMessage = sObjectId;
-		for (auto& c : poMessage) {
-			c = std::tolower(c);
-		}
-		poMessage += " ok";
-		SituPlugin::SendKeyboardString(poTarget);
-		SituPlugin::SendKeyboardPresses({ 0x1C });
-		SituPlugin::SendKeyboardString(poMessage);
-		SituPlugin::SendKeyboardPresses({ 0x1C });
-	}
-
 	if (ObjectType == WINDOW_HANDOFF_EXT_CJS) {
 
 		if (!strcmp(func.c_str(), "Cancel")) {
@@ -1641,6 +1622,25 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 {	
 
 	if (menuState.mouseMMB) { return; }
+
+	if (ObjectType == HIGHLIGHT_POINT_OUT_ACCEPT) {
+		CSiTRadar::mAcData[sObjectId].pointOutPendingApproval = false;
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		string poTarget = GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign();
+		for (auto& c : poTarget) {
+			c = std::tolower(c);
+		}
+		poTarget = ".chat " + poTarget;
+		string poMessage = sObjectId;
+		for (auto& c : poMessage) {
+			c = std::tolower(c);
+		}
+		poMessage += " ok";
+		SituPlugin::SendKeyboardString(poTarget);
+		SituPlugin::SendKeyboardPresses({ 0x1C });
+		SituPlugin::SendKeyboardString(poMessage);
+		SituPlugin::SendKeyboardPresses({ 0x1C });
+	}
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU) {
 		if (!strcmp(sObjectId, "AutoHandoff")) {
@@ -2721,7 +2721,6 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 	const char* sTargetController) {
 
 	string poString = FlightPlan.GetControllerAssignedData().GetFlightStripAnnotation(0);
-	string poAccept = FlightPlan.GetControllerAssignedData().GetFlightStripAnnotation(1);
 
 	// On receive PO message
 	if (!strcmp(sTargetController, m_pRadScr->GetPlugIn()->ControllerMyself().GetCallsign())) {
@@ -2735,9 +2734,6 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = false;
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = "";
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = "";
-		}
-		if (!strcmp(poAccept.c_str(), "OK")) {
-			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POAcceptTime = clock();
 		}
 	}
 
