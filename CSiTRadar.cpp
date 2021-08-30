@@ -633,6 +633,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								rectHighlight.right = p.x + 20;
 								rectHighlight.top = p.y + 8;
 								rectHighlight.bottom = p.y + 28;
+								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 
 								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
 
@@ -640,7 +641,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 									dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
 								}
 								rectHighlight.top = rectHighlight.bottom - 3;
-								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 
 								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
 								if (halfSecTick) {
@@ -1483,6 +1483,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 
+	    SituPlugin::SendKeyboardString(".chat cytz_twr");
+		//SituPlugin::SendKeyboardPresses({ 0x1C });
+
 		if (Button == BUTTON_RIGHT) {
 			menuState.ResetSFIOptions();
 			menuState.MB3menu = true;
@@ -1496,8 +1499,20 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == HIGHLIGHT_POINT_OUT_ACCEPT) {
 		CSiTRadar::mAcData[sObjectId].pointOutPendingApproval = false;
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
-		GetPlugIn()->FlightPlanSelectASEL().GetControllerAssignedData().SetFlightStripAnnotation(1, "OK");
-		GetPlugIn()->FlightPlanSelectASEL().PushFlightStrip(CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign());
+		string poTarget = GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign();
+		for (auto &c : poTarget) {
+			c = std::tolower(c);
+		}
+		poTarget = ".chat " + poTarget;
+		string poMessage = sObjectId;
+		for (auto& c : poMessage) {
+			c = std::tolower(c);
+		}
+		poMessage += " ok";
+		SituPlugin::SendKeyboardString(poTarget);
+		SituPlugin::SendKeyboardPresses({ 0x1C });
+		SituPlugin::SendKeyboardString(poMessage);
+		SituPlugin::SendKeyboardPresses({ 0x1C });
 	}
 
 	if (ObjectType == WINDOW_HANDOFF_EXT_CJS) {
@@ -2717,7 +2732,7 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = true;
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutPendingApproval = true;
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString.substr(3);
-			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = GetPlugIn()->ControllerSelect(sTargetController).GetPositionId();
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = GetPlugIn()->ControllerSelect(sSenderController).GetPositionId();
 		}
 		if (poString.empty()) {
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = false;

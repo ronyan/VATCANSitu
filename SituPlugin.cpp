@@ -55,6 +55,55 @@ void SendMouseClick(DWORD mouseBut) {
     SendInput(1, &input, sizeof(input));
 }
 
+void SituPlugin::SendKeyboardString(string str) {
+    std::vector<INPUT> vec;
+    const auto key_board_layout = GetKeyboardLayout(0);
+
+    for (auto ch : str)
+    {
+        INPUT input = { 0 };
+        if (ch == '_') {
+            INPUT inputShift = { 0 };
+            inputShift.type = INPUT_KEYBOARD;
+            inputShift.ki.dwFlags = 0;
+            inputShift.ki.time = 0;
+            inputShift.ki.wVk = VK_SHIFT;
+            inputShift.ki.wScan = MapVirtualKeyExW(VK_SHIFT, MAPVK_VK_TO_VSC, key_board_layout);
+            inputShift.ki.dwExtraInfo = 0;
+            vec.push_back(inputShift);
+
+            input.type = INPUT_KEYBOARD;
+            input.ki.dwFlags = 0;
+            input.ki.time = 0;
+            input.ki.wVk = VK_OEM_MINUS;
+            input.ki.wScan = MapVirtualKeyExW(VK_OEM_MINUS, MAPVK_VK_TO_VSC, key_board_layout);
+            input.ki.dwExtraInfo = 0;
+            vec.push_back(input);
+
+            input.ki.dwFlags |= KEYEVENTF_KEYUP;
+            vec.push_back(input);
+
+            inputShift.ki.dwFlags |= KEYEVENTF_KEYUP;
+            vec.push_back(inputShift);
+        }
+        else {
+
+            input.type = INPUT_KEYBOARD;
+            input.ki.dwFlags = 0;
+            input.ki.time = 0;
+            input.ki.wVk = VkKeyScanExW(ch, key_board_layout);
+            input.ki.wScan = MapVirtualKeyExW(VkKeyScanExW(ch, key_board_layout), MAPVK_VK_TO_VSC, key_board_layout);
+            input.ki.dwExtraInfo = 0;
+            vec.push_back(input);
+
+            input.ki.dwFlags |= KEYEVENTF_KEYUP;
+            vec.push_back(input);
+        }
+    }
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     if (CSiTRadar::m_pRadScr == nullptr) { return CallNextHookEx(NULL, nCode, wParam, lParam); }

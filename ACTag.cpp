@@ -243,7 +243,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	// Initiate the default tag location, if no location is set already or find it in the map
 
 	if (tOffset->find(rt->GetCallsign()) == tOffset->end()) {
-		POINT pTag{ 20, -24 };
+		POINT pTag{ 30, -15 };
 		tOffset->insert(pair<string, POINT>(rt->GetCallsign(), pTag));
 
 		tagOffsetX = pTag.x;
@@ -619,15 +619,18 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 
 		if ((int)doglegY == p.y) {
-			doglegX = p.x + tagOffsetX;
-			if (doglegX > p.x) {
+			
+			//doglegX = p.x + tagOffsetX;
+			if (tagOffsetX > 0) {
 				leaderOrigin.x = p.x + PPSAreaRad;
 				leaderOrigin.y = p.y;
+				doglegX = leaderOrigin.x;
 			}
 			else
 			{
 				leaderOrigin.x = p.x - PPSAreaRad;
 				leaderOrigin.y = p.y;
+				doglegX = leaderOrigin.x;
 			}
 		}
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <EuroScopePlugIn.h>
 #include <vector>
+#include <string>
 
 class SituPlugin :
     public EuroScopePlugIn::CPlugIn
@@ -28,6 +29,7 @@ public:
     virtual void OnAirportRunwayActivityChanged();
 
     static void SendKeyboardPresses(std::vector<WORD> message);
+    static void SendKeyboardString(std::string str);
     static POINT prevMousePt;
     static int prevMouseDelta;
     static bool mouseAtRest;
