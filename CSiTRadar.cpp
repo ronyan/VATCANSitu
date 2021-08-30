@@ -671,12 +671,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 					else if (mAcData[callSign].pointOutFromMe) {
-						if ((clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) < 8 &&
-							(clock() - mAcData[callSign].POAcceptTime / CLOCKS_PER_SEC) > 0 &&
+
+						dc.Rectangle(&selectBox);
+
+						if ( ((clock() - mAcData[callSign].POAcceptTime) / CLOCKS_PER_SEC) < 8 &&
+							((clock() - mAcData[callSign].POAcceptTime) / CLOCKS_PER_SEC) > 0 &&
 							halfSecTick) {
+
+							bool i = true;
+
 						} else {
 
-							dc.Rectangle(&selectBox);
 							RECT rectHighlight;
 							string POString, POString2;
 							POString = "P/Out " + mAcData[callSign].POTarget;

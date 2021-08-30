@@ -57,7 +57,7 @@ void CPopUpMenu::populateMenu()
     if (m_fp->GetTrackingControllerIsMe()) {
         this->m_listElements.emplace_back(SPopUpElement("Controller Remarks", "CtrlRemarks", 0, 0));
         if (CSiTRadar::mAcData[m_fp->GetCallsign()].pointOutFromMe) {
-            this->m_listElements.emplace_back(SPopUpElement("Recall Point Out", "RecallPointOut", 0, 0));
+            this->m_listElements.emplace_back(SPopUpElement("Recall P/Out", "RecallPointOut", 0, 0));
         }
         else {
             this->m_listElements.emplace_back(SPopUpElement("Point Out", "PointOut", 0, 1));

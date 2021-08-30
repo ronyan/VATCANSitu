@@ -1,8 +1,8 @@
 NAME:EuroScope main sector file provider
 URL:http://www.euroscope.hu/sectorfile/euroscope_sector_providers.txt
 LOCALFILE:./euroscope_sector_providers.txt
-LASTDOWNLOAD:202108281712
-NEXTDOWNLOAD:202108301712
+LASTDOWNLOAD:202108301825
+NEXTDOWNLOAD:202109011825
 AUTODOWNLOAD:1
 NAME:VATSIM Bulgarian Sector File Provider
 URL:http://vaccbul.avsim-bg.org/ES/VACCBUL_sector_provider.txt
