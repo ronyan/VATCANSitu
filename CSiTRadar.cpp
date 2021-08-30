@@ -1692,6 +1692,27 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].POString = "";
 
 		}
+		if (!strcmp(sObjectId, "AcceptPointOut")) {
+			menuState.MB3menu = false;
+
+			CSiTRadar::mAcData[sObjectId].pointOutPendingApproval = false;
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+			string poTarget = GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign();
+			for (auto& c : poTarget) {
+				c = std::tolower(c);
+			}
+			poTarget = ".chat " + poTarget;
+			string poMessage = sObjectId;
+			for (auto& c : poMessage) {
+				c = std::tolower(c);
+			}
+			poMessage += " ok";
+			SituPlugin::SendKeyboardString(poTarget);
+			SituPlugin::SendKeyboardPresses({ 0x1C });
+			SituPlugin::SendKeyboardString(poMessage);
+			SituPlugin::SendKeyboardPresses({ 0x1C });
+
+		}
 	}
 
 	if (ObjectType == BUTTON_MENU_RMB_MENU_SECONDARY) {
