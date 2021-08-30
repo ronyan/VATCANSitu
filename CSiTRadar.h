@@ -56,6 +56,7 @@ struct ACData {
     bool pointOutFromMe{ false };
     string POTarget{};
     clock_t POAcceptTime{ clock() };
+    bool pointOutPendingApproval{ true };
     string POString{};
 };
 

@@ -621,8 +621,32 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 					else if (mAcData[callSign].pointOutToMe){
 
-						if (halfSecTick &&
-							mAcData[callSign].POAcceptTime == 0) { // change to flashing for point out events;
+						if (mAcData[callSign].pointOutPendingApproval) { // change to flashing for point out events;
+
+								dc.Rectangle(&selectBox);
+								RECT rectHighlight;
+								string POString, POString2;
+								POString = "P/Out " + mAcData[callSign].POTarget;
+								POString2 = mAcData[callSign].POString;
+
+								rectHighlight.left = p.x - 9;
+								rectHighlight.right = p.x + 20;
+								rectHighlight.top = p.y + 8;
+								rectHighlight.bottom = p.y + 28;
+
+								if (halfSecTick) {
+
+								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
+								rectHighlight.top = rectHighlight.bottom - 3;
+								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
+
+								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
+								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
+							}
+						}
+						else {
 							dc.Rectangle(&selectBox);
 							RECT rectHighlight;
 							string POString, POString2;
@@ -637,11 +661,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
 							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
 							rectHighlight.top = rectHighlight.bottom - 3;
-							AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 
 							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
 							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
-							AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 						}
 					}
 					else if (mAcData[callSign].pointOutFromMe) {
@@ -1468,6 +1490,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == HIGHLIGHT_POINT_OUT_ACCEPT) {
+		CSiTRadar::mAcData[sObjectId].pointOutPendingApproval = false;
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 		GetPlugIn()->FlightPlanSelectASEL().GetControllerAssignedData().SetFlightStripAnnotation(1, "OK");
 		GetPlugIn()->FlightPlanSelectASEL().PushFlightStrip(CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectByPositionId(mAcData[sObjectId].POTarget.c_str()).GetCallsign());
@@ -2688,7 +2711,8 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 	if (!strcmp(sTargetController, m_pRadScr->GetPlugIn()->ControllerMyself().GetCallsign())) {
 		if (poString.find("PO") != string::npos) {
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutToMe = true;
-			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutPendingApproval = true;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString.substr(3);
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POTarget = GetPlugIn()->ControllerSelect(sTargetController).GetPositionId();
 		}
 		if (poString.empty()) {
@@ -2705,7 +2729,7 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 	if (!strcmp(sSenderController, m_pRadScr->GetPlugIn()->ControllerMyself().GetCallsign())) {
 		if (!poString.empty()) {
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutFromMe = true;
-			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString;
+			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString.substr(3);
 		}
 	} 
 
