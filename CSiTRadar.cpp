@@ -377,7 +377,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						) {
 						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
 							&& !menuState.filterBypassAll
-							&& !isDest) {
+							) {
 							continue;
 						}
 
