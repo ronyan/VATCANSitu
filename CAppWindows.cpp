@@ -10,7 +10,7 @@ CAppWindows::CAppWindows()
 	
 }
 
-CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea) {
+CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements) {
 	m_origin = origin;
 	m_winType = winType;
 	m_windowId_ = windowIDs_;
@@ -24,7 +24,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 		m_width = 300;
 		m_height = 250;
 		SListBox lb;
-		lb.PopulateListBox();
+		lb.PopulateListBox(*lbElements);
 		m_listboxes_.emplace_back(lb);
 
 		SWindowButton blank, submit, cancel;
@@ -57,6 +57,26 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 		freetext.m_width = 268;
 		m_textfields_.push_back(freetext);
 	}
+
+	m_origin.x = origin.x - m_width / 2;
+	m_origin.y = origin.y - m_height / 2;
+
+	if (origin.x < radarea.left) { m_origin.x = radarea.left; }
+	if ((origin.x + m_width) > radarea.right) { m_origin.x = radarea.right - m_width; }
+	if (origin.y < radarea.top + 60) { m_origin.y = radarea.top + 60; }
+	if ((origin.y + m_height) > (radarea.bottom)) { m_origin.y = radarea.bottom - m_height; }
+
+	windowIDs_++;
+}
+
+
+CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea) {
+	m_origin = origin;
+	m_winType = winType;
+	m_windowId_ = windowIDs_;
+	m_callsign = fp.GetCallsign();
+	string s;
+	s = fp.GetCallsign();
 
 	if (winType == WINDOW_HANDOFF_EXT_CJS) {
 		s += " H/O:";

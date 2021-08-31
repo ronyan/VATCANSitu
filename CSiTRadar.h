@@ -56,7 +56,7 @@ struct ACData {
     bool pointOutFromMe{ false };
     string POTarget{};
     clock_t POAcceptTime{ clock() };
-    bool pointOutPendingApproval{ true };
+    bool pointOutPendingApproval{ false };
     string POString{};
 };
 
@@ -89,7 +89,7 @@ struct buttonStates {
 
     set<string> activeArpt;
     map<string, bool> nearbyCJS;
-    
+
 
     bool SFIMode{};
     SFocusItem focusedItem;
@@ -124,6 +124,7 @@ struct buttonStates {
     string SFIPrefString{};
     string SFIPrefStringASRSetting{};
     string SFIPrefStringDefault{ "ABCDEFGHIJ" };
+    vector<string> ctrlRemarkDefaults{};
 
     void ResetSFIOptions() {
     if (SFIPrefStringASRSetting.size() == 0) {

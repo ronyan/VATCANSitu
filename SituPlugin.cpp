@@ -672,8 +672,12 @@ void SituPlugin::OnCompilePrivateChat(const char* sSenderCallsign,
         c = toupper(c);
     }
 
+    for (auto& c : msg) {
+        c = toupper(c);
+    }
+
     if (CSiTRadar::mAcData[cs].pointOutFromMe) {
-        if (!strcmp(msg.c_str(), "ok")) {
+        if (!strcmp(msg.c_str(), "OK")) {
             CSiTRadar::mAcData[cs].POAcceptTime = clock();
         }
     }

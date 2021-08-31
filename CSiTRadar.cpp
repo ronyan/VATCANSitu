@@ -38,6 +38,9 @@ CSiTRadar::CSiTRadar()
 
 	// load settings file
 	try {
+		for (int i = 0; i < 7; i++) {
+			menuState.ctrlRemarkDefaults.emplace_back("");
+		}
 
 		std::ifstream settings_file(".\\situWx\\settings.json");
 		if (settings_file.is_open()) {
@@ -54,6 +57,11 @@ CSiTRadar::CSiTRadar()
 
 			if (!j["prefSFI"].is_null()) {
 				menuState.SFIPrefStringDefault = j["prefSFI"];
+			}
+			if (!j["ctrlRemarks"].is_null()) {
+				for (int i = 0; i < 7; i++) {
+					menuState.ctrlRemarkDefaults[i] = j["ctrlRemarks"][i];
+				}
 			}
 
 		}
@@ -73,6 +81,7 @@ CSiTRadar::CSiTRadar()
 
 			j["prefSFI"] = menuState.SFIPrefStringDefault;
 
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
 
 			settings_file << j;
 		}
@@ -137,6 +146,8 @@ CSiTRadar::~CSiTRadar()
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
 			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
 
 			settings_file << j;
 		}
@@ -1511,6 +1522,13 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == WINDOW_CTRL_REMARKS) {
 
 		auto window = GetAppWindow(stoi(id));
+
+		if (!strcmp(func.c_str(), "Blank")) {
+			ModifyCtrlRemarks("", GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+
 		if (!strcmp(func.c_str(), "Cancel")) {
 			menuState.radarScrWindows.erase(stoi(id));
 		}
@@ -1714,7 +1732,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			}
 			// If not draw it
 			if (!exists) {
-				CAppWindows ctrl({ Pt.x, Pt.y}, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea());
+				CAppWindows ctrl({ Pt.x, Pt.y}, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea(), &menuState.ctrlRemarkDefaults);
 				menuState.radarScrWindows[ctrl.m_windowId_] = ctrl;
 			}
 		}

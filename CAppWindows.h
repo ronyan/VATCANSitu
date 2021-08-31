@@ -1,6 +1,7 @@
 #pragma once
 #include "SituPlugin.h"
 #include "constants.h"
+#include <vector>
 
 struct SWindowElements {
 	RECT titleBarRect;
@@ -75,14 +76,10 @@ struct SListBox {
 	CDC* m_dc;
 
 	vector<SListBoxElement> listBox_;
-	void PopulateListBox(){
-		listBox_.emplace_back(SListBoxElement(300,"RNAV"));
-		listBox_.emplace_back(SListBoxElement(300,"AFK"));
-		listBox_.emplace_back(SListBoxElement(300,"VECTORS"));
-		listBox_.emplace_back(SListBoxElement(300, ""));
-		listBox_.emplace_back(SListBoxElement(300, ""));
-		listBox_.emplace_back(SListBoxElement(300, ""));
-		listBox_.emplace_back(SListBoxElement(300, ""));
+	void PopulateListBox(std::vector<string> lb_e_vector){
+		for (auto& lbe : lb_e_vector) {
+			listBox_.emplace_back(SListBoxElement(300, lbe));
+		}
 	}
 	void RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
 	SListBoxElement GetListBoxElement(const char* elementID){
@@ -164,6 +161,7 @@ public:
 	vector<STextField> m_textfields_;
 
 	CAppWindows();
+	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	SWindowElements DrawWindow(CDC* dc);
 
