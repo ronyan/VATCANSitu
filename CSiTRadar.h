@@ -392,6 +392,7 @@ public:
                 tf.m_focused = false;
             }
         }
+        CSiTRadar::menuState.focusedItem.m_focus_on = false;
     }
     static void CloseWindow(int winID) {
         if (menuState.radarScrWindows.count(winID) != 0) {

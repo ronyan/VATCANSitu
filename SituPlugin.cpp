@@ -55,9 +55,21 @@ void SendMouseClick(DWORD mouseBut) {
     SendInput(1, &input, sizeof(input));
 }
 
-void SituPlugin::SendKeyboardString(string str) {
+void SituPlugin::SendKeyboardString(const string str) {
     std::vector<INPUT> vec;
     const auto key_board_layout = GetKeyboardLayout(0);
+
+    INPUT iCaps = { 0 };
+    iCaps.type = INPUT_KEYBOARD;
+    iCaps.ki.dwFlags = 0;
+    iCaps.ki.time = 0;
+    iCaps.ki.wVk = VK_CAPITAL;
+    iCaps.ki.wScan = MapVirtualKeyExW(VK_SHIFT, MAPVK_VK_TO_VSC, key_board_layout);
+    iCaps.ki.dwExtraInfo = 0;
+    vec.push_back(iCaps);
+
+    iCaps.ki.dwFlags |= KEYEVENTF_KEYUP;
+    vec.push_back(iCaps);
 
     for (auto ch : str)
     {
@@ -100,6 +112,12 @@ void SituPlugin::SendKeyboardString(string str) {
             vec.push_back(input);
         }
     }
+
+    iCaps.ki.dwFlags = 0;
+    vec.push_back(iCaps);
+
+    iCaps.ki.dwFlags |= KEYEVENTF_KEYUP;
+    vec.push_back(iCaps);
 
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }

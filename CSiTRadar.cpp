@@ -473,6 +473,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						// if you are handing off to someone
 						if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
 							mAcData[callSign].isHandoff = TRUE;
+
+							// Clear the entry used for pointout coordination
+							radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().SetFlightStripAnnotation(0, "");
 						}
 					}
 					else {
@@ -1552,7 +1555,40 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			mAcData[window->m_callsign].POTarget = window->m_textfields_.front().m_text;
 			mAcData[window->m_callsign].POString = window->m_textfields_.back().m_text;
 
+			string defaultESpout;
+			string callsign = window->m_callsign;
+			defaultESpout = ".point " + window->m_textfields_.front().m_text;
+			for (auto& c : defaultESpout) {
+				c = tolower(c);
+			}
 			menuState.radarScrWindows.erase(stoi(id));
+			ClearFocusedTextFields();
+
+			if (!GetPlugIn()->ControllerSelectByPositionId(mAcData[callsign].POTarget.c_str()).IsOngoingAble()) { // if not ES, send a ES default p/out i.e. to US
+
+				SituPlugin::SendKeyboardString(defaultESpout);
+				GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(callsign.c_str()));
+				SituPlugin::SendKeyboardPresses({ 0x4E });
+			}
+			else { // if ES send a text message also (if target doesn't use plugin)
+
+				string poTarget = GetPlugIn()->ControllerSelectByPositionId(mAcData[callsign].POTarget.c_str()).GetCallsign();
+				poTarget = ".chat " + poTarget;
+				string poMessage = "point out " + callsign;
+				poMessage = poMessage + " " + mAcData[callsign].POString;
+
+				for (auto& c : poMessage) {
+					c = std::tolower(c);
+				}
+				for (auto& c : poTarget) {
+					c = std::tolower(c);
+				}
+
+				SituPlugin::SendKeyboardString(poTarget);
+				SituPlugin::SendKeyboardPresses({ 0x1C });
+				SituPlugin::SendKeyboardString(poMessage);
+				SituPlugin::SendKeyboardPresses({ 0x1C });
+			}
 
 		}
 	}
