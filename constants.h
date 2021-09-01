@@ -111,6 +111,10 @@ const int DELETE_ALL_FREE_TEXT = 1103;
 // AC lists
 const int LIST_OFF_SCREEN = 8000;
 const int LIST_TIME_ATIS = 8001;
+const int LIST_MESSAGES = 8002;
+
+
+const int LIST_ITEM_SIMPLE_STRING = 8100;
 
 // Module 2 : distances relative to module origin
 const int HALO_TOOL_X = 0;

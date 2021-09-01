@@ -123,9 +123,6 @@ CSiTRadar::CSiTRadar()
 
 	time = clock();
 	oldTime = clock();
-
-	//CAppWindows win({ 300,450 }, WINDOW_CTRL_REMARKS);
-	//menuState.radarScrWindows[win.m_windowId_] = win;
 }
 
 CSiTRadar::~CSiTRadar()
@@ -361,6 +358,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList(acLists[LIST_OFF_SCREEN].p, &dc, mAcData, LIST_OFF_SCREEN);
+				//DrawACList({ 500,80 }, &dc, mAcData, LIST_MESSAGES);
 
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
@@ -2785,7 +2783,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		listArcft.left = p.x + 10;
 		listArcft.top = p.y + 13;
 
-		header = "OFF Screen";
+		header = "Off Screen";
 
 		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
@@ -2816,8 +2814,42 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		}
 	}
 
+	if (listType == LIST_MESSAGES) {
 
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
 
+		header = "Message List";
+		header += " (" + to_string(wxRadar::asyncMessages.size()) + ")";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_MESSAGES, to_string(LIST_MESSAGES).c_str(), listHeading, true, "");
+
+		// Add the aircrafts
+
+		for (auto& message : wxRadar::asyncMessages) {
+			if (!acLists[LIST_MESSAGES].collapsed) {
+				dc->DrawText(message.reponseMessage.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(message.reponseMessage.c_str(), &listArcft, DT_LEFT);
+				listArcft.top += 13;
+			}
+			showArrow = true;
+		}
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_MESSAGES].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
+	}
 
 	dc->RestoreDC(sDC);
 	DeleteObject(font);
