@@ -33,6 +33,11 @@ struct ACList {
     bool collapsed{ false };
 };
 
+struct inactiveRunway {
+    CPosition end1;
+    CPosition end2;
+};
+
 struct ACData {
     bool hasVFRFP;
     bool isADSB;
@@ -106,6 +111,7 @@ struct buttonStates {
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;
+    vector<inactiveRunway> inactiveRwyList;
     map<string, string> arptAltimeterOld;
     map<string, string> arptAtisLetterOld;
 

@@ -1452,35 +1452,63 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 		}
-	}
 
-	if (phase == REFRESH_PHASE_BACK_BITMAP) {
-		if (menuState.wxAll || menuState.wxHigh) {
-			
-			std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
-			// wxRadar::renderRadar( &g, this, menuState.wxAll);
-		}
+		if (phase == REFRESH_PHASE_BACK_BITMAP) {
+			if (menuState.wxAll || menuState.wxHigh) {
 
-		// refresh jurisdictional list on zoom change
-		CSiTRadar::menuState.jurisdictionalAC.clear();
+				std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
+				// wxRadar::renderRadar( &g, this, menuState.wxAll);
+			}
 
-		for (auto& ac : CSiTRadar::mAcData) {
+			// refresh jurisdictional list on zoom change
+			CSiTRadar::menuState.jurisdictionalAC.clear();
 
-			if (ac.second.isJurisdictional) {
-				if (ac.second.isOnScreen) {
-					if (ac.second.isHandoff) {
-						CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
-					}
-					else {
-						CSiTRadar::menuState.jurisdictionalAC.push_back(ac.first);
+			for (auto& ac : CSiTRadar::mAcData) {
+
+				if (ac.second.isJurisdictional) {
+					if (ac.second.isOnScreen) {
+						if (ac.second.isHandoff) {
+							CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+						}
+						else {
+							CSiTRadar::menuState.jurisdictionalAC.push_back(ac.first);
+						}
 					}
 				}
+				if (ac.second.isHandoffToMe && ac.second.isOnScreen) {
+					CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+				}
 			}
-			if (ac.second.isHandoffToMe && ac.second.isOnScreen) {
-				CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
+
+			Pen pen(Color(255, 199, 48, 35), 1);
+
+			if (strcmp(DisplayType.c_str(), "IFR") == 0) {
+				for (auto const& rwy : menuState.inactiveRwyList) {
+
+					POINT end1 = m_pRadScr->ConvertCoordFromPositionToPixel(rwy.end1);
+					POINT end2 = m_pRadScr->ConvertCoordFromPositionToPixel(rwy.end2);
+
+					g.SetSmoothingMode(SmoothingModeNone);
+
+					g.DrawLine(&pen, Point(end1.x, end1.y), Point(end2.x, end2.y));
+
+					//dc.MoveTo(end1);
+					//dc.LineTo(end2);
+
+					POINT circle;
+					circle.x = (end1.x + end2.x) / 2;
+					circle.y = (end1.y + end2.y) / 2;
+
+					g.SetSmoothingMode(SmoothingModeHighQuality);
+
+					g.DrawEllipse(&pen, circle.x - (int)round(0.1 * pixnm), circle.y - (int)round(0.1 * pixnm), (int)round(0.2 * pixnm), (int)round(0.2 * pixnm));
+
+				}
 			}
 		}
 	}
+
+	
 
 	g.ReleaseHDC(hdc);
 	dc.Detach();
@@ -2401,20 +2429,48 @@ void CSiTRadar::updateActiveRunways(int i) {
 	CSiTRadar::menuState.activeArpt.clear();
 	menuState.activeRunwaysList.clear();
 	menuState.activeRunways.clear();
+	menuState.inactiveRwyList.clear();
 	// Active runway highlighting for ground screens
 	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
+		string airport;
 
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
-			string airportrwy = runway.GetAirportName();
-			CSiTRadar::menuState.activeArpt.insert(airportrwy.substr(0, 4));
+			airport = runway.GetAirportName();
+			CSiTRadar::menuState.activeArpt.insert(airport.substr(0, 4));
 
-			airportrwy = airportrwy + runway.GetRunwayName(0);
+			string airportrwy = airport + runway.GetRunwayName(0);
 			activerwys.push_back(airportrwy);
 
 		}
 	}
+
+	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
+		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
+		string airportrwy;
+
+		for (auto const& arpt : menuState.activeArpt) {
+			
+			string r = runway.GetAirportName();
+
+			if (!strcmp(r.substr(0, 4).c_str(), arpt.c_str())) {
+				if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {}
+				else {
+					inactiveRunway r;
+					CPosition p;
+					runway.GetPosition(&p, 0);
+					r.end1 = p;
+					runway.GetPosition(&p, 1);
+					r.end2 = p;
+
+					menuState.inactiveRwyList.push_back(r);
+				}
+			}
+		}
+	}
+
+	
 
 	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_GEO); sectorElement.IsValid();
 		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_GEO)) {
