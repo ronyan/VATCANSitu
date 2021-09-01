@@ -129,7 +129,7 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (CSiTRadar::menuState.focusedItem.m_focus_on) {
         CAppWindows* parentWin = CSiTRadar::GetAppWindow(CSiTRadar::menuState.focusedItem.m_focused_tf->m_parentWindowID);
         if (!(lParam & 0x40000000)) {
-            if (wParam >= 0x30 && wParam < 0x5A) {
+            if (wParam >= 0x30 && wParam <= 0x5A) {
                 char l = MapVirtualKeyA(wParam, 2);
 
                 CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back(l);
