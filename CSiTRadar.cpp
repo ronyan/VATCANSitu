@@ -38,8 +38,10 @@ CSiTRadar::CSiTRadar()
 
 	// load settings file
 	try {
-		for (int i = 0; i < 7; i++) {
-			menuState.ctrlRemarkDefaults.emplace_back("");
+		if (menuState.ctrlRemarkDefaults.size() < 7) {
+			for (int i = (int)menuState.ctrlRemarkDefaults.size(); i < 7; i++) {
+				menuState.ctrlRemarkDefaults.emplace_back("");
+			}
 		}
 
 		std::ifstream settings_file(".\\situWx\\settings.json");
