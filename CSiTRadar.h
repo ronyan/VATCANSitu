@@ -23,6 +23,7 @@
 #include "TopMenu.h"
 #include "ACTag.h"
 #include "PPS.h"
+#include "CACList.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -145,6 +146,7 @@ struct buttonStates {
     void ExpandSFIOptions() { SFIPrefString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; };
 
     map<int, CAppWindows> radarScrWindows;
+    map<int, CACList> radarScrLists;
 
 };
 

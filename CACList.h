@@ -27,6 +27,7 @@ public:
 class CACListItem {
 public:
 	static unsigned long m_list_IDs_;
+	POINT m_origin;
 	int m_list_ID_;
 	int m_list_item_line;
 	std::vector<CACListItemElement> m_list_elements_;
@@ -54,12 +55,14 @@ public:
 	int m_listType;
 	POINT origin;
 	int m_list_ID;
+	bool m_has_arrow{ false };
 	bool m_collapsed{ false };
 	std::string m_header;
 	std::vector<CACListItem> m_list_items_;
 
 	CACList();
-	CACList(int listType) {
+	CACList(CDC* dc, int listType) {
+		m_dc = dc;
 		m_listType = listType;
 	}
 	void PopulatetList(std::vector<std::string> listContents) {
