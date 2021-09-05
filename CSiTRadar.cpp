@@ -1299,7 +1299,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						deltax += 38;
 
-						if (deltax >= 350) { deltax = 0; deltay += 26; }
+						if (deltax >= 440) { deltax = 0; deltay += 26; }
 					}
 				}
 
