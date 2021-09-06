@@ -434,10 +434,27 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						targetPen = CreatePen(PS_DASHDOT, 1, C_WHITE);
 						dc.SelectObject(targetPen);
 
+						CFont font;
+						LOGFONT lgfont;
+
+						memset(&lgfont, 0, sizeof(LOGFONT));
+						lgfont.lfWeight = 500;
+						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+						lgfont.lfHeight = 14;
+						font.CreateFontIndirect(&lgfont);
+
 						dc.MoveTo(p);
 						dc.LineTo(ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition));
 
+						RECT dctFixNameRect;
+						dctFixNameRect.top = ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition).y + 3;
+						dctFixNameRect.left = ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition).x -15;
+
+						dc.DrawText(mAcData[callSign].directToPendingFixName.c_str(), &dctFixNameRect, DT_CENTER | DT_CALCRECT);
+						dc.DrawText(mAcData[callSign].directToPendingFixName.c_str(), &dctFixNameRect, DT_CENTER);
+
 						DeleteObject(targetPen);
+						DeleteObject(font);
 
 					}
 
@@ -852,6 +869,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(lbE.m_elementID);
 							AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
 						}
+						string lbFuncStr;
+						lbFuncStr = to_string(window.second.m_windowId_) + " " + to_string(listbox.m_ListBoxID);
+						AddScreenObject(WINDOW_SCROLL_ARROW_UP, lbFuncStr.c_str(), listbox.m_scrbar.uparrow, false, (lbFuncStr + " Up").c_str());
+						AddScreenObject(WINDOW_SCROLL_ARROW_DOWN, lbFuncStr.c_str(), listbox.m_scrbar.downarrow, false, (lbFuncStr + " Down").c_str());
 					}
 
 					for (auto& tf : window.second.m_textfields_) {
@@ -859,6 +880,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(tf.m_textFieldID);
 						AddScreenObject(WINDOW_TEXT_FIELD, windowFuncStr.c_str(), tf.m_textRect, true, windowFuncStr.c_str());
 					}
+					
 					
 				}
 
@@ -1555,6 +1577,29 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		func = s.substr(pos + 1);
 	}
 
+	if (ObjectType == WINDOW_SCROLL_ARROW_UP) {
+		auto window = GetAppWindow(stoi(id));
+		auto lb = window->GetListBox(atoi(func.c_str()));
+		lb.ScrollUp();
+		lb.listBox_.clear();
+		lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+		window->m_listboxes_.clear();
+		window->m_listboxes_.push_back(lb);
+		RequestRefresh();
+	}
+
+	if (ObjectType == WINDOW_SCROLL_ARROW_DOWN) {
+		auto window = GetAppWindow(stoi(id));
+		auto lb = window->GetListBox(atoi(func.c_str()));
+
+		lb.ScrollDown();
+		lb.listBox_.clear();
+		lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+		window->m_listboxes_.clear();
+		window->m_listboxes_.push_back(lb);
+		RequestRefresh();
+	}
+
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 
@@ -1578,6 +1623,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (ObjectType == WINDOW_DIRECT_TO) {
 		string c;
 		auto window = GetAppWindow(stoi(id));
+		string cs = window->m_callsign;
 
 		if (!strcmp(func.c_str(), "Ok")) {
 
@@ -1585,25 +1631,39 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			for (const auto& lb : window->m_listboxes_) {
 				for (const auto& lelem : lb.listBox_) {
 					if (lelem.m_selected_) {
-						c = lelem.m_ListBoxElementText;
-						ModifyCtrlRemarks(c, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-						menuState.radarScrWindows.erase(stoi(id));
 
+						c = lelem.m_ListBoxElementText;
+						menuState.radarScrWindows.erase(stoi(id));
+						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+						mAcData[cs].directToLineOn = false;
+						mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
+						mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
+						mAcData[cs].directToPendingFixName = "";
 						return;
 					}
 					else {
 						c = "";
+						if (!lb.selectItem.empty()) {
+							c = lb.selectItem;
+						}
 					}
 				}
 			}
 
-			GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+			GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+			menuState.radarScrWindows.erase(stoi(id));
+			mAcData[cs].directToLineOn = false;
+			mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
+			mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
+			mAcData[cs].directToPendingFixName = "";
+
 		}
 
 		if (!strcmp(func.c_str(), "Cancel")) {
 			mAcData[window->m_callsign].directToLineOn = false;
 			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0; 
 			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
+			mAcData[window->m_callsign].directToPendingFixName = "";
 
 			menuState.radarScrWindows.erase(stoi(id));
 		}
@@ -1717,6 +1777,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				if (lelem.m_elementID == stoi(le)) {
 					lelem.m_selected_ = true;
 					le_text = lelem.m_ListBoxElementText;
+					lb.selectItem = le_text;
 				}
 				else {
 					lelem.m_selected_ = false;
@@ -1730,6 +1791,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				std::vector<string>::iterator it = std::find(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), mAcData[window->m_callsign].acFPRoute.fix_names.end(), le_text);
 				int index = std::distance(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), it);
 				mAcData[window->m_callsign].directToPendingPosition = mAcData[window->m_callsign].acFPRoute.route_fix_positions.at(index);
+				mAcData[window->m_callsign].directToPendingFixName = le_text;
 			}
 		}
 
@@ -1828,6 +1890,20 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 		if (!strcmp(sObjectId, "DirectTo")) {
 			menuState.MB3menu = false;
+
+			// maintain route in plugin ac-model
+			int numPts = GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointsNumber();
+			string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+			ACRoute rte;
+			rte.fix_names.clear();
+			rte.route_fix_positions.clear();
+			mAcData[cs].acFPRoute = rte;
+			for (int i = 0; i < numPts; i++) {
+				rte.fix_names.push_back(GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointName(i));
+				rte.route_fix_positions.push_back(GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointPosition(i));
+			}
+			mAcData[cs].acFPRoute = rte;
+
 			// Check if there is already a window, bring it to the mouse
 			bool exists = false;
 			for (auto& win : menuState.radarScrWindows) {
@@ -2650,24 +2726,13 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 			CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
 		}
 	}
-	
+
 	menuState.numJurisdictionAC = count;
-
-	// maintain route in plugin ac-model
-	int numPts = FlightPlan.GetExtractedRoute().GetPointsNumber();
-
-	ACRoute rte;
-	rte.fix_names.clear();
-	rte.route_fix_positions.clear();
-	acdata.acFPRoute = rte;
-	for (int i = 0; i < numPts; i++) {
-		rte.fix_names.push_back(FlightPlan.GetExtractedRoute().GetPointName(i));
-		rte.route_fix_positions.push_back(FlightPlan.GetExtractedRoute().GetPointPosition(i));
-	}
-	acdata.acFPRoute = rte;
 
 	// These items don't need to be updated each loop, save loop type by storing data in a map
 	string callSign = FlightPlan.GetCallsign();
+
+	acdata.acFPRoute = mAcData[callSign].acFPRoute; // cache so it's not lost
 	bool isVFR = !strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V");
 
 	// Get information about the Aircraft/Flightplan

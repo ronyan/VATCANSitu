@@ -19,6 +19,7 @@ struct ACRoute {
     std::vector<std::string> fix_names;
     int nearestPtIdx;
     int directPtIdx;
+    int selectIdx;
 };
 
 class SituPlugin :

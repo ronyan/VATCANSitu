@@ -4,6 +4,7 @@
 unsigned long CAppWindows::windowIDs_ = 0;
 unsigned long SListBoxElement::m_elementIDcount = 0;
 unsigned long STextField::m_textFieldIDcount = 0;
+unsigned long SListBox::m_list_box_ids;
 
 CAppWindows::CAppWindows()
 {
@@ -82,7 +83,9 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 		m_width = 110;
 
 		SListBox lb;
+		lb.m_max_elements = 5;
 		lb.PopulateDirectListBox(rte, fp);
+		lb.m_origin = m_origin;
 		m_listboxes_.emplace_back(lb);
 
 		SWindowButton submit, cancel;
@@ -253,7 +256,14 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 	for (auto& lb : this->m_listboxes_) {
 		lb.m_dc = dc;
 		lb.RenderListBox(1, 1, 1, { m_origin.x + listboxDeltaX, titleRect.bottom + 2 + listboxDeltaY});
+		if (lb.m_has_scroll_bar) {
+			lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
+			lb.m_scrbar.Draw(dc);
+		}
 	}
+
+
+
 	// Draw Buttons if present
 	for (auto& but : this->m_buttons_) {
 		but.m_dc = dc;
@@ -320,6 +330,7 @@ void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT 
 	}
 	RECT totalListBox{ winOrigin.x + 16, winOrigin.y,  winOrigin.x + m_width - 16, winOrigin.y + listBox_.size() * 20 };
 	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
+	this->m_width = totalListBox.right - totalListBox.left;
 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);

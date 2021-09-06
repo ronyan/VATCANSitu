@@ -8,6 +8,86 @@ struct SWindowElements {
 	vector<RECT> ListBoxRect;
 };
 
+struct SListBoxScrollBar {
+	int m_height;
+	int m_width;
+	int m_list_box_id;
+	int m_scroll_bar_id;
+	int m_max_elements;
+	double m_slider_height_ratio;
+	int m_slider_location;
+	int m_clicks;
+	RECT uparrow;
+	RECT downarrow;
+	POINT m_origin;
+	SListBoxScrollBar() {}
+
+	SListBoxScrollBar(int h, int w, int listboxid, POINT origin, int firstelem, int clicks) {
+		m_height = h;
+		m_width = w;
+		m_list_box_id = listboxid;
+		m_origin = origin;
+		m_slider_location = firstelem;
+
+		m_clicks = clicks;
+	}
+	void Draw(CDC* dc) {
+		int sDC = dc->SaveDC();
+
+		HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY4);
+		HBRUSH targetBrush = CreateSolidBrush(C_MENU_GREY1);
+		HBRUSH tb2 = CreateSolidBrush(C_MENU_GREY4);
+		dc->SelectObject(targetPen);
+		dc->SelectObject(targetBrush);
+
+		RECT scrollbar;
+		RECT slider;
+
+		scrollbar.top = m_origin.y;
+		scrollbar.bottom = m_origin.y + m_height;
+		scrollbar.left = m_origin.x;
+		scrollbar.right = m_origin.x + m_width;
+
+		uparrow.top = m_origin.y;
+		uparrow.left = m_origin.x;
+		uparrow.right = m_origin.x + m_width;
+		uparrow.bottom = m_origin.y + 10;
+
+		downarrow.top = m_origin.y + m_height - 10;
+		downarrow.left = m_origin.x;
+		downarrow.right = m_origin.x + m_width;
+		downarrow.bottom = m_origin.y + m_height;
+		
+		slider.left = m_origin.x +1;
+		slider.right = m_origin.x + m_width -1;
+
+		int deltay = (downarrow.top - uparrow.bottom) / m_clicks;
+		slider.top = uparrow.bottom + deltay* m_slider_location;
+		slider.bottom = slider.top + round((downarrow.top - uparrow.bottom)/m_clicks);
+
+		dc->MoveTo({ uparrow.left + 1, uparrow.bottom - 3 });
+		dc->LineTo({ uparrow.left + 4, uparrow.top + 2 });
+		dc->LineTo({ uparrow.right - 3, uparrow.bottom - 3 });
+		dc->LineTo({ uparrow.left + 2, uparrow.bottom - 3 });
+
+		dc->MoveTo({ downarrow.left + 1, downarrow.top +1 });
+		dc->LineTo({ downarrow.left + 4, downarrow.bottom - 2 });
+		dc->LineTo({ downarrow.right - 3, downarrow.top + 1 });
+		dc->LineTo({ downarrow.left + 1, downarrow.top + 1 });
+
+		dc->Draw3dRect(&scrollbar, C_MENU_GREY2, C_MENU_GREY4);
+		dc->Draw3dRect(&uparrow, C_MENU_GREY2, C_MENU_GREY4);
+		dc->Draw3dRect(&downarrow, C_MENU_GREY2, C_MENU_GREY4);
+		dc->Draw3dRect(&slider, C_MENU_GREY4, C_MENU_GREY1);
+
+		DeleteObject(targetPen);
+		DeleteObject(targetBrush);
+		DeleteObject(tb2);
+		dc->RestoreDC(sDC);
+	}
+};
+
+
 struct ObjectManager {
 
 };
@@ -16,7 +96,7 @@ struct SListBoxElement {
 	static unsigned long m_elementIDcount;
 	int m_elementID;
 	int m_width;
-	int m_height;
+	int m_height{ 20 };
 	int m_listElementHeight;
 	bool m_selected_{ false };
 	string m_ListBoxElementText;
@@ -69,12 +149,24 @@ struct STextField {
 };
 
 struct SListBox {
+	static unsigned long m_list_box_ids;
 	int m_width;
-	int m_ListBoxID;
+	unsigned long m_ListBoxID;
 	int m_windowID_;
-	int m_ListBoxIndex;
-	int m_LB_firstElem_idx;
+	int m_nearestPtIdx;
+	int m_LB_firstElem_idx{ 0 };
+	int m_max_elements;
+	int m_last_element;
+	int m_height;
+	bool m_has_scroll_bar{ false };
+	string selectItem{};
+	SListBoxScrollBar m_scrbar;
+	POINT m_origin;
 	CDC* m_dc;
+	SListBox() {
+		m_ListBoxID = m_list_box_ids;
+		m_list_box_ids++;
+	}
 
 	vector<SListBoxElement> listBox_;
 	void PopulateListBox(std::vector<string> lb_e_vector){
@@ -84,26 +176,57 @@ struct SListBox {
 	}
 	void PopulateDirectListBox(ACRoute* rte, CFlightPlan fp) {
 
-		int nearestPtIdx = fp.GetExtractedRoute().GetPointsCalculatedIndex();
+		m_nearestPtIdx = fp.GetExtractedRoute().GetPointsCalculatedIndex();
 		int directPtIdx = fp.GetExtractedRoute().GetPointsAssignedIndex();
 
 		int i = 0;
 		int j = 0;
+		m_height = 0;
+		m_last_element = (int)rte->fix_names.size();
 		for (auto& rtefix : rte->fix_names) {
-			if (i >= nearestPtIdx) {
-				if (j < 5) {
-					listBox_.emplace_back(SListBoxElement(120, rtefix));
+			if (i >= (m_nearestPtIdx + m_LB_firstElem_idx)) {
+				if (j < m_max_elements) {
+					SListBoxElement lbe(115, rtefix);
+					// remember selected item on scroll
+					if (!strcmp(rtefix.c_str(), this->selectItem.c_str())) {
+						lbe.m_selected_ = true;
+					}
+					listBox_.emplace_back(lbe);
+					m_height += lbe.m_height;
 				}
 				j++;
 			}
 			i++;
 		}
-		while (j < 5) {
-			listBox_.emplace_back(SListBoxElement(120, ""));
+		while (j < m_max_elements) {
+			SListBoxElement lbe(115, "");
+			listBox_.emplace_back(lbe);
+			m_height += lbe.m_height;
 			j++;
+		}
+
+		if (((int)rte->fix_names.size() - m_nearestPtIdx) > m_max_elements) {
+			// Draw a scroll bar
+			m_has_scroll_bar = true;
+			SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, m_origin, m_LB_firstElem_idx, ((int)rte->fix_names.size() - m_nearestPtIdx - m_max_elements) + 1);
+			scrollBar.m_height = m_height;
+			scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)((double)rte->fix_names.size() - (double)m_nearestPtIdx);
+			m_scrbar = scrollBar;
 		}
 	}
 	void RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
+	void ScrollUp() {
+		if (m_LB_firstElem_idx > 0) {
+			m_LB_firstElem_idx--;
+		}
+	}
+	void ScrollDown() {
+		if (m_nearestPtIdx + m_LB_firstElem_idx + m_max_elements < m_last_element)
+		{
+			m_LB_firstElem_idx++;
+		}
+	}
+
 	SListBoxElement GetListBoxElement(const char* elementID){
 		return *find_if(listBox_.begin(), listBox_.end(), [&elementID](const SListBoxElement& obj) { return !strcmp(obj.m_ListBoxElementText.c_str(), elementID); });
 	}
@@ -186,6 +309,9 @@ public:
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
+	SListBox GetListBox(int id) {
+		return *find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](const SListBox& obj) { return obj.m_ListBoxID == id; });
+	}
 	SWindowElements DrawWindow(CDC* dc);
 
 	void AddWindow(POINT origin, int winType, CFlightPlan* fp);

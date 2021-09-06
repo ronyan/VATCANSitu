@@ -55,6 +55,7 @@ struct ACData {
     bool pointOutPendingApproval{ false };
     bool directToLineOn{ false };
     CPosition directToPendingPosition{};
+    string directToPendingFixName;
     string POString{};
     ACRoute acFPRoute;
 };
