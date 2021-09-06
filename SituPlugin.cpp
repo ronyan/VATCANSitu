@@ -163,6 +163,13 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     CSiTRadar::m_pRadScr->RequestRefresh();
                     return -1;
                 }
+                if (parentWin->m_winType == WINDOW_CTRL_REMARKS) {
+
+                    CSiTRadar::ModifyCtrlRemarks(CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.c_str(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelect(parentWin->m_callsign.c_str()));
+                    CSiTRadar::CloseWindow(parentWin->m_windowId_);
+                    CSiTRadar::m_pRadScr->RequestRefresh();
+                    return -1;
+                }
             }
         }
     }

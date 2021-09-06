@@ -56,6 +56,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 		freetext.m_location_ = { 16, 188 };
 		freetext.m_height = 20;
 		freetext.m_width = 268;
+		freetext.m_parentWindowID = m_windowId_;
 		m_textfields_.push_back(freetext);
 	}
 

@@ -1789,9 +1789,17 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			mAcData[window->m_callsign].directToLineOn = true;
 			if (!mAcData[window->m_callsign].acFPRoute.fix_names.empty() && !mAcData[window->m_callsign].acFPRoute.route_fix_positions.empty()) {
 				std::vector<string>::iterator it = std::find(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), mAcData[window->m_callsign].acFPRoute.fix_names.end(), le_text);
-				int index = std::distance(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), it);
-				mAcData[window->m_callsign].directToPendingPosition = mAcData[window->m_callsign].acFPRoute.route_fix_positions.at(index);
-				mAcData[window->m_callsign].directToPendingFixName = le_text;
+				if (it != mAcData[window->m_callsign].acFPRoute.fix_names.end()) {
+					int index = std::distance(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), it);
+					mAcData[window->m_callsign].directToPendingPosition = mAcData[window->m_callsign].acFPRoute.route_fix_positions.at(index);
+					mAcData[window->m_callsign].directToPendingFixName = le_text;
+				}
+				else {
+					mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
+					mAcData[window->m_callsign].directToPendingPosition.m_Longitude = 0.0;
+					mAcData[window->m_callsign].directToPendingFixName = "";
+					mAcData[window->m_callsign].directToLineOn = false;
+				}
 			}
 		}
 
