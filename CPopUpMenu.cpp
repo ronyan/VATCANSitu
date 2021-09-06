@@ -56,12 +56,14 @@ void CPopUpMenu::populateMenu()
     autoHOTarget += m_rad->GetPlugIn()->ControllerSelect(m_rad->GetPlugIn()->FlightPlanSelect(m_fp->GetCallsign()).GetCoordinatedNextController()).GetPositionId();
     if (m_fp->GetTrackingControllerIsMe()) {
         this->m_listElements.emplace_back(SPopUpElement("Controller Remarks", "CtrlRemarks", 0, 0));
+        this->m_listElements.emplace_back(SPopUpElement("DE Corr", "Decorrelate", 0, 0));
         if (CSiTRadar::mAcData[m_fp->GetCallsign()].pointOutFromMe) {
             this->m_listElements.emplace_back(SPopUpElement("Recall P/Out", "RecallPointOut", 0, 0));
         }
         else {
             this->m_listElements.emplace_back(SPopUpElement("Point Out", "PointOut", 0, 1));
         }
+        this->m_listElements.emplace_back(SPopUpElement("Direct To", "DirectTo", 0, 0));
         this->m_listElements.emplace_back(SPopUpElement("Mod SFI", "ModSFI", 0, 1));
         this->m_listElements.emplace_back(SPopUpElement("Comm. Type", "SetComm", 0, 1));
     }

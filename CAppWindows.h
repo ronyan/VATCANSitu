@@ -73,12 +73,34 @@ struct SListBox {
 	int m_ListBoxID;
 	int m_windowID_;
 	int m_ListBoxIndex;
+	int m_LB_firstElem_idx;
 	CDC* m_dc;
 
 	vector<SListBoxElement> listBox_;
 	void PopulateListBox(std::vector<string> lb_e_vector){
 		for (auto& lbe : lb_e_vector) {
 			listBox_.emplace_back(SListBoxElement(300, lbe));
+		}
+	}
+	void PopulateDirectListBox(ACRoute* rte, CFlightPlan fp) {
+
+		int nearestPtIdx = fp.GetExtractedRoute().GetPointsCalculatedIndex();
+		int directPtIdx = fp.GetExtractedRoute().GetPointsAssignedIndex();
+
+		int i = 0;
+		int j = 0;
+		for (auto& rtefix : rte->fix_names) {
+			if (i >= nearestPtIdx) {
+				if (j < 5) {
+					listBox_.emplace_back(SListBoxElement(120, rtefix));
+				}
+				j++;
+			}
+			i++;
+		}
+		while (j < 5) {
+			listBox_.emplace_back(SListBoxElement(120, ""));
+			j++;
 		}
 	}
 	void RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
@@ -162,6 +184,7 @@ public:
 
 	CAppWindows();
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
+	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	SWindowElements DrawWindow(CDC* dc);
 

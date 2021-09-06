@@ -28,16 +28,6 @@
 using namespace EuroScopePlugIn;
 using namespace std;
 
-struct ACList {
-    POINT p{ 0, 0 };
-    int listType{ 0 };
-    bool collapsed{ false };
-};
-
-struct inactiveRunway {
-    CPosition end1;
-    CPosition end2;
-};
 
 struct ACData {
     bool hasVFRFP;
@@ -63,7 +53,10 @@ struct ACData {
     string POTarget{};
     clock_t POAcceptTime{ clock() };
     bool pointOutPendingApproval{ false };
+    bool directToLineOn{ false };
+    CPosition directToPendingPosition{};
     string POString{};
+    ACRoute acFPRoute;
 };
 
 struct SFocusItem {

@@ -3,6 +3,24 @@
 #include <vector>
 #include <string>
 
+struct ACList {
+    POINT p{ 0, 0 };
+    int listType{ 0 };
+    bool collapsed{ false };
+};
+
+struct inactiveRunway {
+    EuroScopePlugIn::CPosition end1;
+    EuroScopePlugIn::CPosition end2;
+};
+
+struct ACRoute {
+    std::vector<EuroScopePlugIn::CPosition> route_fix_positions;
+    std::vector<std::string> fix_names;
+    int nearestPtIdx;
+    int directPtIdx;
+};
+
 class SituPlugin :
     public EuroScopePlugIn::CPlugIn
 {

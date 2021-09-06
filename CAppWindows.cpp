@@ -69,6 +69,52 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 	windowIDs_++;
 }
 
+CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte) {
+	m_origin = origin;
+	m_winType = winType;
+	m_windowId_ = windowIDs_;
+	m_callsign = fp.GetCallsign();
+	string s; 
+
+	if (winType == WINDOW_DIRECT_TO) {
+		windowTitle = m_callsign;
+		m_height = 190;
+		m_width = 110;
+
+		SListBox lb;
+		lb.PopulateDirectListBox(rte, fp);
+		m_listboxes_.emplace_back(lb);
+
+		SWindowButton submit, cancel;
+
+		submit.location = { 6, 155 };
+		submit.m_height = 25;
+		submit.m_width = 45;
+		submit.text = "Ok";
+		submit.windowID = m_windowId_;
+
+		cancel.location = { 56, 155 };
+		cancel.m_height = 25;
+		cancel.m_width = 45;
+		cancel.text = "Cancel";
+		cancel.windowID = m_windowId_;
+
+		m_buttons_.push_back(submit);
+		m_buttons_.push_back(cancel);
+
+	}
+
+	m_origin.x = origin.x - m_width / 2;
+	m_origin.y = origin.y - m_height / 2;
+
+	if (origin.x < radarea.left) { m_origin.x = radarea.left; }
+	if ((origin.x + m_width) > radarea.right) { m_origin.x = radarea.right - m_width; }
+	if (origin.y < radarea.top + 60) { m_origin.y = radarea.top + 60; }
+	if ((origin.y + m_height) > (radarea.bottom)) { m_origin.y = radarea.bottom - m_height; }
+
+	windowIDs_++;
+}
+
 
 CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea) {
 	m_origin = origin;
@@ -196,13 +242,17 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 	// Draw Secondary title if present
 
 	int listboxDeltaY = 0;
+	int listboxDeltaX = 0;
 	if (m_winType == WINDOW_CTRL_REMARKS) {
 		listboxDeltaY = 25;
+	}
+	if (m_winType == WINDOW_DIRECT_TO) {
+		listboxDeltaX = -10;
 	}
 	// Draw List Box if present
 	for (auto& lb : this->m_listboxes_) {
 		lb.m_dc = dc;
-		lb.RenderListBox(1, 1, 1, { m_origin.x, titleRect.bottom + 2 + listboxDeltaY});
+		lb.RenderListBox(1, 1, 1, { m_origin.x + listboxDeltaX, titleRect.bottom + 2 + listboxDeltaY});
 	}
 	// Draw Buttons if present
 	for (auto& but : this->m_buttons_) {

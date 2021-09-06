@@ -387,7 +387,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					string callSign = radarTarget.GetCallsign();
 					// altitude filtering 
 
-						// Destination airport highlighting
+					// Destination airport highlighting
 					auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination());
 					bool isDest = false;
 
@@ -426,6 +426,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 					else {
 						mAcData[radarTarget.GetCallsign()].isOnScreen = true;
+					}
+
+					// Draw pending direct to line if exists
+					if (mAcData[callSign].directToLineOn) {
+						HPEN targetPen;
+						targetPen = CreatePen(PS_DASHDOT, 1, C_WHITE);
+						dc.SelectObject(targetPen);
+
+						dc.MoveTo(p);
+						dc.LineTo(ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition));
+
+						DeleteObject(targetPen);
+
 					}
 
 					// Draw PTL
@@ -1562,6 +1575,40 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
+	if (ObjectType == WINDOW_DIRECT_TO) {
+		string c;
+		auto window = GetAppWindow(stoi(id));
+
+		if (!strcmp(func.c_str(), "Ok")) {
+
+
+			for (const auto& lb : window->m_listboxes_) {
+				for (const auto& lelem : lb.listBox_) {
+					if (lelem.m_selected_) {
+						c = lelem.m_ListBoxElementText;
+						ModifyCtrlRemarks(c, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+						menuState.radarScrWindows.erase(stoi(id));
+
+						return;
+					}
+					else {
+						c = "";
+					}
+				}
+			}
+
+			GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+		}
+
+		if (!strcmp(func.c_str(), "Cancel")) {
+			mAcData[window->m_callsign].directToLineOn = false;
+			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0; 
+			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
+
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+	}
+
 	if (ObjectType == WINDOW_CTRL_REMARKS) {
 
 		auto window = GetAppWindow(stoi(id));
@@ -1656,6 +1703,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == WINDOW_LIST_BOX_ELEMENT) {
 		string s, win, le;
+		string le_text;
 		s = sObjectId;
 		string::size_type pos = s.find(" ");
 		if (pos != s.npos) {
@@ -1668,13 +1716,25 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			for (auto &lelem : lb.listBox_) {
 				if (lelem.m_elementID == stoi(le)) {
 					lelem.m_selected_ = true;
+					le_text = lelem.m_ListBoxElementText;
 				}
 				else {
 					lelem.m_selected_ = false;
 				}
 			}
 		}
+
+		if (window->m_winType == WINDOW_DIRECT_TO) {
+			mAcData[window->m_callsign].directToLineOn = true;
+			if (!mAcData[window->m_callsign].acFPRoute.fix_names.empty() && !mAcData[window->m_callsign].acFPRoute.route_fix_positions.empty()) {
+				std::vector<string>::iterator it = std::find(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), mAcData[window->m_callsign].acFPRoute.fix_names.end(), le_text);
+				int index = std::distance(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), it);
+				mAcData[window->m_callsign].directToPendingPosition = mAcData[window->m_callsign].acFPRoute.route_fix_positions.at(index);
+			}
+		}
+
 	}
+
 	if (ObjectType == WINDOW_TEXT_FIELD) {
 		string s, win, tf;
 		s = sObjectId;
@@ -1761,6 +1821,30 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			menuState.MB3menu = false;
 			GetPlugIn()->FlightPlanSelectASEL().EndTracking();
 		}
+		if (!strcmp(sObjectId, "Decorrelate")) {
+			menuState.MB3menu = false;
+			GetPlugIn()->FlightPlanSelectASEL().Uncorrelate();
+		}		
+
+		if (!strcmp(sObjectId, "DirectTo")) {
+			menuState.MB3menu = false;
+			// Check if there is already a window, bring it to the mouse
+			bool exists = false;
+			for (auto& win : menuState.radarScrWindows) {
+				if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign())
+					&& win.second.m_winType == WINDOW_DIRECT_TO)
+				{
+					win.second.m_origin = { Pt.x, Pt.y };
+					exists = true;
+				}
+			}
+			// If not draw it
+			if (!exists) {
+				CAppWindows dctto({ Pt.x, Pt.y }, WINDOW_DIRECT_TO, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea(), &mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].acFPRoute);
+				menuState.radarScrWindows[dctto.m_windowId_] = dctto;
+			}
+		}
+
 		if (!strcmp(sObjectId, "CtrlRemarks")) {
 			menuState.MB3menu = false;
 			// Check if there is already a window, bring it to the mouse
@@ -2544,6 +2628,8 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
+
+	ACData acdata;
 	int count = 0;
 	CSiTRadar::menuState.jurisdictionalAC.clear();
 
@@ -2564,34 +2650,21 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 			CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
 		}
 	}
-
-	/*
-	for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
-		radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
-	{
-		if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) { 
-			
-			count++; 
-		
-			// 3rd priority is jurisdictional aircraft
-			if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
-				CSiTRadar::menuState.jurisdictionalAC.push_back(radarTarget.GetCallsign());
-			}
-			// 2nd priority is aircraft being handed off
-			else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
-				CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
-			}
-		
-		}
-		// 1st priority is aircraft being handed off to you
-		else if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), CSiTRadar::m_pRadScr->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
-		{
-			CSiTRadar::menuState.jurisdictionalAC.push_front(radarTarget.GetCallsign());
-		}
-	}
-	*/
 	
 	menuState.numJurisdictionAC = count;
+
+	// maintain route in plugin ac-model
+	int numPts = FlightPlan.GetExtractedRoute().GetPointsNumber();
+
+	ACRoute rte;
+	rte.fix_names.clear();
+	rte.route_fix_positions.clear();
+	acdata.acFPRoute = rte;
+	for (int i = 0; i < numPts; i++) {
+		rte.fix_names.push_back(FlightPlan.GetExtractedRoute().GetPointName(i));
+		rte.route_fix_positions.push_back(FlightPlan.GetExtractedRoute().GetPointPosition(i));
+	}
+	acdata.acFPRoute = rte;
 
 	// These items don't need to be updated each loop, save loop type by storing data in a map
 	string callSign = FlightPlan.GetCallsign();
@@ -2612,7 +2685,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	
 	string CJS = FlightPlan.GetTrackingControllerId();
 
-	ACData acdata;
+
 	if (FlightPlan.GetTrackingControllerIsMe()) {
 		acdata.tagType = 1;
 	}
