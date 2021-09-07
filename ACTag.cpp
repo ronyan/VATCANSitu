@@ -207,7 +207,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	if (rt->GetGS() > 0) {
 		struct tm gmt;
 		time_t t = std::time(0);
-		t += ((rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS()) * 3600);
+		t += static_cast<time_t>(((rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS()) * 3600));
 		gmtime_s(&gmt, &t);
 
 		char timeStr[50];

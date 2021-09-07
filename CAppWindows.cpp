@@ -329,7 +329,7 @@ void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT 
 		r.top += deltay;
 		deltay += 20;
 	}
-	RECT totalListBox{ winOrigin.x + 16, winOrigin.y,  winOrigin.x + m_width - 16, winOrigin.y + listBox_.size() * 20 };
+	RECT totalListBox{ winOrigin.x + 16, winOrigin.y,  winOrigin.x + m_width - 16, winOrigin.y + static_cast<int>(listBox_.size() * 20) };
 	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
 	this->m_width = totalListBox.right - totalListBox.left;
 

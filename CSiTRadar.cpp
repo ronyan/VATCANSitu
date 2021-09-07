@@ -788,7 +788,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							if ((flightPlan.GetFPTrackPosition().GetPosition().m_Latitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Latitude) &&
 								(flightPlan.GetFPTrackPosition().GetPosition().m_Longitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Longitude)) {
 
-								if (mAcData[flightPlan.GetCallsign()].prevPosition.size() < menuState.numHistoryDots) {
+								if (static_cast<int>(mAcData[flightPlan.GetCallsign()].prevPosition.size()) < menuState.numHistoryDots) {
 
 									mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
 

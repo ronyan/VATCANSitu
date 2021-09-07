@@ -63,7 +63,7 @@ struct SListBoxScrollBar {
 
 		int deltay = (downarrow.top - uparrow.bottom) / m_clicks;
 		slider.top = uparrow.bottom + deltay* m_slider_location;
-		slider.bottom = slider.top + round((downarrow.top - uparrow.bottom)/m_clicks);
+		slider.bottom = slider.top + static_cast<int>(round((downarrow.top - uparrow.bottom)/m_clicks));
 
 		dc->MoveTo({ uparrow.left + 1, uparrow.bottom - 3 });
 		dc->LineTo({ uparrow.left + 4, uparrow.top + 2 });
