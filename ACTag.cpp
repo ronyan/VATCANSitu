@@ -723,6 +723,7 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		uline0.top = p.y - 19;
 		uline0.left = p.x + 10;
+		if (CSiTRadar::halfSecTick && CSiTRadar::mAcData[rt->GetCallsign()].multipleDiscrete) { ssr = ""; }
 		dc->DrawText(ssr.c_str(), &uline0, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(ssr.c_str(), &uline0, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_SQUAWK, rt->GetCallsign(), uline0, TRUE, "");

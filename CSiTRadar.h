@@ -28,6 +28,12 @@
 using namespace EuroScopePlugIn;
 using namespace std;
 
+struct SSquawkCodeManagement {
+    string squawk;
+    string fpcs;
+    int numCorrelatedRT{ 0 };
+};
+
 
 struct ACData {
     bool hasVFRFP;
@@ -58,6 +64,7 @@ struct ACData {
     string directToPendingFixName;
     string POString{};
     ACRoute acFPRoute;
+    bool multipleDiscrete{ false };
 };
 
 struct SFocusItem {
@@ -141,6 +148,9 @@ struct buttonStates {
 
     map<int, CAppWindows> radarScrWindows;
     map<int, CACList> radarScrLists;
+    vector<SSquawkCodeManagement> squawkCodes;
+
+
 
 };
 
