@@ -387,32 +387,43 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 
 					// Correlation check
-					auto sqitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&radarTarget](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), radarTarget.GetPosition().GetSquawk()); });
-					if (sqitr == menuState.squawkCodes.end()) {
+					if (radarTarget.GetPosition().GetRadarFlags() > 1) {
+						auto sqitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&radarTarget](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), radarTarget.GetPosition().GetSquawk()); });
 
-						radarTarget.Uncorrelate();
+						if (radarTarget.GetCorrelatedFlightPlan().IsValid()) {
 
-					}
-					
-					if (sqitr != menuState.squawkCodes.end()) {
+							if (sqitr == menuState.squawkCodes.end()) {
 
-						if (!radarTarget.GetCorrelatedFlightPlan().IsValid()) {
-							if (sqitr->numCorrelatedRT >= 0) {
+								radarTarget.Uncorrelate();
 
-								radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
-								sqitr->numCorrelatedRT++;
-								mAcData[callSign].multipleDiscrete = false;
+							}
+
+						}
+						else {
+							if (sqitr != menuState.squawkCodes.end()) {
+
+								int sqkc = atoi(radarTarget.GetPosition().GetSquawk());
+
+								if (sqkc == 1000 || sqkc == 1200 || sqkc == 1400 || sqkc == 2000) {}
+								else {
+
+									if (sqitr->numCorrelatedRT == 0) {
+
+										radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
+										sqitr->numCorrelatedRT++;
+										mAcData[callSign].multipleDiscrete = false;
+									}
+
+									else {
+
+										// Multiple discrete offender handling, squawk should be forced on and it should flash, and it should not correlate
+										radarTarget.Uncorrelate();
+										mAcData[callSign].multipleDiscrete = true;
+
+										//to-do add message to message list:
 
 
-
-								if (sqitr->numCorrelatedRT > 1) {
-									// Multiple discrete offender handling, squawk should be forced on and it should flash, and it should not correlate
-									radarTarget.Uncorrelate();
-									mAcData[callSign].multipleDiscrete = true;
-									sqitr->numCorrelatedRT = 1;
-
-									//to-do add message to message list:
-
+									}
 								}
 							}
 						}
@@ -2801,7 +2812,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	if (remarks.find("STS/ADSB") != remarks.npos) { acdata.isADSB = true; }
 	mAcData[callSign] = acdata;
 
-	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(),FlightPlan.GetCallsign()); });
+	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
 	if (itr == menuState.squawkCodes.end()) {
 		SSquawkCodeManagement sq;
 		sq.fpcs = FlightPlan.GetCallsign();
@@ -2810,12 +2821,66 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		menuState.squawkCodes.push_back(sq);
 	}
 	else {
-		menuState.squawkCodes.at(distance(menuState.squawkCodes.begin(),itr)).squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
 		if (itr->numCorrelatedRT > 0) {
 			itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
 		}
 	}
+}
 
+void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
+	int DataType) {
+
+	int sqcount = 0;
+
+	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
+	if (itr == menuState.squawkCodes.end()) {
+		SSquawkCodeManagement sq;
+		sq.fpcs = FlightPlan.GetCallsign();
+		sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+		sq.numCorrelatedRT = 0;
+		menuState.squawkCodes.push_back(sq);
+	}
+	else {
+
+		// identify and edit non unique codes;
+
+		if (FlightPlan.GetTrackingControllerIsMe() || !strcmp(FlightPlan.GetTrackingControllerCallsign(), "")) {
+			do {
+				if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
+					itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+					sqcount = count_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+					if (sqcount > 1) {
+						auto sq = FlightPlan.GetControllerAssignedData().GetSquawk();
+						int sq_base_10 = stoi(sq, 0, 8);
+						sq_base_10++;
+						sq_base_10 %= 4095;
+
+						auto base10oct = [&sq_base_10]() {
+							std::ostringstream str;
+							str << std::oct << sq_base_10;
+							return str.str();
+						};
+
+						string sqk = base10oct();
+						// pad with leading zeros if needed
+						if (sqk.size() < 4) {
+							sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
+						}
+
+						FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str());
+						itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+					}
+				}
+			} while (sqcount >= 2);
+		}
+
+		itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+
+		if (itr->numCorrelatedRT > 0) {
+			itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
+		}
+
+	}
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {

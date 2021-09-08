@@ -290,6 +290,10 @@ public:
         POINT Pt,
         RECT Area);
 
+    inline  virtual void OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
+        int DataType);
+
+
     void OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area);
 
     double RadRange(void)
