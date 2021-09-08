@@ -396,7 +396,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					
 					if (sqitr != menuState.squawkCodes.end()) {
 
-						if (sqitr->numCorrelatedRT == 0) {
+						if (sqitr->numCorrelatedRT >= 0) {
 
 							radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
 							sqitr->numCorrelatedRT++;
