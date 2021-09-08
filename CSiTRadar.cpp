@@ -396,21 +396,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					
 					if (sqitr != menuState.squawkCodes.end()) {
 
-						if (sqitr->numCorrelatedRT >= 0) {
+						if (!radarTarget.GetCorrelatedFlightPlan().IsValid()) {
+							if (sqitr->numCorrelatedRT >= 0) {
 
-							radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
-							sqitr->numCorrelatedRT++;
-							mAcData[callSign].multipleDiscrete = false;
+								radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
+								sqitr->numCorrelatedRT++;
+								mAcData[callSign].multipleDiscrete = false;
 
 
-							if (sqitr->numCorrelatedRT > 1) {
-								// Multiple discrete offender handling, squawk should be forced on and it should flash, and it should not correlate
-								radarTarget.Uncorrelate();
-								mAcData[callSign].multipleDiscrete = true;
-								sqitr->numCorrelatedRT = 1;
 
-								//to-do add message to message list:
+								if (sqitr->numCorrelatedRT > 1) {
+									// Multiple discrete offender handling, squawk should be forced on and it should flash, and it should not correlate
+									radarTarget.Uncorrelate();
+									mAcData[callSign].multipleDiscrete = true;
+									sqitr->numCorrelatedRT = 1;
 
+									//to-do add message to message list:
+
+								}
 							}
 						}
 					}
