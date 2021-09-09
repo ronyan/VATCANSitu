@@ -649,37 +649,39 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// show CJS for controller tracking aircraft // or if in handoff mode, show the target controller's CJS
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated)) { // || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
+						else {
+							CFont font;
+							LOGFONT lgfont;
 
-						CFont font;
-						LOGFONT lgfont;
+							memset(&lgfont, 0, sizeof(LOGFONT));
+							lgfont.lfWeight = 500;
+							strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+							lgfont.lfHeight = 14;
+							font.CreateFontIndirect(&lgfont);
 
-						memset(&lgfont, 0, sizeof(LOGFONT));
-						lgfont.lfWeight = 500;
-						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 14;
-						font.CreateFontIndirect(&lgfont);
+							dc.SelectObject(font);
+							dc.SetTextColor(cjsColor);
 
-						dc.SelectObject(font);
-						dc.SetTextColor(cjsColor);
+							RECT rectCJS;
+							rectCJS.left = p.x - 6;
+							rectCJS.right = p.x + 75;
+							rectCJS.top = p.y - 18;
+							rectCJS.bottom = p.y;
 
-						RECT rectCJS;
-						rectCJS.left = p.x - 6;
-						rectCJS.right = p.x + 75;
-						rectCJS.top = p.y - 18;
-						rectCJS.bottom = p.y;
+							string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
-						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
+							if (menuState.handoffMode &&
+								strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+								CJS = GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetCoordinatedNextController()).GetPositionId();
+								dc.SetTextColor(C_WHITE);
+							}
 
-						if (menuState.handoffMode &&
-							strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
-							CJS = GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetCoordinatedNextController()).GetPositionId();
-							dc.SetTextColor(C_WHITE);
+							dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
+
+							dc.SetTextColor(cjsColor);
+							DeleteObject(font);
 						}
-
-						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
-
-						dc.SetTextColor(cjsColor);
-						DeleteObject(font);
 					}
 
 					// plane halo looks at the <map> hashalo to see if callsign has a halo, if so, draws halo
