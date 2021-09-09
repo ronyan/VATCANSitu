@@ -1565,6 +1565,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// refresh jurisdictional list on zoom change
 			CSiTRadar::menuState.jurisdictionalAC.clear();
 
+	
 			for (auto& ac : CSiTRadar::mAcData) {
 
 				if (ac.second.isJurisdictional) {
@@ -1581,6 +1582,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					CSiTRadar::menuState.jurisdictionalAC.push_front(ac.first);
 				}
 			}
+
+			/*
 
 			Pen pen(Color(255, 199, 48, 35), 1);
 
@@ -1607,6 +1610,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				}
 			}
+			*/
 		}
 	}
 
