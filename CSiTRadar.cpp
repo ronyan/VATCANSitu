@@ -829,8 +829,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (flightPlan.GetCorrelatedRadarTarget().IsValid() || menuState.showExtrapFP == FALSE) { continue; }
 
 					// if the flightplan does not have a correlated radar target
-					if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED
-						&& !mAcData[flightPlan.GetCallsign()].isADSB) {
+					if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
 
 						// Store the points for history dots, only store new if position updated
 						if (mAcData[flightPlan.GetCallsign()].prevPosition.empty()) {
