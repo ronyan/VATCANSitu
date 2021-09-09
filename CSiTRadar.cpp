@@ -540,8 +540,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
 						CACTag::DrawHistoryDots(&dc, &radarTarget);
 					}
-
+					
 					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
+					/*
 					if (radarTarget.GetPosition().GetRadarFlags() == 0
 						&& isADSB) {
 						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
@@ -550,6 +551,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
 						CACTag::DrawHistoryDots(&dc, &radarTarget);
 					}
+					*/
 
 					// Tag Level Logic
 					if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
@@ -639,7 +641,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 
 					// show CJS for controller tracking aircraft // or if in handoff mode, show the target controller's CJS
-					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated)) { // || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 
 						CFont font;
 						LOGFONT lgfont;

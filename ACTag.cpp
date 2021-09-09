@@ -1171,7 +1171,7 @@ void CACTag::DrawHistoryDots(CDC* dc, CFlightPlan* fp)
 	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
 	dc->SelectObject(targetPen);
 
-	for(auto pos: CSiTRadar::mAcData[fp->GetCallsign()].prevPosition){
+	for(auto& pos: CSiTRadar::mAcData[fp->GetCallsign()].prevPosition){
 		dot = CSiTRadar::m_pRadScr->ConvertCoordFromPositionToPixel(pos);
 		RECT r = { dot.x - 1, dot.y - 1, dot.x + 1,dot.y + 1 };
 		dc->Ellipse(&r);

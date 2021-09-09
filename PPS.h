@@ -31,7 +31,7 @@ public:
 		dc->SelectObject(targetPen);
 		dc->SelectStockObject(NULL_BRUSH);
 
-		if (radFlag == 0) {
+		if (radFlag == 4) {
 			// Draw ADSB PPS symbology
 			if (isADSB) {
 				dc->MoveTo(p.x - 4, p.y - 4);
@@ -49,8 +49,10 @@ public:
 		}
 
 		else {
+			
+			if (radFlag == 0) { }
 			// Special Codes
-			if (!strcmp(squawk.c_str(), "7600") || !strcmp(squawk.c_str(), "7700")) {
+			else if (!strcmp(squawk.c_str(), "7600") || !strcmp(squawk.c_str(), "7700")) {
 				HBRUSH targetBrush = CreateSolidBrush(ppsColor);
 				dc->SelectObject(targetBrush);
 
@@ -128,7 +130,7 @@ public:
 				}
 
 			}
-			else if (radFlag >= 3 && radFlag <= 7) {
+			else if (radFlag >= 3 && radFlag <= 7 && radFlag != 4) {
 				if (isCorrelated && !isVFR && !isRVSM) {
 					dc->MoveTo(p.x - 4, p.y - 2);
 					dc->LineTo(p.x - 4, p.y + 2);
