@@ -358,22 +358,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList(acLists[LIST_OFF_SCREEN].p, &dc, mAcData, LIST_OFF_SCREEN);
-				//DrawACList({ 500,80 }, &dc, mAcData, LIST_MESSAGES);
 
 				/*
 				CACList MessageList;
 				MessageList.m_listType = LIST_MESSAGES;
 				MessageList.m_dc = &dc;
 				MessageList.origin = { 800,85 };
+				MessageList.m_collapsed = false;
 				vector<string> msgList;
-				for (auto& msg : wxRadar::asyncMessages) {
-					msgList.push_back(msg.reponseMessage);
-				}
-				MessageList.m_header = "Message List ";
+				msgList.push_back("NO CORRELATION MULTI DISCRETE");
+				msgList.push_back("MULT DSCRT UNASSOC 2456");
+				MessageList.m_header = "Message List";
 				if (!msgList.empty()) { MessageList.m_header += " (" + to_string(msgList.size()) + ")"; }
 				MessageList.PopulatetList(msgList);
 				MessageList.DrawList();
 				*/
+				
 
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
@@ -2877,7 +2877,9 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 							sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
 						}
 
-						FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str());
+						if (FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str())) {
+						}
+						else { break; }
 						itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
 					}
 				}

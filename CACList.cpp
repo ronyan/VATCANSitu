@@ -31,6 +31,9 @@ void CACList::DrawList()
 	HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);;
 	HBRUSH targetBrush = CreateSolidBrush(C_WHITE);
 
+	m_dc->SelectObject(targetPen);
+	m_dc->SelectObject(targetBrush);
+
 	m_dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
 	m_dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
 
@@ -38,17 +41,22 @@ void CACList::DrawList()
 		m_has_arrow = false;
 	}
 
+	int i = 0;
 	for (auto &entry : m_list_items_) {
+		entry.m_origin.y = listHeading.bottom;
+		if (entry.m_priority == 3) { m_dc->SetTextColor(C_MENU_GREY4); }
+
 		if (!this->m_collapsed) {
 			for (auto& elem : entry.m_list_elements_) {
 
-				RECT listElement{ entry.m_origin.x, entry.m_origin.y, entry.m_origin.x + 10, entry.m_origin.y + 13 };
+				RECT listElement{ entry.m_origin.x, entry.m_origin.y + (i*13), entry.m_origin.x + 10, entry.m_origin.y + 13 + (i*13) };
 				m_dc->DrawText(elem.m_list_element_text.c_str(), &listElement, DT_LEFT | DT_CALCRECT);
 				m_dc->DrawText(elem.m_list_element_text.c_str(), &listElement, DT_LEFT);
 
-				listElement.top += 13;
+
 			}
 		}
+		i++;
 		m_has_arrow = true;
 	}
 

@@ -32,6 +32,7 @@ public:
 	int m_list_item_line;
 	std::vector<CACListItemElement> m_list_elements_;
 	bool shifted;
+	int m_priority{ 0 };
 	RECT list_item_rect;
 
 	CACListItem();
@@ -68,7 +69,10 @@ public:
 	void PopulatetList(std::vector<std::string> listContents) {
 
 		for (auto le : listContents) {
-			m_list_items_.push_back(CACListItem(le));
+			CACListItem li(le);
+			li.m_priority = 3;
+			li.m_origin = origin;
+			m_list_items_.push_back(li);
 		}
 
 	}
