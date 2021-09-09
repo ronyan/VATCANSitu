@@ -995,45 +995,45 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					string numCJSAC = to_string(menuState.numJurisdictionAC);
 					TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
 
-					menuButton but_tagHL = { { modOrigin.x+45, radarea.top + 6 }, "Tag HL", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_tagHL = { { modOrigin.x+50, radarea.top + 6 }, "Tag HL", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_tagHL);
 					ButtonToScreen(this, but, "Tag HL", 0);
 
-					menuButton but_setup = { { modOrigin.x + 85, radarea.top + 6 }, "Setup", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_setup = { { modOrigin.x + 95, radarea.top + 6 }, "Setup", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_setup);
 					ButtonToScreen(this, but, "Setup", 0);
 
-					menuButton but_aircraftState = { { modOrigin.x + 125, radarea.top + 6 }, "Aircraft State", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_aircraftState = { { modOrigin.x + 140, radarea.top + 6 }, "Aircraft State", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_aircraftState);
 					ButtonToScreen(this, but, "Aircraft State", 0);
 
-					menuButton but_SSR = { { modOrigin.x + 195, radarea.top + 6 }, "SSR:", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_SSR = { { modOrigin.x + 212, radarea.top + 6 }, "SSR:", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_SSR);
 					ButtonToScreen(this, but, "SSR", 0);
 
 
 
-					menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 45, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 48, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_misc);
 
-					menuButton but_areas = { { modOrigin.x + 45, radarea.top + 31 }, "Areas", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_areas = { { modOrigin.x + 50, radarea.top + 31 }, "Areas", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_areas);
 					ButtonToScreen(this, but, "Areas", 0);
 
-					menuButton but_tags = { { modOrigin.x + 85, radarea.top + 31 }, "Tags", 40, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_tags = { { modOrigin.x + 95, radarea.top + 31 }, "Tags", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_tags);
 					ButtonToScreen(this, but, "Tags", 0);
 
 
-					menuButton but_flightPlan = { { modOrigin.x + 125, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_flightPlan = { { modOrigin.x + 140, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_flightPlan);
 					ButtonToScreen(this, but, "Flight Plan", 0);
 
-					menuButton but_destAirport = { { modOrigin.x + 195, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_destAirport = { { modOrigin.x + 212, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_destAirport);
 					ButtonToScreen(this, but, "Dest Airport", BUTON_MENU_DEST_APRT);
 
-					menutopleft.x = 295;
+					menutopleft.x = 310;
 
 					if (menuLayer == 0) {
 
@@ -1046,7 +1046,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						menutopleft.x += 35;
 						TopMenu::DrawButton(&dc, menutopleft, 35, 23, "Pan", 0);
 						menutopleft.y -= 25;
-						menutopleft.x += 55;
+						menutopleft.x += 43;
 
 						// horizontal range calculation
 						int range = (int)round(RadRange());
@@ -1084,7 +1084,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						TopMenu::DrawBut(&dc, but_rngdropdown);
 						TopMenu::DrawIconBut(&dc, but_rngdropdown, downArrow, 3);
 
-						menutopleft.x += 65;
+						menutopleft.x += 60;
 						menutopleft.y -= 32;
 
 						menutopleft.y += 8;
@@ -1295,64 +1295,64 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				// Destination Airport Menu
 
 				if (menuState.destAirport) {
-					TopMenu::DrawBackground(dc, { 203, radarea.top }, 350, 90);
+					TopMenu::DrawBackground(dc, { 218, radarea.top }, 330, 90);
 
-					menuButton but_dest_1 = { {210, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[0] };
+					menuButton but_dest_1 = { {228, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[0] };
 					but = TopMenu::DrawBut(&dc, but_dest_1);
 					ButtonToScreen(this, but, "Dest 1", BUTTON_MENU_DEST_1);
 
-					auto dest1 = TopMenu::MakeField(dc, { 225, 34 }, 32, 15, menuState.destICAO[0].c_str());
+					auto dest1 = TopMenu::MakeField(dc, { 243, 34 }, 32, 15, menuState.destICAO[0].c_str());
 					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest1", dest1, 0, "");
 
-					menuButton but_dest_2 = { {210, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[1] };
+					menuButton but_dest_2 = { {228, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[1] };
 					but = TopMenu::DrawBut(&dc, but_dest_2);
 					ButtonToScreen(this, but, "Dest 2", BUTTON_MENU_DEST_2);
 
-					auto dest2 = TopMenu::MakeField(dc, { 225, 60 }, 32, 15, menuState.destICAO[1].c_str());
+					auto dest2 = TopMenu::MakeField(dc, { 243, 60 }, 32, 15, menuState.destICAO[1].c_str());
 					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest2", dest2, 0, "");
 
-					menuButton but_dest_3 = { {265, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[2] };
+					menuButton but_dest_3 = { {283, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[2] };
 					but = TopMenu::DrawBut(&dc, but_dest_3);
 					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_3);
 
-					auto dest3 = TopMenu::MakeField(dc, { 280, 34 }, 32, 15, menuState.destICAO[2].c_str());
+					auto dest3 = TopMenu::MakeField(dc, { 298, 34 }, 32, 15, menuState.destICAO[2].c_str());
 					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest3", dest3, 0, "");
 
-					menuButton but_dest_4 = { {265, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[3] };
+					menuButton but_dest_4 = { {283, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[3] };
 					but = TopMenu::DrawBut(&dc, but_dest_4);
 					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_4);
 
-					auto dest4 = TopMenu::MakeField(dc, { 280, 60 }, 32, 15, menuState.destICAO[3].c_str());
+					auto dest4 = TopMenu::MakeField(dc, { 298, 60 }, 32, 15, menuState.destICAO[3].c_str());
 					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest4", dest4, 0, "");
 
-					menuButton but_dest_5 = { {320, 83}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[4] };
+					menuButton but_dest_5 = { {338, 83}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destArptOn[4] };
 					but = TopMenu::DrawBut(&dc, but_dest_5);
 					ButtonToScreen(this, but, "Dest 3", BUTTON_MENU_DEST_5);
 
-					auto dest5 = TopMenu::MakeField(dc, { 335, 80 }, 32, 15, menuState.destICAO[4].c_str());
+					auto dest5 = TopMenu::MakeField(dc, { 353, 80 }, 32, 15, menuState.destICAO[4].c_str());
 					AddScreenObject(BUTTON_MENU_DEST_ICAO, "dest5", dest5, 0, "");
 
-					menuButton but_dest_dist = { {380, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destDME };
+					menuButton but_dest_dist = { {398, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destDME };
 					but = TopMenu::DrawBut(&dc, but_dest_dist);
 					ButtonToScreen(this, but, "Dest Dist", BUTTON_MENU_DEST_DIST);
-					TopMenu::MakeText(dc, { 385, 25 }, 40, 30, "DME");
+					TopMenu::MakeText(dc, { 403, 25 }, 40, 30, "DME");
 
-					menuButton but_dest_est = { {430, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destEST };
+					menuButton but_dest_est = { {448, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destEST };
 					but = TopMenu::DrawBut(&dc, but_dest_est);
 					ButtonToScreen(this, but, "Dest EST", BUTTON_MENU_DEST_EST);
-					TopMenu::MakeText(dc, { 433, 25 }, 40, 30, "EST");
+					TopMenu::MakeText(dc, { 451, 25 }, 40, 30, "EST");
 
-					menuButton but_dest_vfr = { {380, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destVFR };
+					menuButton but_dest_vfr = { {398, 62}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.destVFR };
 					but = TopMenu::DrawBut(&dc, but_dest_vfr);
 					ButtonToScreen(this, but, "Dest VFR", BUTTON_MENU_DEST_VFR);
-					TopMenu::MakeText(dc, { 383, 51 }, 40, 30, "VFR");
+					TopMenu::MakeText(dc, { 403, 51 }, 40, 30, "VFR");
 
 
-					menuButton but_close_dest_arpt = { {465, 90}, "Close", 40, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					menuButton but_close_dest_arpt = { {488, 90}, "Close", 40, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_close_dest_arpt);
 					ButtonToScreen(this, but, "Close Dest", BUTTON_MENU_CLOSE_DEST);
-
-					menuButton but_clear_dest_arpt = { {380, 78}, "Clear All Dest", 80, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					
+					menuButton but_clear_dest_arpt = { {398, 78}, "Clear All Dest", 80, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_clear_dest_arpt);
 					ButtonToScreen(this, but, "Clear All Dest", BUTTON_MENU_CLEAR_DEST);
 				}
@@ -1360,7 +1360,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				// QUICK look menu
 
 				if (menuState.quickLook) {
-					TopMenu::DrawBackground(dc, { 286, radarea.top }, 690, 60);
+					TopMenu::DrawBackground(dc, { 306, radarea.top }, 670, 60);
 
 					menuButton but_quickLook = { {900, 30}, "Close", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_quickLook);
@@ -1380,11 +1380,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					for (auto cjs : menuState.nearbyCJS) {
 
 
-						but_quickLook = { {295+deltax, radarea.top + 12 + deltay}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
+						but_quickLook = { {317+deltax, radarea.top + 12 + deltay}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
 						but = TopMenu::DrawBut(&dc, but_quickLook);
 						ButtonToScreen(this, but, cjs.first.c_str(), BUTTON_MENU_QL_CJS);
 
-						TopMenu::MakeTextLeft(dc, { 308 + deltax, radarea.top + 11 + deltay }, 20, 10, cjs.first.c_str());
+						TopMenu::MakeTextLeft(dc, { 330 + deltax, radarea.top + 11 + deltay }, 20, 10, cjs.first.c_str());
 
 						deltax += 38;
 
