@@ -502,19 +502,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					}
 
-					// Draw PTL
-					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
-						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
-					}
-					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
-						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
-					}
-
 					// Get information about the Aircraft/Flightplan
 					bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
 					bool isVFR = mAcData[callSign].hasVFRFP;
 					bool isRVSM = mAcData[callSign].isRVSM;
 					bool isADSB = mAcData[callSign].isADSB;
+
+					// Draw PTL
+					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
+						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+					}
+					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
+						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
+						else {
+							HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+						}
+					}
 
 					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
@@ -536,7 +539,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
-					if (radarTarget.GetPosition().GetRadarFlags() != 0) {
+					if (radarTarget.GetPosition().GetRadarFlags() != 0 && radarTarget.GetPosition().GetRadarFlags() !=4) {
+						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+						CACTag::DrawHistoryDots(&dc, &radarTarget);
+					}
+					else if (radarTarget.GetPosition().GetRadarFlags() == 4 && isADSB) {
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
 						CACTag::DrawHistoryDots(&dc, &radarTarget);
 					}
