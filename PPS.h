@@ -140,10 +140,12 @@ public:
 					dc->LineTo(p.x, p.y - 5);
 					dc->LineTo(p.x - 4, p.y - 2);
 
-					dc->MoveTo(p.x - 4, p.y + 2);
-					dc->LineTo(p.x, p.y - 4);
-					dc->LineTo(p.x + 4, p.y + 2);
-					dc->LineTo(p.x - 4, p.y + 2);
+					if (radFlag == 3 || radFlag == 5 || radFlag == 7) {
+						dc->MoveTo(p.x - 4, p.y + 2);
+						dc->LineTo(p.x, p.y - 4);
+						dc->LineTo(p.x + 4, p.y + 2);
+						dc->LineTo(p.x - 4, p.y + 2);
+					}
 				}
 
 				if (isCorrelated && !isVFR && isRVSM) {
