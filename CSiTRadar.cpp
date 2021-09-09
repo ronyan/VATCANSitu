@@ -1181,7 +1181,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						RECT r = TopMenu::DrawButton2(dc, menutopleft, 55, 23, cid.c_str(), 0);
 
 						menutopleft.y += 25;
-						but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", menuState.quickLook);
+
+	
+						auto it = find_if(menuState.nearbyCJS.begin(), menuState.nearbyCJS.end(), [](const std::pair<string, bool>& c) { return c.second == true; });
+						bool qckl = false;
+						if (it != menuState.nearbyCJS.end()) { qckl = true; }
+					
+						but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", qckl);
 						menutopleft.y -= 25;
 						ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
 					}
