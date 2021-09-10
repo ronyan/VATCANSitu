@@ -14,6 +14,7 @@ struct SListBoxScrollBar {
 	int m_list_box_id;
 	int m_scroll_bar_id;
 	int m_max_elements;
+	int m_total_elements;
 	double m_slider_height_ratio;
 	int m_slider_location;
 	int m_clicks;
@@ -61,9 +62,9 @@ struct SListBoxScrollBar {
 		slider.left = m_origin.x +1;
 		slider.right = m_origin.x + m_width -1;
 
-		int deltay = (downarrow.top - uparrow.bottom) / m_clicks;
+		int deltay = static_cast<int>(((downarrow.top - uparrow.bottom) - ((downarrow.top - uparrow.bottom) * m_max_elements / (m_total_elements))) / (m_clicks - 1));
 		slider.top = uparrow.bottom + deltay* m_slider_location;
-		slider.bottom = slider.top + static_cast<int>(round((downarrow.top - uparrow.bottom)/m_clicks));
+		slider.bottom = slider.top + static_cast<int>(round((downarrow.top - uparrow.bottom)*m_max_elements/(m_total_elements)));
 
 		dc->MoveTo({ uparrow.left + 1, uparrow.bottom - 3 });
 		dc->LineTo({ uparrow.left + 4, uparrow.top + 2 });
@@ -211,6 +212,7 @@ struct SListBox {
 			SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, m_origin, m_LB_firstElem_idx, ((int)rte->fix_names.size() - m_nearestPtIdx - m_max_elements) + 1);
 			scrollBar.m_height = m_height;
 			scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)((double)rte->fix_names.size() - (double)m_nearestPtIdx);
+			scrollBar.m_total_elements = static_cast<int>(rte->fix_names.size() - m_nearestPtIdx);
 			m_scrbar = scrollBar;
 		}
 	}

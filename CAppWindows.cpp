@@ -258,6 +258,7 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 		lb.m_dc = dc;
 		lb.RenderListBox(1, 1, 1, { m_origin.x + listboxDeltaX, titleRect.bottom + 2 + listboxDeltaY});
 		if (lb.m_has_scroll_bar) {
+			lb.m_scrbar.m_max_elements = lb.m_max_elements;
 			lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
 			lb.m_scrbar.Draw(dc);
 		}
