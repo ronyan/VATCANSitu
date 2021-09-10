@@ -2881,8 +2881,8 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 
 				if (FlightPlan.GetTrackingControllerIsMe() || !strcmp(FlightPlan.GetTrackingControllerCallsign(), "")) {
 					if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
+						itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
 						do {
-							itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
 							sqcount = count_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
 							
 							if (sqcount > 1) {
@@ -2902,7 +2902,7 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 								if (sqk.size() < 4) {
 									sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
 								}
-								itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+								itr->squawk = sqk;
 							}
 						} while (sqcount >= 2);
 						FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str());
