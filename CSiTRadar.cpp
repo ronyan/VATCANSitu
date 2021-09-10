@@ -428,8 +428,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							}
 						}
 					}
-					if (radarTarget.GetPosition().GetRadarFlags() == 0) {
-						radarTarget.Uncorrelate();
+					if (radarTarget.GetPosition().GetRadarFlags() < 2) {
+						if (radarTarget.GetPosition().GetRadarFlags() == 0 || !mAcData[radarTarget.GetCallsign()].manualCorr) {
+							radarTarget.Uncorrelate();
+						}
 					}
 
 					// altitude filtering 

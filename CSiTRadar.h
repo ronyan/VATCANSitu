@@ -65,6 +65,7 @@ struct ACData {
     string POString{};
     ACRoute acFPRoute;
     bool multipleDiscrete{ false };
+    bool manualCorr{ false };
 };
 
 struct SFocusItem {
