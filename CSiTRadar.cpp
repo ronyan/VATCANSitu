@@ -541,11 +541,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					if (radarTarget.GetPosition().GetRadarFlags() != 0 && radarTarget.GetPosition().GetRadarFlags() !=4) {
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-						CACTag::DrawHistoryDots(&dc, &radarTarget);
+						if (radarTarget.GetGS() > 10) {
+							CACTag::DrawHistoryDots(&dc, &radarTarget);
+						}
 					}
 					else if (radarTarget.GetPosition().GetRadarFlags() == 4 && isADSB) {
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-						CACTag::DrawHistoryDots(&dc, &radarTarget);
+						if (radarTarget.GetGS() > 10) {
+							CACTag::DrawHistoryDots(&dc, &radarTarget);
+						}
 					}
 					
 					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
