@@ -2852,56 +2852,60 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 
 	int sqcount = 0;
 
-	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
-	if (itr == menuState.squawkCodes.end()) {
-		SSquawkCodeManagement sq;
-		sq.fpcs = FlightPlan.GetCallsign();
-		sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-		sq.numCorrelatedRT = 0;
-		menuState.squawkCodes.push_back(sq);
-	}
-	else {
+	if (GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_DIRECT ||
+		GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_PLAYBACK) {
 
-		// identify and edit non unique codes;
+		auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
+		if (itr == menuState.squawkCodes.end()) {
+			SSquawkCodeManagement sq;
+			sq.fpcs = FlightPlan.GetCallsign();
+			sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+			sq.numCorrelatedRT = 0;
+			menuState.squawkCodes.push_back(sq);
+		}
+		else {
 
-		if (FlightPlan.GetTrackingControllerIsMe() || !strcmp(FlightPlan.GetTrackingControllerCallsign(), "")) {
-			do {
-				if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
-					itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-					sqcount = count_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
-					if (sqcount > 1) {
-						auto sq = FlightPlan.GetControllerAssignedData().GetSquawk();
-						int sq_base_10 = stoi(sq, 0, 8);
-						sq_base_10++;
-						sq_base_10 %= 4095;
+			// identify and edit non unique codes;
 
-						auto base10oct = [&sq_base_10]() {
-							std::ostringstream str;
-							str << std::oct << sq_base_10;
-							return str.str();
-						};
-
-						string sqk = base10oct();
-						// pad with leading zeros if needed
-						if (sqk.size() < 4) {
-							sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
-						}
-
-						if (FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str())) {
-						}
-						else { break; }
+			if (FlightPlan.GetTrackingControllerIsMe() || !strcmp(FlightPlan.GetTrackingControllerCallsign(), "")) {
+				do {
+					if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
 						itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+						sqcount = count_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+						if (sqcount > 1) {
+							auto sq = FlightPlan.GetControllerAssignedData().GetSquawk();
+							int sq_base_10 = stoi(sq, 0, 8);
+							sq_base_10++;
+							sq_base_10 %= 4095;
+
+							auto base10oct = [&sq_base_10]() {
+								std::ostringstream str;
+								str << std::oct << sq_base_10;
+								return str.str();
+							};
+
+							string sqk = base10oct();
+							// pad with leading zeros if needed
+							if (sqk.size() < 4) {
+								sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
+							}
+
+							if (FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str())) {
+							}
+							else { break; }
+							itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+						}
 					}
-				}
-			} while (sqcount >= 2);
+				} while (sqcount >= 2);
+			}
+
+			itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+
+			if (itr->numCorrelatedRT > 0) {
+				itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
+			}
+
 		}
-
-		itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-
-		if (itr->numCorrelatedRT > 0) {
-			itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
-		}
-
 	}
 }
 
