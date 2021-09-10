@@ -74,11 +74,23 @@ public:
 
 			else if (radFlag == 1) {
 
-				dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
-				dc->LineTo(p.x, p.y);
-				dc->LineTo(p.x - 4, p.y - 4);
-				dc->MoveTo(p.x, p.y);
-				dc->LineTo(p.x + 4, p.y - 4);
+				if (isCorrelated) {
+					HPEN targetPen1 = CreatePen(PS_SOLID, 1, ppsColor);
+					dc->SelectStockObject(NULL_BRUSH);
+					dc->SelectObject(targetPen1);
+
+					POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
+					dc->Polygon(vertices, 3);
+					DeleteObject(targetPen1);
+				}
+				else {
+					dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
+					dc->LineTo(p.x, p.y);
+					dc->LineTo(p.x - 4, p.y - 4);
+					dc->MoveTo(p.x, p.y);
+					dc->LineTo(p.x + 4, p.y - 4);
+				}
+
 			}
 			// IFR correlated
 			else if (radFlag == 2) {

@@ -428,6 +428,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							}
 						}
 					}
+					if (radarTarget.GetPosition().GetRadarFlags() == 0) {
+						radarTarget.Uncorrelate();
+					}
 
 					// altitude filtering 
 
@@ -529,7 +532,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// logic for the color of the PPS
 					if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
-					else if (radarTarget.GetPosition().GetRadarFlags() == 1 && !isCorrelated) { ppsColor = C_PPS_MAGENTA; }
+					else if (radarTarget.GetPosition().GetRadarFlags() == 1 ) { ppsColor = C_PPS_MAGENTA; }
 					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
 					else if (isVFR && isCorrelated) { ppsColor = C_PPS_ORANGE; }
 					else { ppsColor = C_PPS_YELLOW; }
