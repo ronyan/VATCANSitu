@@ -2877,12 +2877,14 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 			else {
 
 				// identify and edit non unique codes;
+				string sqk;
 
 				if (FlightPlan.GetTrackingControllerIsMe() || !strcmp(FlightPlan.GetTrackingControllerCallsign(), "")) {
-					do {
-						if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
+					if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
+						do {
 							itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
 							sqcount = count_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+							
 							if (sqcount > 1) {
 								auto sq = FlightPlan.GetControllerAssignedData().GetSquawk();
 								int sq_base_10 = stoi(sq, 0, 8);
@@ -2895,19 +2897,16 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 									return str.str();
 								};
 
-								string sqk = base10oct();
+								sqk = base10oct();
 								// pad with leading zeros if needed
 								if (sqk.size() < 4) {
 									sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
 								}
-
-								if (FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str())) {
-								}
-								else { break; }
 								itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
 							}
-						}
-					} while (sqcount >= 2);
+						} while (sqcount >= 2);
+						FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str());
+					} 
 				}
 
 				itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
