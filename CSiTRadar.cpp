@@ -2861,6 +2861,7 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 
 	int sqcount = 0;
 
+	/*
 	if (GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_DIRECT ||
 		GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_PLAYBACK) {
 
@@ -2918,6 +2919,7 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 			}
 		}
 	}
+	*/
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
