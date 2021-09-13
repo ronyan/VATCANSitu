@@ -1708,6 +1708,57 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						c = lelem.m_ListBoxElementText;
 						menuState.radarScrWindows.erase(stoi(id));
 						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+
+						string pposStr;
+						float lat, lon, latmin, lonmin;
+						double longitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Longitude, &lon);
+						double latitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Latitude, &lat);
+
+						latmin = abs(round(latitudedecmin * 60));
+						lonmin = abs(round(longitudedecmin * 60));
+						string lonstring = to_string(static_cast<int>(abs(lon)));
+						if (lonstring.size() < 3) {
+							lonstring.insert(lonstring.begin(), 3 - lonstring.size(), '0');
+						}
+
+						if (lon < 0) {
+							if (lat > 0) {
+								// W N
+								pposStr = to_string(static_cast<int>(lat)) + to_string(static_cast<int>(latmin)) + "N" + lonstring + to_string(static_cast<int>(lonmin)) + "W";
+							}
+							else {
+								// W S
+								pposStr = to_string(static_cast<int>(abs(lat))) + to_string(static_cast<int>(latmin)) + "S" + lonstring + to_string(static_cast<int>(lonmin)) + "W";
+							}
+
+						}
+						else {
+							if (lat > 0) {
+								//  E N
+								pposStr = to_string(static_cast<int>(lat)) + to_string(static_cast<int>(latmin)) + "N" + lonstring + to_string(static_cast<int>(lonmin)) + "E";
+							}
+							else {
+								// E S
+								pposStr = to_string(static_cast<int>(abs(lat))) + to_string(static_cast<int>(latmin)) + "S" + lonstring + to_string(static_cast<int>(lonmin)) + "E";
+							}
+						}
+						pposStr += " ";
+						string rtestr = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetRoute();
+						auto itr = rtestr.find(c.c_str());
+						if (itr != rtestr.npos) {
+							rtestr = rtestr.substr(itr);
+							rtestr.insert(0, pposStr);
+						}
+						else {
+							rtestr = pposStr;
+							for (int i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
+								rtestr += mAcData[cs].acFPRoute.fix_names.at(i) + " ";
+							}
+						}
+
+						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().SetRoute(rtestr.c_str());
+						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().AmendFlightPlan();
+
 						mAcData[cs].directToLineOn = false;
 						mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
 						mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
