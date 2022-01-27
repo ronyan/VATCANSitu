@@ -2881,6 +2881,8 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
 	
 	string CJS = FlightPlan.GetTrackingControllerId();
+	string origin = FlightPlan.GetFlightPlanData().GetOrigin();
+	string destin = FlightPlan.GetFlightPlanData().GetDestination();
 
 	if (FlightPlan.GetTrackingControllerIsMe()) {
 		acdata.tagType = 1;
@@ -2890,6 +2892,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	if (remarks.find("STS/ADSB") != remarks.npos) { acdata.isADSB = true; }
+	if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') acdata.isADSB = true;
 	mAcData[callSign] = acdata;
 
 	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
