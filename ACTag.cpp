@@ -3,22 +3,25 @@
 
 using namespace EuroScopePlugIn;
 
-void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
+void CACTag::DrawFPACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPlan *fp, unordered_map<string, POINT> *tOffset)
+{
 
-	POINT p{0,0};
+	POINT p{0, 0};
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
 	// Initiate the default tag location, if no location is set already or find it in the map
 
-	if (tOffset->find(fp->GetCallsign()) == tOffset->end()) {
-		POINT pTag{ 20, -20 };
+	if (tOffset->find(fp->GetCallsign()) == tOffset->end())
+	{
+		POINT pTag{20, -20};
 		tOffset->insert(pair<string, POINT>(fp->GetCallsign(), pTag));
 
 		tagOffsetX = pTag.x;
 		tagOffsetY = pTag.y;
 	}
-	else {
+	else
+	{
 		POINT pTag = tOffset->find(fp->GetCallsign())->second;
 
 		tagOffsetX = pTag.x;
@@ -37,12 +40,15 @@ void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	font.CreateFontIndirect(&lgfont);
 	dc->SelectObject(font);
 
-	// Find position of aircraft 
-	if (rt->IsValid()) {
+	// Find position of aircraft
+	if (rt->IsValid())
+	{
 		p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 	}
-	else {
-		if (fp->IsValid()) {
+	else
+	{
+		if (fp->IsValid())
+		{
 			p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
 		}
 	}
@@ -54,40 +60,46 @@ void CACTag::DrawFPACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	RECT tagAltitude;
 	tagAltitude.left = p.x + tagOffsetX;
-	tagAltitude.top = p.y + tagOffsetY +10;
-	
+	tagAltitude.top = p.y + tagOffsetY + 10;
+
 	RECT tagGS;
 	tagGS.left = p.x + tagOffsetX + 40;
 	tagGS.top = p.y + tagOffsetY + 10;
-	
 
-	if (fp->IsValid()) {
+	if (fp->IsValid())
+	{
 
 		dc->SetTextColor(C_PPS_ORANGE); // FP Track in orange colour
 
 		POINT p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
-		
+
 		// Parse the CS and Wt Symbol
 		string cs = fp->GetCallsign();
 		string wtSymbol = "";
-		if (fp->GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
-		if (fp->GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
+		if (fp->GetFlightPlanData().GetAircraftWtc() == 'H')
+		{
+			wtSymbol = "+";
+		}
+		if (fp->GetFlightPlanData().GetAircraftWtc() == 'L')
+		{
+			wtSymbol = "-";
+		}
 		cs = cs + wtSymbol;
 
 		fp->GetClearedAltitude();
 
 		// Draw the text for the tag
-			
+
 		dc->DrawText(cs.c_str(), &tagCallsign, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(cs.c_str(), &tagCallsign, DT_LEFT);
 
-dc->DrawText(to_string(fp->GetFinalAltitude() / 100).c_str(), &tagAltitude, DT_LEFT | DT_CALCRECT);
-dc->DrawText(to_string(fp->GetFinalAltitude() / 100).c_str(), &tagAltitude, DT_LEFT);
+		dc->DrawText(to_string(fp->GetFinalAltitude() / 100).c_str(), &tagAltitude, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(to_string(fp->GetFinalAltitude() / 100).c_str(), &tagAltitude, DT_LEFT);
 
-// Add the screen obects, TAG_FP_AREA first so that the others go on top;
+		// Add the screen obects, TAG_FP_AREA first so that the others go on top;
 
-rad->AddScreenObject(TAG_ITEM_FP_CS, fp->GetCallsign(), tagCallsign, TRUE, fp->GetCallsign());
-rad->AddScreenObject(TAG_ITEM_FP_FINAL_ALTITUDE, fp->GetCallsign(), tagAltitude, TRUE, "ALT");
+		rad->AddScreenObject(TAG_ITEM_FP_CS, fp->GetCallsign(), tagCallsign, TRUE, fp->GetCallsign());
+		rad->AddScreenObject(TAG_ITEM_FP_FINAL_ALTITUDE, fp->GetCallsign(), tagAltitude, TRUE, "ALT");
 	}
 
 	// restore context
@@ -99,26 +111,36 @@ rad->AddScreenObject(TAG_ITEM_FP_FINAL_ALTITUDE, fp->GetCallsign(), tagAltitude,
 
 // Draws tag for Radar Targets
 
-void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
+void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPlan *fp, unordered_map<string, POINT> *tOffset)
+{
 
-	POINT p{ 0,0 };
+	POINT p{0, 0};
 	p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
 	bool blinking = FALSE;
-	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0
-		&& rad->GetPlugIn()->ControllerMyself().IsController()) { blinking = TRUE; }
-	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
-	if (CSiTRadar::hoAcceptedTime.find(fp->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0 && rad->GetPlugIn()->ControllerMyself().IsController())
+	{
+		blinking = TRUE;
+	}
+	if (rt->GetPosition().GetTransponderI())
+	{
+		blinking = TRUE;
+	}
+	if (CSiTRadar::hoAcceptedTime.find(fp->GetCallsign()) != CSiTRadar::hoAcceptedTime.end())
+	{
+		blinking = TRUE;
+	}
 
 	// Destination airport highlighting
 	auto itr = std::find(begin(CSiTRadar::menuState.destICAO), end(CSiTRadar::menuState.destICAO), fp->GetFlightPlanData().GetDestination());
 	bool isDest = false;
 
-	if (itr != end(CSiTRadar::menuState.destICAO)
-		&& strcmp(fp->GetFlightPlanData().GetDestination(), "") != 0) {
-		if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)]) {
+	if (itr != end(CSiTRadar::menuState.destICAO) && strcmp(fp->GetFlightPlanData().GetDestination(), "") != 0)
+	{
+		if (CSiTRadar::menuState.destArptOn[distance(CSiTRadar::menuState.destICAO, itr)])
+		{
 
 			HPEN targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
 			dc->SelectObject(targetPen);
@@ -137,49 +159,97 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	// Line 1 Items
 	string cs = fp->GetCallsign();
 	string wtSymbol = "";
-	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
-	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
-	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'J') { wtSymbol = "$"; }
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H')
+	{
+		wtSymbol = "+";
+	}
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L')
+	{
+		wtSymbol = "-";
+	}
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'J')
+	{
+		wtSymbol = "$";
+	}
 	cs = cs + wtSymbol;
 
 	char commTypeChar = tolower(fp->GetControllerAssignedData().GetCommunicationType());
-	if (commTypeChar == '\0') {
+	if (commTypeChar == '\0')
+	{
 		commTypeChar = tolower(fp->GetFlightPlanData().GetCommunicationType());
 	}
 	string commType = "";
-	if (commTypeChar != 'v') { commType = "/"; commType += commTypeChar; }
+	if (commTypeChar != 'v')
+	{
+		commType = "/";
+		commType += commTypeChar;
+	}
 
 	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
 
 	// Line 2 Items
 	string altThreeDigit;
-	if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+	if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude())
+	{
 		altThreeDigit = to_string((rt->GetPosition().GetFlightLevel() + 50) / 100); // +50 to force rounding up
 	}
-	else {
+	else
+	{
 		altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100);
 	}
-	if (altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
+	if (altThreeDigit.size() <= 3)
+	{
+		altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0');
+	}
 	string vmi;
-	if (rt->GetVerticalSpeed() > 400) { vmi = "^"; }
-	if (rt->GetVerticalSpeed() < -400) { vmi = "|"; }; // up arrow "??!" = downarrow
+	if (rt->GetVerticalSpeed() > 400)
+	{
+		vmi = "^";
+	}
+	if (rt->GetVerticalSpeed() < -400)
+	{
+		vmi = "|";
+	}; // up arrow "??!" = downarrow
 	string vmr = to_string(abs(rt->GetVerticalSpeed() / 200));
-	if (vmr.size() <= 2) { vmr.insert(vmr.begin(), 2 - vmr.size(), '0'); }
+	if (vmr.size() <= 2)
+	{
+		vmr.insert(vmr.begin(), 2 - vmr.size(), '0');
+	}
 	string clrdAlt = to_string(fp->GetControllerAssignedData().GetClearedAltitude() / 100);
-	if (clrdAlt.size() <= 3) { clrdAlt.insert(clrdAlt.begin(), 3 - clrdAlt.size(), '0'); }
-	if (fp->GetControllerAssignedData().GetClearedAltitude() == 0) { clrdAlt = "clr"; }
-	if (fp->GetControllerAssignedData().GetClearedAltitude() == 1) { clrdAlt = "APR"; }
-	if (fp->GetControllerAssignedData().GetClearedAltitude() == 2) { clrdAlt = "APR"; }
+	if (clrdAlt.size() <= 3)
+	{
+		clrdAlt.insert(clrdAlt.begin(), 3 - clrdAlt.size(), '0');
+	}
+	if (fp->GetControllerAssignedData().GetClearedAltitude() == 0)
+	{
+		clrdAlt = "clr";
+	}
+	if (fp->GetControllerAssignedData().GetClearedAltitude() == 1)
+	{
+		clrdAlt = "APR";
+	}
+	if (fp->GetControllerAssignedData().GetClearedAltitude() == 2)
+	{
+		clrdAlt = "APR";
+	}
 	string fpAlt = to_string(fp->GetFlightPlanData().GetFinalAltitude() / 100);
-	if (fpAlt.size() <= 3) { fpAlt.insert(fpAlt.begin(), 3 - fpAlt.size(), '0'); }
-	if (fp->GetFlightPlanData().GetFinalAltitude() == 0) { fpAlt = "fld"; }
+	if (fpAlt.size() <= 3)
+	{
+		fpAlt.insert(fpAlt.begin(), 3 - fpAlt.size(), '0');
+	}
+	if (fp->GetFlightPlanData().GetFinalAltitude() == 0)
+	{
+		fpAlt = "fld";
+	}
 	string handoffCJS = fp->GetHandoffTargetControllerId();
-	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) {
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
+	{
 		handoffCJS = fp->GetTrackingControllerId();
 	}
 	string groundSpeed = to_string((rt->GetPosition().GetReportedGS() + 5) / 10);
 	string setSpeed = to_string(fp->GetControllerAssignedData().GetAssignedSpeed());
 	string setMach = to_string(fp->GetControllerAssignedData().GetAssignedMach());
+	string adsbMach = to_string(fp->GetFlightPlanData().PerformanceGetMach(rt->GetPosition().GetFlightLevel(), 0));
 
 	// Line 3 Items
 	string acType = fp->GetFlightPlanData().GetAircraftFPType();
@@ -188,23 +258,28 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 	rad->GetPlugIn()->SelectActiveSectorfile();
 	for (CSectorElement sectorElement = rad->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); sectorElement.IsValid();
-		sectorElement = rad->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_AIRPORT)) {
-		if (!strcmp(sectorElement.GetName(), destination.c_str())) {
+		 sectorElement = rad->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_AIRPORT))
+	{
+		if (!strcmp(sectorElement.GetName(), destination.c_str()))
+		{
 			sectorElement.GetPosition(&dest, 0);
 		}
 	}
 	string destinationDist, destinationTime;
 	// if the destination airport is not in the sector file, have to use Euroscope's FP calculated distance and not a direct distance
-	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0) {
+	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0)
+	{
 		destinationDist = to_string((long)fp->GetDistanceToDestination());
 	}
 	// otherwise, the display should be direct distance which can be more accurate calculated if in the SCT file.
-	else {
+	else
+	{
 		destinationDist = to_string((long)rt->GetPosition().GetPosition().DistanceTo(dest));
 	}
 
 	string est;
-	if (rt->GetGS() > 0) {
+	if (rt->GetGS() > 0)
+	{
 		struct tm gmt;
 		time_t t = std::time(0);
 		t += static_cast<time_t>(((rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS()) * 3600));
@@ -215,52 +290,61 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		est = timeStr;
 	}
 
-	if (isDest) {
-		if (CSiTRadar::menuState.destDME && !CSiTRadar::menuState.destEST) {
+	if (isDest)
+	{
+		if (CSiTRadar::menuState.destDME && !CSiTRadar::menuState.destEST)
+		{
 			destination = destination + "-" + destinationDist;
 		}
-		else if (CSiTRadar::menuState.destEST && !CSiTRadar::menuState.destDME) {
+		else if (CSiTRadar::menuState.destEST && !CSiTRadar::menuState.destDME)
+		{
 			destination = destination + "-" + est;
 		}
-		else if (CSiTRadar::menuState.destEST && CSiTRadar::menuState.destDME) {
+		else if (CSiTRadar::menuState.destEST && CSiTRadar::menuState.destDME)
+		{
 			destination = destination + "-" + destinationDist + "-" + est;
 		}
 	}
 	else
 	{
-		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1) {
+		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 1)
+		{
 			destination = destination + "-" + destinationDist;
 		}
-		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 2) {
+		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 2)
+		{
 			destination = destination + "-" + est;
 		}
 
-		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 3) {
+		if (CSiTRadar::mAcData[rt->GetCallsign()].destLabelType == 3)
+		{
 			destination = destination + "-" + destinationDist + "-" + est;
 		}
 	}
-	
+
 	// Initiate the default tag location, if no location is set already or find it in the map
 
-	if (tOffset->find(rt->GetCallsign()) == tOffset->end()) {
-		POINT pTag{ 20, -20 };
+	if (tOffset->find(rt->GetCallsign()) == tOffset->end())
+	{
+		POINT pTag{20, -20};
 		tOffset->insert(pair<string, POINT>(rt->GetCallsign(), pTag));
 
 		tagOffsetX = pTag.x;
 		tagOffsetY = pTag.y;
 	}
-	else {
+	else
+	{
 		POINT pTag = tOffset->find(rt->GetCallsign())->second;
 
 		tagOffsetX = pTag.x;
 		tagOffsetY = pTag.y;
 	}
 
-	POINT line0 = { p.x + tagOffsetX, p.y + tagOffsetY - 12 };
-	POINT line1 = { p.x + tagOffsetX, p.y + tagOffsetY };
-	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 11 };
-	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 22 };
-	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 33 };
+	POINT line0 = {p.x + tagOffsetX, p.y + tagOffsetY - 12};
+	POINT line1 = {p.x + tagOffsetX, p.y + tagOffsetY};
+	POINT line2 = {p.x + tagOffsetX, p.y + tagOffsetY + 11};
+	POINT line3 = {p.x + tagOffsetX, p.y + tagOffsetY + 22};
+	POINT line4 = {p.x + tagOffsetX, p.y + tagOffsetY + 33};
 
 	// save context
 	int sDC = dc->SaveDC();
@@ -280,14 +364,16 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	RECT rline1; // bring scope out to allow connector to be drawn
 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
-		( CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1)) {
+		(CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1))
+	{
 		// Tag formatting
 		RECT tagCallsign;
 		tagCallsign.left = p.x + tagOffsetX;
 		tagCallsign.top = p.y + tagOffsetY;
 
 		dc->SetTextColor(C_PPS_YELLOW);
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 
@@ -296,12 +382,14 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline1.left = line1.x;
 		rline1.bottom = line2.y;
 
-		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac) {
+		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac)
+		{
 			dc->SetTextColor(C_PPS_RED);
-			if (blinking && CSiTRadar::halfSecTick) {
+			if (blinking && CSiTRadar::halfSecTick)
+			{
 				dc->SetTextColor(C_WHITE);
 			}
-			
+
 			dc->SelectObject(boldfont);
 
 			dc->DrawText("+", &rline1, DT_LEFT | DT_CALCRECT);
@@ -313,14 +401,16 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		dc->SetTextColor(C_PPS_YELLOW);
 		dc->SelectObject(font);
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 
 		// SFI mode changes the ASEL aircraft ACID to white
 
 		if (CSiTRadar::menuState.SFIMode &&
-			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 
@@ -331,32 +421,42 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rline1.right = rline1.left + 8;
 
 		if (CSiTRadar::menuState.SFIMode &&
-			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0)
+		{
 			dc->SetTextColor(C_PPS_YELLOW);
 		}
 
 		// Show Communication Type if not Voice
 		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
-		if (commType.size() > 0) {
+		if (commType.size() > 0)
+		{
 			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);			
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
 		}
 		rline1.left = rline1.right;
-		
-		if (sfi.size() >1 && sfi.find(" ", 2) != sfi.npos && sfi.find(" ", 2) < 3 && sfi.at(0) == ' ') {
+
+		if (sfi.size() > 1 && sfi.find(" ", 2) != sfi.npos && sfi.find(" ", 2) < 3 && sfi.at(0) == ' ')
+		{
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT);
 		}
-		else if (sfi.size() < 3 && sfi.size() != 0 ) {
+		else if (sfi.size() < 3 && sfi.size() != 0)
+		{
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT);
 		}
-	
+
 		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
-		
+
 		// add some padding for the SFI + long callsigns
-		if (sfi.size() == 0) { CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 12; }
-		else { CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 6; }
+		if (sfi.size() == 0)
+		{
+			CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 12;
+		}
+		else
+		{
+			CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 6;
+		}
 
 		// Line 2
 		RECT rline2;
@@ -367,7 +467,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(altThreeDigit.c_str(), &rline2, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), rline2, TRUE, "");
 
-		if (abs(rt->GetVerticalSpeed()) > 400) {
+		if (abs(rt->GetVerticalSpeed()) > 400)
+		{
 			rline2.left = rline2.right;
 			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT);
@@ -380,24 +481,27 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		double alt;
 
-		if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+		if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude())
+		{
 			alt = rt->GetPosition().GetFlightLevel(); // +50 to force rounding up
 		}
-		else {
+		else
+		{
 			alt = rt->GetPosition().GetPressureAltitude();
 		}
 
 		if (
-			// altitude differential 
+			// altitude differential
 			(abs(alt - fp->GetControllerAssignedData().GetClearedAltitude()) > 200 &&
-			fp->GetControllerAssignedData().GetClearedAltitude() != 0) 
-			
-			// or extended altitudes toggled on
-			|| (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt)) {
+			 fp->GetControllerAssignedData().GetClearedAltitude() != 0)
 
+			// or extended altitudes toggled on
+			|| (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt))
+		{
 
 			dc->SetTextColor(C_PPS_ORANGE);
-			if (blinking && CSiTRadar::halfSecTick) {
+			if (blinking && CSiTRadar::halfSecTick)
+			{
 				dc->SetTextColor(C_WHITE);
 			}
 			dc->DrawText(("C" + clrdAlt).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
@@ -406,9 +510,11 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			rline2.left = rline2.right + 8;
 		}
 
-		if (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt) {
+		if (CSiTRadar::menuState.extAltToggle && CSiTRadar::mAcData[rt->GetCallsign()].extAlt)
+		{
 			dc->SetTextColor(C_PPS_ORANGE);
-			if (blinking && CSiTRadar::halfSecTick) {
+			if (blinking && CSiTRadar::halfSecTick)
+			{
 				dc->SetTextColor(C_WHITE);
 			}
 			dc->DrawText(("F" + fpAlt).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
@@ -418,16 +524,21 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 
 		dc->SetTextColor(RGB(255, 234, 46));
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 		dc->DrawText(handoffCJS.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 		dc->DrawText((handoffCJS).c_str(), &rline2, DT_LEFT);
 		rline2.left = rline2.right + 8;
-		if (rline2.left < p.x + tagOffsetX + 38) { rline2.left = p.x + tagOffsetX + 38; }
+		if (rline2.left < p.x + tagOffsetX + 38)
+		{
+			rline2.left = p.x + tagOffsetX + 38;
+		}
 		dc->SetTextColor(C_PPS_YELLOW);
 
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
@@ -438,27 +549,61 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		dc->SetTextColor(C_PPS_ORANGE);
 
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
-		if (fp->GetControllerAssignedData().GetAssignedSpeed() != 0) {
-			setSpeed = setSpeed.insert(0, "A");
-			dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT);
-			rline2.left = rline2.right + 8;
-			rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+		if (rt->GetPosition().GetRadarFlags() == 4 && rt->GetPosition().GetRadarFlags() != 2 && rt->GetPosition().GetFlightLevel() >= 28000)
+		{
+			if (fp->GetControllerAssignedData().GetAssignedSpeed() != 0)
+			{
+				setSpeed = setSpeed.insert(0, "A");
+				dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT);
+				rline2.left = rline2.right + 8;
+				rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+			}
+			else if (fp->GetControllerAssignedData().GetAssignedMach() != 0)
+			{
+				setMach = setMach.insert(0, "A.");
+				dc->DrawText(setMach.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(setMach.c_str(), &rline2, DT_LEFT);
+				rline2.left = rline2.right + 8;
+				rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+			}
+			else
+			{
+				adsbMach = adsbMach.insert(0, "M.");
+				dc->DrawText(adsbMach.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(adsbMach.c_str(), &rline2, DT_LEFT);
+				rline2.left = rline2.right + 8;
+				rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+			}
 		}
-		if (fp->GetControllerAssignedData().GetAssignedMach() != 0 ) {
-			setMach = setMach.insert(0, "A.");
-			dc->DrawText(setMach.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(setMach.c_str(), &rline2, DT_LEFT);
-			rline2.left = rline2.right + 8;
-			rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+		else
+		{
+			if (fp->GetControllerAssignedData().GetAssignedSpeed() != 0)
+			{
+				setSpeed = setSpeed.insert(0, "A");
+				dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(setSpeed.c_str(), &rline2, DT_LEFT);
+				rline2.left = rline2.right + 8;
+				rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+			}
+			if (fp->GetControllerAssignedData().GetAssignedMach() != 0)
+			{
+				setMach = setMach.insert(0, "A.");
+				dc->DrawText(setMach.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(setMach.c_str(), &rline2, DT_LEFT);
+				rline2.left = rline2.right + 8;
+				rad->AddScreenObject(TAG_ITEM_TYPE_ASSIGNED_HEADING, fp->GetCallsign(), rline2, TRUE, "");
+			}
 		}
 
 		// Line 3
 		dc->SetTextColor(C_PPS_YELLOW);
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 
@@ -471,7 +616,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		rad->AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, rt->GetCallsign(), rline3, TRUE, "");
 		rline3.left = rline3.right + 10;
 
-		if (isDest) {
+		if (isDest)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 
@@ -479,7 +625,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(destination.c_str(), &rline3, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_DESTINATION, rt->GetCallsign(), rline3, TRUE, "");
 
-		if (isDest) {
+		if (isDest)
+		{
 			dc->SetTextColor(C_PPS_YELLOW);
 		}
 
@@ -487,11 +634,14 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		RECT rline4;
 		rline4.top = line4.y;
 		rline4.left = line4.x;
-		if (sfi.size() >2) {
-			if (sfi.find(" ") != sfi.npos && sfi.find(" ") == 0) {
+		if (sfi.size() > 2)
+		{
+			if (sfi.find(" ") != sfi.npos && sfi.find(" ") == 0)
+			{
 				sfi = sfi.substr(sfi.find(" ") + 1);
 				// Find the second space: " N REMARKS" -> "REMARKS"
-				if (sfi.find(" ") != sfi.npos && sfi.find(" ") == 1) { // allows for spaces in remarks i.e. "NEW PILOT"
+				if (sfi.find(" ") != sfi.npos && sfi.find(" ") == 1)
+				{ // allows for spaces in remarks i.e. "NEW PILOT"
 					sfi = sfi.substr(sfi.find(" ") + 1);
 				}
 			}
@@ -507,9 +657,10 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	int doglegY = 0;
 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
-		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2) {
+		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2)
+	{
 
-		POINT connector{ 0,0 };
+		POINT connector{0, 0};
 		int tagOffsetX = 0;
 		int tagOffsetY = 0;
 
@@ -520,20 +671,30 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		tagOffsetY = pTag.y;
 
 		bool blinking = FALSE;
-		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
-			&& strcmp(fp->GetHandoffTargetControllerId(), "") != 0) {
+		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId() && strcmp(fp->GetHandoffTargetControllerId(), "") != 0)
+		{
 			blinking = TRUE;
 		}
-		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
+		if (rt->GetPosition().GetTransponderI())
+		{
+			blinking = TRUE;
+		}
 
-		if (rt->IsValid()) {
+		if (rt->IsValid())
+		{
 			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 		}
 
 		// determine if the tag is to the left or the right of the PPS
 
-		if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
-		if (pTag.x < 0) { connector.x = rline1.right + 3; }
+		if (pTag.x >= 0)
+		{
+			connector.x = (int)p.x + tagOffsetX - 3;
+		};
+		if (pTag.x < 0)
+		{
+			connector.x = rline1.right + 3;
+		}
 		connector.y = p.y + tagOffsetY + 7;
 
 		// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
@@ -545,7 +706,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		POINT leaderOrigin = p;
 		int PPSAreaRad = 9;
 
-		if (connector.x - p.x != 0) {
+		if (connector.x - p.x != 0)
+		{
 
 			double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
 			double y = abs(p.y - connector.y); // also cast as double for atan
@@ -553,11 +715,20 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			phi = atan(y / x);
 
 			// logic for if phi is a certain value; unit circle! (with fudge factor)
-			if (phi >= 0 && phi < PI / 6) { theta = 30; }
-			else if (phi >= PI / 6 && phi < PI / 4) { theta = 45; }
-			else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
+			if (phi >= 0 && phi < PI / 6)
+			{
+				theta = 30;
+			}
+			else if (phi >= PI / 6 && phi < PI / 4)
+			{
+				theta = 45;
+			}
+			else if (phi >= PI / 4 && phi < PI / 3)
+			{
+				theta = 60;
+			}
 
-			theta = theta * PI / 180; // to radians
+			theta = theta * PI / 180;		// to radians
 			doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
 
 			// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
@@ -565,63 +736,73 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			leaderOrigin.y = (int)(p.y - (PPSAreaRad)*sin(theta));
 			leaderOrigin.x = (int)(p.x + (PPSAreaRad)*cos(theta));
 
-			if (connector.x < p.x) { 
-				
-				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); 
-			
+			if (connector.x < p.x)
+			{
+
+				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta)));
+
 				leaderOrigin.y = (int)(p.y - (PPSAreaRad)*sin(theta));
 				leaderOrigin.x = (int)(p.x - (PPSAreaRad)*cos(theta));
-			
-			} // quadrant 2
-			if (connector.y > p.y && connector.x > p.x) { 
 
-				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); 
-			
+			} // quadrant 2
+			if (connector.y > p.y && connector.x > p.x)
+			{
+
+				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta)));
+
 				leaderOrigin.y = (int)(p.y + (PPSAreaRad)*sin(theta));
 				leaderOrigin.x = (int)(p.x + (PPSAreaRad)*cos(theta));
 			}
 
 			// Quadrant 3
-			if (connector.y > p.y && connector.x < p.x) { 
-				
-				doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); 
-				
-				leaderOrigin.y = (int)(p.y + (PPSAreaRad) * sin(theta));
-				leaderOrigin.x = (int)(p.x - (PPSAreaRad) * cos(theta));
+			if (connector.y > p.y && connector.x < p.x)
+			{
+
+				doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta)));
+
+				leaderOrigin.y = (int)(p.y + (PPSAreaRad)*sin(theta));
+				leaderOrigin.x = (int)(p.x - (PPSAreaRad)*cos(theta));
 			}
-			
-			
-			if (phi >= PI / 3) { 
+
+			if (phi >= PI / 3)
+			{
 				doglegX = p.x;
 
-				if (doglegY < p.y) {
+				if (doglegY < p.y)
+				{
 					leaderOrigin.x = p.x;
 					leaderOrigin.y = p.y - PPSAreaRad;
 				}
-				else {
+				else
+				{
 					leaderOrigin.x = p.x;
 					leaderOrigin.y = p.y + PPSAreaRad;
 				}
 			} // same as directly above or below
 		}
-		else {
+		else
+		{
 			doglegX = p.x; // if directly on top or below
 			doglegY = p.y + tagOffsetY + 7;
 
-			if (doglegY < p.y) {
+			if (doglegY < p.y)
+			{
 				leaderOrigin.x = p.x;
 				leaderOrigin.y = p.y - PPSAreaRad;
 			}
-			else {
+			else
+			{
 				leaderOrigin.x = p.x;
 				leaderOrigin.y = p.y + PPSAreaRad;
 			}
 		}
 
-		if ((int)doglegY == p.y) {
-			
+		if ((int)doglegY == p.y)
+		{
+
 			//doglegX = p.x + tagOffsetX;
-			if (tagOffsetX > 0) {
+			if (tagOffsetX > 0)
+			{
 				leaderOrigin.x = p.x + PPSAreaRad;
 				leaderOrigin.y = p.y;
 				doglegX = leaderOrigin.x;
@@ -635,10 +816,14 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		}
 
 		// draw extension if tag is to the left of the PPS
-		if (rline1.right < (int)doglegX) {
+		if (rline1.right < (int)doglegX)
+		{
 			HPEN targetPen;
 			COLORREF conColor = C_PPS_YELLOW;
-			if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+			if (CSiTRadar::halfSecTick == TRUE && blinking)
+			{
+				conColor = C_WHITE;
+			}
 			targetPen = CreatePen(PS_SOLID, 1, conColor);
 			dc->SelectObject(targetPen);
 
@@ -651,28 +836,32 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		// Draw the angled line and draw the horizontal line
 		HPEN targetPen;
 		COLORREF conColor = C_PPS_YELLOW;
-		if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+		if (CSiTRadar::halfSecTick == TRUE && blinking)
+		{
+			conColor = C_WHITE;
+		}
 		targetPen = CreatePen(PS_SOLID, 1, conColor);
 		dc->SelectObject(targetPen);
 		dc->SelectStockObject(NULL_BRUSH);
 
 		dc->MoveTo(leaderOrigin.x, leaderOrigin.y);
-		dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
+		dc->LineTo((int)doglegX, (int)doglegY);				// line to the dogleg
 		dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
 
 		// ADSB circle
-		if (CSiTRadar::mAcData[rt->GetCallsign()].isADSB) {
+		if (CSiTRadar::mAcData[rt->GetCallsign()].isADSB)
+		{
 			dc->Ellipse((int)doglegX - 3, (int)doglegY - 3, (int)doglegX + 4, (int)doglegY + 4);
 		}
 
 		DeleteObject(targetPen);
-
 	}
 
 	// Draw Connector Ends
-	
+
 	// BRAVO TAGS
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1) {
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 0 && rt->GetPosition().GetRadarFlags() != 1)
+	{
 
 		RECT bline0{};
 		RECT bline1{};
@@ -687,7 +876,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(altThreeDigit.c_str(), &bline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), bline1, TRUE, "BRAVO ALT");
 
-		if (abs(rt->GetVerticalSpeed()) > 400) {
+		if (abs(rt->GetVerticalSpeed()) > 400)
+		{
 			bline1.left = bline1.right;
 			dc->DrawText(vmi.c_str(), &bline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmi.c_str(), &bline1, DT_LEFT);
@@ -700,7 +890,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		bline3.top = bline1.bottom - 2;
 		bline3.left = p.x + 38;
-		if (isDest) {
+		if (isDest)
+		{
 			dc->SetTextColor(C_WHITE);
 			dc->DrawText(destination.c_str(), &bline3, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(destination.c_str(), &bline3, DT_LEFT);
@@ -708,14 +899,13 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 			dc->SetTextColor(C_PPS_YELLOW);
 		}
 	}
-	
 
-	// Uncorrelated 
-	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3 
-		&& rt->GetPosition().GetRadarFlags() != 1) {
+	// Uncorrelated
+	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 3 && rt->GetPosition().GetRadarFlags() != 1)
+	{
 
 		dc->SetTextColor(C_PPS_YELLOW);
-		
+
 		RECT uline0{};
 		RECT uline1{};
 		RECT uline2{};
@@ -723,7 +913,10 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 
 		uline0.top = p.y - 19;
 		uline0.left = p.x + 10;
-		if (CSiTRadar::halfSecTick && CSiTRadar::mAcData[rt->GetCallsign()].multipleDiscrete) { ssr = ""; }
+		if (CSiTRadar::halfSecTick && CSiTRadar::mAcData[rt->GetCallsign()].multipleDiscrete)
+		{
+			ssr = "";
+		}
 		dc->DrawText(ssr.c_str(), &uline0, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(ssr.c_str(), &uline0, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_SQUAWK, rt->GetCallsign(), uline0, TRUE, "");
@@ -734,7 +927,8 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 		dc->DrawText(altThreeDigit.c_str(), &uline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), uline1, TRUE, "Uncorr ALT");
 
-		if (abs(rt->GetVerticalSpeed()) > 400) {
+		if (abs(rt->GetVerticalSpeed()) > 400)
+		{
 			uline1.left = uline1.right;
 			dc->DrawText(vmi.c_str(), &uline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmi.c_str(), &uline1, DT_LEFT);
@@ -754,17 +948,27 @@ void CACTag::DrawRTACTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPl
 	dc->RestoreDC(sDC);
 }
 
-void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, unordered_map<string, POINT>* tOffset) {
-	
-	POINT p{ 0,0 };
+void CACTag::DrawNARDSTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPlan *fp, unordered_map<string, POINT> *tOffset)
+{
+
+	POINT p{0, 0};
 	p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
 	bool blinking = FALSE;
-	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0) { blinking = TRUE; }
-	if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
-	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end()) { blinking = TRUE; }
+	if (strcmp(fp->GetHandoffTargetControllerId(), rad->GetPlugIn()->ControllerMyself().GetPositionId()) == 0)
+	{
+		blinking = TRUE;
+	}
+	if (rt->GetPosition().GetTransponderI())
+	{
+		blinking = TRUE;
+	}
+	if (CSiTRadar::hoAcceptedTime.find(rt->GetCallsign()) != CSiTRadar::hoAcceptedTime.end())
+	{
+		blinking = TRUE;
+	}
 
 	// Line 0 Items
 	string ssr = rt->GetPosition().GetSquawk();
@@ -772,55 +976,79 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 	// Line 1 Items
 	string cs = rt->GetCallsign();
 	string wtSymbol = "";
-	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H') { wtSymbol = "+"; }
-	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L') { wtSymbol = "-"; }
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H')
+	{
+		wtSymbol = "+";
+	}
+	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'L')
+	{
+		wtSymbol = "-";
+	}
 	cs = cs + wtSymbol;
 
 	char commTypeChar = tolower(fp->GetControllerAssignedData().GetCommunicationType());
-	if (commTypeChar == '\0') {
+	if (commTypeChar == '\0')
+	{
 		commTypeChar = tolower(fp->GetFlightPlanData().GetCommunicationType());
 	}
 	string commType = "";
-	if (commTypeChar != 'v') { commType = "/"; commType += commTypeChar; }
+	if (commTypeChar != 'v')
+	{
+		commType = "/";
+		commType += commTypeChar;
+	}
 
 	string sfi = fp->GetControllerAssignedData().GetScratchPadString();
 
 	// Line 2 Items
 	string altThreeDigit;
-	if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+	if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude())
+	{
 		altThreeDigit = to_string((rt->GetPosition().GetFlightLevel() + 50) / 100); // +50 to force rounding up
 	}
-	else {
+	else
+	{
 		altThreeDigit = to_string((rt->GetPosition().GetPressureAltitude() + 50) / 100);
 	}
-	if (altThreeDigit.size() <= 3) { altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0'); }
+	if (altThreeDigit.size() <= 3)
+	{
+		altThreeDigit.insert(altThreeDigit.begin(), 3 - altThreeDigit.size(), '0');
+	}
 	string vmi;
-	if (rt->GetVerticalSpeed() > 400) { vmi = "^"; }
-	if (rt->GetVerticalSpeed() < -400) { vmi = "|"; }; // up arrow "??!" = downarrow
-	
+	if (rt->GetVerticalSpeed() > 400)
+	{
+		vmi = "^";
+	}
+	if (rt->GetVerticalSpeed() < -400)
+	{
+		vmi = "|";
+	}; // up arrow "??!" = downarrow
+
 	string groundSpeed = to_string((rt->GetPosition().GetReportedGS() + 5) / 10);
 
 	// Initiate the default tag location, if no location is set already or find it in the map
 
-	if (tOffset->find(rt->GetCallsign()) == tOffset->end()) {
-		POINT pTag{ 20, -24 };
+	if (tOffset->find(rt->GetCallsign()) == tOffset->end())
+	{
+		POINT pTag{20, -24};
 		tOffset->insert(pair<string, POINT>(rt->GetCallsign(), pTag));
 
 		tagOffsetX = pTag.x;
 		tagOffsetY = pTag.y;
 	}
-	else {
+	else
+	{
 		POINT pTag = tOffset->find(rt->GetCallsign())->second;
 
 		tagOffsetX = pTag.x;
 		tagOffsetY = pTag.y;
 	}
 
-	POINT line0 = { p.x + tagOffsetX, p.y + tagOffsetY - 11 };
-	POINT line1 = { p.x + tagOffsetX, p.y + tagOffsetY };
-	POINT line2 = { p.x + tagOffsetX, p.y + tagOffsetY + 11 };
-	POINT line3 = { p.x + tagOffsetX, p.y + tagOffsetY + 22 };
-	POINT line4 = { p.x + tagOffsetX, p.y + tagOffsetY + 33 };
+	POINT line0 = {p.x + tagOffsetX, p.y + tagOffsetY - 11};
+	POINT line1 = {p.x + tagOffsetX, p.y + tagOffsetY};
+	POINT line2 = {p.x + tagOffsetX, p.y + tagOffsetY + 11};
+	POINT line3 = {p.x + tagOffsetX, p.y + tagOffsetY + 22};
+	POINT line4 = {p.x + tagOffsetX, p.y + tagOffsetY + 33};
 
 	// save context
 	int sDC = dc->SaveDC();
@@ -843,9 +1071,10 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 	int doglegY = 0;
 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
-		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2) {
+		CSiTRadar::mAcData[rt->GetCallsign()].tagType == 2)
+	{
 
-		POINT connector{ 0,0 };
+		POINT connector{0, 0};
 		int tagOffsetX = 0;
 		int tagOffsetY = 0;
 
@@ -856,20 +1085,30 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		tagOffsetY = pTag.y;
 
 		bool blinking = FALSE;
-		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId()
-			&& strcmp(fp->GetHandoffTargetControllerId(), "") != 0) {
+		if (fp->GetHandoffTargetControllerId() == rad->GetPlugIn()->ControllerMyself().GetPositionId() && strcmp(fp->GetHandoffTargetControllerId(), "") != 0)
+		{
 			blinking = TRUE;
 		}
-		if (rt->GetPosition().GetTransponderI()) { blinking = TRUE; }
+		if (rt->GetPosition().GetTransponderI())
+		{
+			blinking = TRUE;
+		}
 
-		if (rt->IsValid()) {
+		if (rt->IsValid())
+		{
 			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 		}
 
 		// determine if the tag is to the left or the right of the PPS
 
-		if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
-		if (pTag.x < 0) { connector.x = (int)p.x + tagOffsetX - 3 + CSiTRadar::mAcData[rt->GetCallsign()].tagWidth; }
+		if (pTag.x >= 0)
+		{
+			connector.x = (int)p.x + tagOffsetX - 3;
+		};
+		if (pTag.x < 0)
+		{
+			connector.x = (int)p.x + tagOffsetX - 3 + CSiTRadar::mAcData[rt->GetCallsign()].tagWidth;
+		}
 		connector.y = p.y + tagOffsetY + 7;
 
 		// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
@@ -879,7 +1118,8 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		double theta = 30;
 		double phi = 0;
 
-		if (connector.x - p.x != 0) {
+		if (connector.x - p.x != 0)
+		{
 
 			double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
 			double y = abs(p.y - connector.y); // also cast as double for atan
@@ -887,22 +1127,44 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 			phi = atan(y / x);
 
 			// logic for if phi is a certain value; unit circle! (with fudge factor)
-			if (phi >= 0 && phi < PI / 6) { theta = 30; }
-			else if (phi >= PI / 6 && phi < PI / 4) { theta = 45; }
-			else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
+			if (phi >= 0 && phi < PI / 6)
+			{
+				theta = 30;
+			}
+			else if (phi >= PI / 6 && phi < PI / 4)
+			{
+				theta = 45;
+			}
+			else if (phi >= PI / 4 && phi < PI / 3)
+			{
+				theta = 60;
+			}
 
-			theta = theta * PI / 180; // to radians
+			theta = theta * PI / 180;		// to radians
 			doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
 
 			// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
 			doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
 
-			if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
-			if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); }
-			if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
-			if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
+			if (connector.x < p.x)
+			{
+				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta)));
+			} // quadrant 2
+			if (connector.y > p.y && connector.x > p.x)
+			{
+				doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta)));
+			}
+			if (connector.y > p.y && connector.x < p.x)
+			{
+				doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta)));
+			}
+			if (phi >= PI / 3)
+			{
+				doglegX = p.x;
+			} // same as directly above or below
 		}
-		else {
+		else
+		{
 			doglegX = p.x; // if direction on top or below
 			doglegY = p.y + tagOffsetY + 7;
 		}
@@ -910,34 +1172,38 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		// Draw the angled line and draw the horizontal line
 		HPEN targetPen;
 		COLORREF conColor = C_PPS_YELLOW;
-		if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+		if (CSiTRadar::halfSecTick == TRUE && blinking)
+		{
+			conColor = C_WHITE;
+		}
 		targetPen = CreatePen(PS_SOLID, 1, conColor);
 		dc->SelectObject(targetPen);
 		dc->SelectStockObject(NULL_BRUSH);
 
 		dc->MoveTo(p.x, p.y);
-		dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
+		dc->LineTo((int)doglegX, (int)doglegY);				// line to the dogleg
 		dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
 
 		DeleteObject(targetPen);
-
 	}
 
 	// Draw Connector Ends
 
 	if (CSiTRadar::mAcData[rt->GetCallsign()].tagType == 1 ||
-		(CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1)) {
+		(CSiTRadar::mAcData[fp->GetCallsign()].isADSB && CSiTRadar::mAcData[fp->GetCallsign()].tagType == 1))
+	{
 		// Tag formatting
 		RECT tagCallsign;
 		tagCallsign.left = p.x + tagOffsetX;
 		tagCallsign.top = p.y + tagOffsetY;
 
 		dc->SetTextColor(C_PPS_YELLOW);
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 
-		// Line 0 
+		// Line 0
 		RECT rline0;
 		rline0.top = line0.y;
 		rline0.left = line0.x;
@@ -953,9 +1219,11 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		rline1.left = line1.x;
 		rline1.bottom = line2.y;
 
-		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac) {
+		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac)
+		{
 			dc->SetTextColor(C_PPS_RED);
-			if (blinking && CSiTRadar::halfSecTick) {
+			if (blinking && CSiTRadar::halfSecTick)
+			{
 				dc->SetTextColor(C_WHITE);
 			}
 
@@ -978,7 +1246,8 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		rline1.right = rline1.left + 8;
 
 		// Show Communication Type if not Voice
-		if (commType.size() > 0) {
+		if (commType.size() > 0)
+		{
 			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
 		}
@@ -988,10 +1257,14 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 
 		// draw extension if tag is to the left of the PPS
-		if (rline1.right < (int)doglegX) {
+		if (rline1.right < (int)doglegX)
+		{
 			HPEN targetPen;
 			COLORREF conColor = C_PPS_YELLOW;
-			if (CSiTRadar::halfSecTick == TRUE && blinking) { conColor = C_WHITE; }
+			if (CSiTRadar::halfSecTick == TRUE && blinking)
+			{
+				conColor = C_WHITE;
+			}
 			targetPen = CreatePen(PS_SOLID, 1, conColor);
 			dc->SelectObject(targetPen);
 
@@ -1010,7 +1283,8 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 		dc->DrawText(altThreeDigit.c_str(), &rline2, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_ALTITUDE, rt->GetCallsign(), rline2, TRUE, "");
 
-		if (abs(rt->GetVerticalSpeed()) > 400) {
+		if (abs(rt->GetVerticalSpeed()) > 400)
+		{
 			rline2.left = rline2.right;
 			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(vmi.c_str(), &rline2, DT_LEFT);
@@ -1019,14 +1293,17 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 
 		double alt;
 
-		if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude()) {
+		if (rt->GetPosition().GetPressureAltitude() > rad->GetPlugIn()->GetTransitionAltitude())
+		{
 			alt = rt->GetPosition().GetFlightLevel(); // +50 to force rounding up
 		}
-		else {
+		else
+		{
 			alt = rt->GetPosition().GetPressureAltitude();
 		}
 
-		if (blinking && CSiTRadar::halfSecTick) {
+		if (blinking && CSiTRadar::halfSecTick)
+		{
 			dc->SetTextColor(C_WHITE);
 		}
 		dc->DrawText(to_string(rt->GetPosition().GetReportedGS() / 10).c_str(), &rline2, DT_LEFT | DT_CALCRECT);
@@ -1042,15 +1319,14 @@ void CACTag::DrawNARDSTag(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightP
 	DeleteObject(boldfont);
 }
 
-
-void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)
+void CACTag::DrawFPConnector(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPlan *fp, COLORREF color, unordered_map<string, POINT> *tOffset)
 {
-	
+
 	// save context
 	int sDC = dc->SaveDC();
 
-	POINT p{ 0,0 };
-	POINT connector{ 0,0 };
+	POINT p{0, 0};
+	POINT connector{0, 0};
 	int tagOffsetX = 0;
 	int tagOffsetY = 0;
 
@@ -1060,19 +1336,28 @@ void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 	tagOffsetX = pTag.x;
 	tagOffsetY = pTag.y;
 
-	if (fp->IsValid()) {
+	if (fp->IsValid())
+	{
 		p = rad->ConvertCoordFromPositionToPixel(fp->GetFPTrackPosition().GetPosition());
 	}
-	else {
-		if (rt->IsValid()) {
+	else
+	{
+		if (rt->IsValid())
+		{
 			p = rad->ConvertCoordFromPositionToPixel(rt->GetPosition().GetPosition());
 		}
 	}
 
 	// determine if the tag is to the left or the right of the PPS
 
-	if (pTag.x >= 0) { connector.x = (int)p.x + tagOffsetX - 3; };
-	if (pTag.x < 0) { connector.x = (int)p.x + tagOffsetX - 3 + TAG_WIDTH; }
+	if (pTag.x >= 0)
+	{
+		connector.x = (int)p.x + tagOffsetX - 3;
+	};
+	if (pTag.x < 0)
+	{
+		connector.x = (int)p.x + tagOffsetX - 3 + TAG_WIDTH;
+	}
 	connector.y = p.y + tagOffsetY + 7;
 
 	// the connector is only drawn at 30, 45 or 60 degrees, set the theta to the nearest appropriate angle
@@ -1085,30 +1370,53 @@ void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 	int doglegX = 0;
 	int doglegY = 0;
 
-	if (connector.x - p.x != 0) {
-		
+	if (connector.x - p.x != 0)
+	{
+
 		double x = abs(connector.x - p.x); // use absolute value since coord system is upside down
 		double y = abs(p.y - connector.y); // also cast as double for atan
 
-		phi = atan(y/x); 
-	
-		// logic for if phi is a certain value; unit circle! (with fudge factor)
-		if (phi >= 0 && phi < PI/6 ) { theta = 30; }
-		else if(phi >= PI / 6 && phi < PI / 4) { theta = 45; }
-		else if (phi >= PI / 4 && phi < PI / 3) { theta = 60; }
+		phi = atan(y / x);
 
-		theta = theta * PI / 180; // to radians
+		// logic for if phi is a certain value; unit circle! (with fudge factor)
+		if (phi >= 0 && phi < PI / 6)
+		{
+			theta = 30;
+		}
+		else if (phi >= PI / 6 && phi < PI / 4)
+		{
+			theta = 45;
+		}
+		else if (phi >= PI / 4 && phi < PI / 3)
+		{
+			theta = 60;
+		}
+
+		theta = theta * PI / 180;		// to radians
 		doglegY = p.y + tagOffsetY + 7; // small padding to line it up with the middle of the first line
 
 		// Calculate the x position of the intersection point (probably there is a more efficient way, but the atan drove me crazy
 		doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); // quad 1
 
-		if (connector.x < p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } // quadrant 2
-		if (connector.y > p.y && connector.x > p.x) { doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta))); } 
-		if (connector.y > p.y && connector.x < p.x) { doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta))); }
-		if (phi >= PI / 3) { doglegX = p.x; } // same as directly above or below
+		if (connector.x < p.x)
+		{
+			doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta)));
+		} // quadrant 2
+		if (connector.y > p.y && connector.x > p.x)
+		{
+			doglegX = (int)(p.x - ((double)(p.y - (double)connector.y) / tan(theta)));
+		}
+		if (connector.y > p.y && connector.x < p.x)
+		{
+			doglegX = (int)(p.x + ((double)(p.y - (double)connector.y) / tan(theta)));
+		}
+		if (phi >= PI / 3)
+		{
+			doglegX = p.x;
+		} // same as directly above or below
 	}
-	else {
+	else
+	{
 		doglegX = p.x; // if direction on top or below
 		doglegY = p.y + tagOffsetY + 7;
 	}
@@ -1120,7 +1428,7 @@ void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 	dc->SelectStockObject(NULL_BRUSH);
 
 	dc->MoveTo(p.x, p.y);
-	dc->LineTo((int)doglegX, (int)doglegY); // line to the dogleg
+	dc->LineTo((int)doglegX, (int)doglegY);				// line to the dogleg
 	dc->LineTo(connector.x, (int)p.y + tagOffsetY + 7); // line to the connector point
 
 	DeleteObject(targetPen);
@@ -1129,12 +1437,11 @@ void CACTag::DrawFPConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlig
 	dc->RestoreDC(sDC);
 }
 
-void CACTag::DrawRTConnector(CDC* dc, CRadarScreen* rad, CRadarTarget* rt, CFlightPlan* fp, COLORREF color, unordered_map<string, POINT>* tOffset)
+void CACTag::DrawRTConnector(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPlan *fp, COLORREF color, unordered_map<string, POINT> *tOffset)
 {
-
 }
 
-void CACTag::DrawHistoryDots(CDC* dc, CRadarTarget* rt)
+void CACTag::DrawHistoryDots(CDC *dc, CRadarTarget *rt)
 {
 	int sDC = dc->SaveDC();
 
@@ -1144,14 +1451,18 @@ void CACTag::DrawHistoryDots(CDC* dc, CRadarTarget* rt)
 
 	HPEN targetPen;
 	COLORREF ppsColor = C_PPS_YELLOW;
-	if (!strcmp(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(),"V")) { ppsColor = C_PPS_ORANGE; }
+	if (!strcmp(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V"))
+	{
+		ppsColor = C_PPS_ORANGE;
+	}
 
 	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
 	dc->SelectObject(targetPen);
-	
-	for (int i = 0; i < CSiTRadar::menuState.numHistoryDots; i++) {
+
+	for (int i = 0; i < CSiTRadar::menuState.numHistoryDots; i++)
+	{
 		dot = CSiTRadar::m_pRadScr->ConvertCoordFromPositionToPixel(trailPt.GetPosition());
-		RECT r = { dot.x - 1, dot.y - 1, dot.x + 1,dot.y + 1 };
+		RECT r = {dot.x - 1, dot.y - 1, dot.x + 1, dot.y + 1};
 		dc->Ellipse(&r);
 		trailPt = rt->GetPreviousPosition(trailPt);
 	}
@@ -1160,7 +1471,7 @@ void CACTag::DrawHistoryDots(CDC* dc, CRadarTarget* rt)
 	dc->RestoreDC(sDC);
 }
 
-void CACTag::DrawHistoryDots(CDC* dc, CFlightPlan* fp)
+void CACTag::DrawHistoryDots(CDC *dc, CFlightPlan *fp)
 {
 	int sDC = dc->SaveDC();
 
@@ -1171,9 +1482,10 @@ void CACTag::DrawHistoryDots(CDC* dc, CFlightPlan* fp)
 	targetPen = CreatePen(PS_SOLID, 1, ppsColor);
 	dc->SelectObject(targetPen);
 
-	for(auto& pos: CSiTRadar::mAcData[fp->GetCallsign()].prevPosition){
+	for (auto &pos : CSiTRadar::mAcData[fp->GetCallsign()].prevPosition)
+	{
 		dot = CSiTRadar::m_pRadScr->ConvertCoordFromPositionToPixel(pos);
-		RECT r = { dot.x - 1, dot.y - 1, dot.x + 1,dot.y + 1 };
+		RECT r = {dot.x - 1, dot.y - 1, dot.x + 1, dot.y + 1};
 		dc->Ellipse(&r);
 	}
 
