@@ -2897,6 +2897,19 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	}
 	mAcData[callSign] = acdata;
 
+
+}
+
+void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
+	int DataType) {
+
+	auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+	if (sitr != menuState.squawkCodes.end()) {
+		if (!sitr->squawk.empty()) {
+		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
+		}
+	}
+
 	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
 	if (itr == menuState.squawkCodes.end()) {
 		SSquawkCodeManagement sq;
@@ -2915,12 +2928,6 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		}
 		*/
 	}
-}
-
-void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
-	int DataType) {
-
-	int sqcount = 0;
 
 	/*
 	if (GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_DIRECT ||
