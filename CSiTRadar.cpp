@@ -2908,6 +2908,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	else {
 		// if asigned squawk is updated
 		itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+		itr->numCorrelatedRT = 0;
 		/*
 		if (itr->numCorrelatedRT > 0) {
 			itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
