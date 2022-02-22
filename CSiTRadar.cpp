@@ -2892,7 +2892,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	if (remarks.find("STS/ADSB") != remarks.npos) { acdata.isADSB = true; }
-	if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') acdata.isADSB = true;
+	if (!origin.empty()) {
+		if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') { acdata.isADSB = true; }
+	}
 	mAcData[callSign] = acdata;
 
 	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
@@ -2904,9 +2906,13 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		menuState.squawkCodes.push_back(sq);
 	}
 	else {
+		// if asigned squawk is updated
+		itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+		/*
 		if (itr->numCorrelatedRT > 0) {
 			itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
 		}
+		*/
 	}
 }
 
