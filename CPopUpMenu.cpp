@@ -83,10 +83,14 @@ void CPopUpMenu::populateMenu()
         }
         this->m_listElements.emplace_back(SPopUpElement("Release", "DropTrack", 0, 0));
     }
-
-    if (!strcmp(m_fp->GetTrackingControllerId(), "")) {
-        this->m_listElements.emplace_back(SPopUpElement("Take Jurisdiction", "AssumeTrack", 0, 0));
+    else {
+        if (!strcmp(m_fp->GetTrackingControllerId(), "")) {
+            this->m_listElements.emplace_back(SPopUpElement("Take Jurisdiction", "AssumeTrack", 0, 0));
+        }
+        this->m_listElements.emplace_back(SPopUpElement("DE Corr", "Decorrelate", 0, 0));
     }
+
+
     this->m_listElements.emplace_back(SPopUpElement(this->m_fp->GetCallsign(), this->m_fp->GetCallsign(), 1, 0));
     
 }

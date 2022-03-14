@@ -2903,91 +2903,28 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 	int DataType) {
 
-	auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
-	if (sitr != menuState.squawkCodes.end()) {
-		if (!sitr->squawk.empty()) {
-		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
-		}
-	}
-
-	auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
-	if (itr == menuState.squawkCodes.end()) {
-		SSquawkCodeManagement sq;
-		sq.fpcs = FlightPlan.GetCallsign();
-		sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-		sq.numCorrelatedRT = 0;
-		menuState.squawkCodes.push_back(sq);
-	}
-	else {
-		// if asigned squawk is updated
-		itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-		itr->numCorrelatedRT = 0;
-		/*
-		if (itr->numCorrelatedRT > 0) {
-			itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
-		}
-		*/
-	}
-
-	/*
-	if (GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_DIRECT ||
-		GetPlugIn()->GetConnectionType() == CONNECTION_TYPE_PLAYBACK) {
-
-		if (GetPlugIn()->ControllerMyself().IsController()) {
-
-			auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
-			if (itr == menuState.squawkCodes.end()) {
-				SSquawkCodeManagement sq;
-				sq.fpcs = FlightPlan.GetCallsign();
-				sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-				sq.numCorrelatedRT = 0;
-				menuState.squawkCodes.push_back(sq);
-			}
-			else {
-
-				// identify and edit non unique codes;
-				string sqk;
-
-				if (FlightPlan.GetTrackingControllerIsMe() || !strcmp(FlightPlan.GetTrackingControllerCallsign(), "")) {
-					if (strcmp(FlightPlan.GetControllerAssignedData().GetSquawk(), "")) {
-						itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-						do {
-							sqcount = count_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
-							
-							if (sqcount > 1) {
-								auto sq = FlightPlan.GetControllerAssignedData().GetSquawk();
-								int sq_base_10 = stoi(sq, 0, 8);
-								sq_base_10++;
-								sq_base_10 %= 4095;
-
-								auto base10oct = [&sq_base_10]() {
-									std::ostringstream str;
-									str << std::oct << sq_base_10;
-									return str.str();
-								};
-
-								sqk = base10oct();
-								// pad with leading zeros if needed
-								if (sqk.size() < 4) {
-									sqk.insert(sqk.begin(), 4 - sqk.size(), '0');
-								}
-								itr->squawk = sqk;
-							}
-						} while (sqcount >= 2);
-						FlightPlan.GetControllerAssignedData().SetSquawk(sqk.c_str());
-					} 
-				}
-
-				itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-
-				if (itr->numCorrelatedRT > 0) {
-					itr->numCorrelatedRT = 0; // reset to false in the event of a decorrelation event
-				}
-
+	if (DataType == CTR_DATA_TYPE_SQUAWK) {
+		auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+		if (sitr != menuState.squawkCodes.end()) {
+			if (!sitr->squawk.empty()) {
+				GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
 			}
 		}
+
+		auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
+		if (itr == menuState.squawkCodes.end()) {
+			SSquawkCodeManagement sq;
+			sq.fpcs = FlightPlan.GetCallsign();
+			sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+			sq.numCorrelatedRT = 0;
+			menuState.squawkCodes.push_back(sq);
+		}
+		else {
+			// if asigned squawk is updated
+			itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+			itr->numCorrelatedRT = 0;
+		}
 	}
-	*/
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
