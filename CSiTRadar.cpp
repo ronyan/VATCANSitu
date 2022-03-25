@@ -447,19 +447,23 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() ||  // Do not filter aircraft being tracked by me
-						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0
-						) {
-						if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
-							&& !menuState.filterBypassAll
-							) {
-							continue;
-						}
+					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) // Filter the aircraft if this statement is true, i.e. I'm not tracking
+					{
+						if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
+							!strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
 
-						if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
-							&& !menuState.filterBypassAll
-							&& !isDest) {
-							continue;
+								if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
+									&& !menuState.filterBypassAll
+									) {
+									continue;
+								}
+
+								if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
+									&& !menuState.filterBypassAll
+									&& !isDest) {
+									continue;
+								}
+							
 						}
 					}
 
@@ -2904,25 +2908,33 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 	int DataType) {
 
 	if (DataType == CTR_DATA_TYPE_SQUAWK) {
-		auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
-		if (sitr != menuState.squawkCodes.end()) {
-			if (!strcmp(sitr->squawk.c_str(),FlightPlan.GetControllerAssignedData().GetSquawk())) {
-				GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
-			}
-		}
+		// if not tracked, or tracked by me, then do a dupe squawk check
+		if (!strcmp(FlightPlan.GetTrackingControllerId(), "") ||
+			FlightPlan.GetTrackingControllerIsMe()) {
 
-		auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
-		if (itr == menuState.squawkCodes.end()) {
-			SSquawkCodeManagement sq;
-			sq.fpcs = FlightPlan.GetCallsign();
-			sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-			sq.numCorrelatedRT = 0;
-			menuState.squawkCodes.push_back(sq);
-		}
-		else {
-			// if asigned squawk is updated
-			itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-			itr->numCorrelatedRT = 0;
+			auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+			if (sitr != menuState.squawkCodes.end()) {
+				if (!strcmp(sitr->squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk())) {
+					if (strcmp(sitr->fpcs.c_str(), FlightPlan.GetCallsign())) {
+						GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
+					}
+				}
+			}
+
+			auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
+			if (itr == menuState.squawkCodes.end()) {
+				SSquawkCodeManagement sq;
+				sq.fpcs = FlightPlan.GetCallsign();
+				sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+				sq.numCorrelatedRT = 0;
+				menuState.squawkCodes.push_back(sq);
+			}
+			else {
+				// if asigned squawk is updated
+				itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+				itr->numCorrelatedRT = 0;
+			}
+
 		}
 	}
 }
