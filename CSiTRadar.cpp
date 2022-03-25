@@ -2906,7 +2906,7 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 	if (DataType == CTR_DATA_TYPE_SQUAWK) {
 		auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
 		if (sitr != menuState.squawkCodes.end()) {
-			if (!sitr->squawk.empty()) {
+			if (!strcmp(sitr->squawk.c_str(),FlightPlan.GetControllerAssignedData().GetSquawk())) {
 				GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
 			}
 		}
