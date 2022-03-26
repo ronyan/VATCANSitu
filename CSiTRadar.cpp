@@ -2880,9 +2880,17 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		FlightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
 		isRVSM = TRUE;
 	}
+	/* VATSIM No Longer implements ICAO codes for equipment
+	* 
+	* 
 	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
 	bool isADSB = regex_search(icaoACData, icaoADSB);
+
+	*/
+
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
+
+	bool isADSB = false;
 	
 	string CJS = FlightPlan.GetTrackingControllerId();
 	string origin = FlightPlan.GetFlightPlanData().GetOrigin();
