@@ -2907,6 +2907,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 	int DataType) {
 
+	/*
 	if (DataType == CTR_DATA_TYPE_SQUAWK) {
 		// if not tracked, or tracked by me, then do a dupe squawk check
 		if (!strcmp(FlightPlan.GetTrackingControllerId(), "") ||
@@ -2937,6 +2938,7 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 
 		}
 	}
+	*/
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
