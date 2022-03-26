@@ -70,8 +70,8 @@ void CPopUpMenu::populateMenu()
     if (CSiTRadar::mAcData[m_fp->GetCallsign()].pointOutPendingApproval) {
         this->m_listElements.emplace_back(SPopUpElement("Accept P/Out", "AcceptPointOut", 0, 0));
     }
-    this->m_listElements.emplace_back(SPopUpElement("Flight Plan", "FltPlan", 0, 0));
     if (m_fp->GetTrackingControllerIsMe()) {
+        this->m_listElements.emplace_back(SPopUpElement("Flight Plan", "FltPlan", 0, 0));
         if (strcmp(m_fp->GetHandoffTargetControllerId(), "")) {
             this->m_listElements.emplace_back(SPopUpElement("H/O Recall", "AssumeTrack", 0, 0));
         }
@@ -88,8 +88,8 @@ void CPopUpMenu::populateMenu()
         if (!strcmp(m_fp->GetTrackingControllerId(), "")) {
             this->m_listElements.emplace_back(SPopUpElement("Take Jurisdiction", "AssumeTrack", 0, 0));
         }
+        this->m_listElements.emplace_back(SPopUpElement("Flight Plan", "FltPlan", 0, 0));
     }
-
 
     this->m_listElements.emplace_back(SPopUpElement(this->m_fp->GetCallsign(), this->m_fp->GetCallsign(), 1, 0));
     
