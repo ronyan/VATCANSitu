@@ -2904,7 +2904,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	if (remarks.find("STS/ADSB") != remarks.npos) { acdata.isADSB = true; }
-	if (!origin.empty()) {
+	if (!origin.empty() && !destin.empty()) {
 		if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') { acdata.isADSB = true; }
 	}
 	mAcData[callSign] = acdata;
