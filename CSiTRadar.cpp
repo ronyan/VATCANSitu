@@ -528,6 +528,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
+					// Draw TBS Marker
+
+					HaloTool::drawTBS(&dc, radarTarget, this, p, 3, pixnm);
+
 					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
 					}
