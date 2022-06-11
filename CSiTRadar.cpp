@@ -571,7 +571,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 									}
 
 									// Lead Plane is H
-									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'L') {
+									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'H') {
 										if (mAcData[callSign].follower == 0) {
 											tbsDist = 6;
 											if ((double)radarTarget.GetGS() / 3600 * 135 < tbsDist) {
