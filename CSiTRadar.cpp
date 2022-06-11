@@ -542,9 +542,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 								int i = radarTarget.GetTrackHeading() - menuState.tbsHdg + 10 ; // ES reports in true, 10 for mag var in CYYZ
 
-								if (i < 5 && i > -5)
+								if (i < 7 && i > -7)
 								{
-									double tbsDist;
+									double tbsDist = 0;
 									// Lead plane is L
 									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'L') {
 										tbsDist = 3; // min radar 
@@ -628,9 +628,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 									if (menuState.tbsMixed && tbsDist < 5) {
 										tbsDist = 5;
 									}
-
-									POINT followerP = HaloTool::drawTBS(&dc, radarTarget, this, p, tbsDist, pixnm, (double)((double)menuState.tbsHdg - 10));
-									
+									if (tbsDist != 0) {
+										POINT followerP = HaloTool::drawTBS(&dc, radarTarget, this, p, tbsDist, pixnm, (double)((double)menuState.tbsHdg - 10));
+									}
 									// draw letter to allow toggling of follower
 									CFont font;
 									LOGFONT lgfont;
