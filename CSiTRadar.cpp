@@ -2907,6 +2907,13 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	if (!origin.empty() && !destin.empty()) {
 		if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') { acdata.isADSB = true; }
 	}
+	// assume mediums and up have ADSB
+	if (FlightPlan.GetFlightPlanData().GetAircraftWtc() == 'M' ||
+		FlightPlan.GetFlightPlanData().GetAircraftWtc() == 'H' ||
+		FlightPlan.GetFlightPlanData().GetAircraftWtc() == 'J')
+	{
+		acdata.isADSB = true;
+	}
 	mAcData[callSign] = acdata;
 
 
