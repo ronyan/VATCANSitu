@@ -536,10 +536,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						if (radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1 ||
 							radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2)
 						{
-							if (radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() < 20) {
+							if (radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() < 20 &&
+								radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() > 2 &&
+								radarTarget.GetPosition().GetPressureAltitude() > 500) {
 
-								if (radarTarget.GetTrackHeading() - mAcData[callSign].finalapproachcourse < 5 &&
-									radarTarget.GetTrackHeading() - mAcData[callSign].finalapproachcourse > -5)
+								int i = radarTarget.GetTrackHeading() - menuState.tbsHdg; // ES reports in true
+
+								if (i < 3 && i > -3)
 								{
 									HaloTool::drawTBS(&dc, radarTarget, this, p, 3, pixnm);
 								}
@@ -2934,27 +2937,6 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		FlightPlan.GetFlightPlanData().GetAircraftWtc() == 'J')
 	{
 		acdata.isADSB = true;
-	}
-
-	// store the final approach track
-	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
-		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
-
-		string a = runway.GetAirportName();
-		string b = FlightPlan.GetFlightPlanData().GetDestination();
-		string c = runway.GetRunwayName(0);
-		string d = FlightPlan.GetFlightPlanData().GetArrivalRwy();
-		int e = runway.GetRunwayHeading(0);
-		int f = runway.GetRunwayHeading(1);
-
-		if (!strcmp(runway.GetAirportName(), FlightPlan.GetFlightPlanData().GetDestination())) {
-			if (!strcmp(runway.GetRunwayName(0), FlightPlan.GetFlightPlanData().GetArrivalRwy())) {
-				acdata.finalapproachcourse = runway.GetRunwayHeading(0);
-			}
-			else if (!strcmp(runway.GetRunwayName(1), FlightPlan.GetFlightPlanData().GetArrivalRwy())) {
-				acdata.finalapproachcourse = runway.GetRunwayHeading(1);
-			}
-		}
 	}
 
 	mAcData[callSign] = acdata;

@@ -142,6 +142,8 @@ public:
         HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
         dc->SelectObject(targetPen);
 
+        // Draw text box to toggle follower L, M, H
+
         dc->MoveTo(tbsp1);
         dc->LineTo(tbsp2);
 

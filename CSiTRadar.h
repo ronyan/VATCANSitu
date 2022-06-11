@@ -66,7 +66,7 @@ struct ACData {
     ACRoute acFPRoute;
     bool multipleDiscrete{ false };
     bool manualCorr{ false };
-    int finalapproachcourse{ 400 };
+    int follower{ 1 }; // 0 is light, 1 is med, 2 heavy, 3 super
 };
 
 struct SFocusItem {
@@ -112,6 +112,7 @@ struct buttonStates {
     bool destEST;
     bool destVFR;
     bool destDME;
+    int tbsHdg;
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;
