@@ -628,38 +628,41 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 									if (menuState.tbsMixed && tbsDist < 5) {
 										tbsDist = 5;
 									}
+
 									if (tbsDist != 0) {
 										POINT followerP = HaloTool::drawTBS(&dc, radarTarget, this, p, tbsDist, pixnm, (double)((double)menuState.tbsHdg - 10));
+
+										// draw letter to allow toggling of follower
+										CFont font;
+										LOGFONT lgfont;
+
+										memset(&lgfont, 0, sizeof(LOGFONT));
+										lgfont.lfWeight = 300;
+										strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+										lgfont.lfHeight = 14;
+										font.CreateFontIndirect(&lgfont);
+
+										dc.SelectObject(font);
+										dc.SetTextColor(C_PPS_TBS_PINK);
+
+										RECT rectTBS;
+										rectTBS.left = followerP.x + 5;
+										rectTBS.right = followerP.x + 15;
+										rectTBS.top = followerP.y - 5;
+										rectTBS.bottom = followerP.y + 10;
+
+										string tbsFollowerStr;
+										if (mAcData[callSign].follower == 0) { tbsFollowerStr = 'L'; }
+										if (mAcData[callSign].follower == 1) { tbsFollowerStr = 'M'; }
+										if (mAcData[callSign].follower == 2) { tbsFollowerStr = 'H'; }
+										if (mAcData[callSign].follower == 3) { tbsFollowerStr = 'J'; }
+
+										dc.DrawText(tbsFollowerStr.c_str(), &rectTBS, DT_LEFT);
+										AddScreenObject(TBS_FOLLOWER_TOGGLE, callSign.c_str(), rectTBS, false, "Toggle TBS Follower");
+
+
+										DeleteObject(font);
 									}
-									// draw letter to allow toggling of follower
-									CFont font;
-									LOGFONT lgfont;
-
-									memset(&lgfont, 0, sizeof(LOGFONT));
-									lgfont.lfWeight = 300;
-									strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-									lgfont.lfHeight = 14;
-									font.CreateFontIndirect(&lgfont);
-
-									dc.SelectObject(font);
-									dc.SetTextColor(C_PPS_TBS_PINK);
-
-									RECT rectTBS;
-									rectTBS.left = followerP.x + 5;
-									rectTBS.right = followerP.x + 15;
-									rectTBS.top = followerP.y - 5;
-									rectTBS.bottom = followerP.y + 10;
-
-									string tbsFollowerStr; 
-									if (mAcData[callSign].follower == 0) { tbsFollowerStr = 'L'; }
-									if (mAcData[callSign].follower == 1) { tbsFollowerStr = 'M'; }
-									if (mAcData[callSign].follower == 2) { tbsFollowerStr = 'H'; }
-									if (mAcData[callSign].follower == 3) { tbsFollowerStr = 'J'; }
-
-									dc.DrawText(tbsFollowerStr.c_str(), &rectTBS, DT_LEFT);
-									AddScreenObject(TBS_FOLLOWER_TOGGLE, callSign.c_str(), rectTBS, false, "Toggle TBS Follower");
-
-									DeleteObject(font);
 								}
 							}
 						}
