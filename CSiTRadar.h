@@ -66,6 +66,7 @@ struct ACData {
     ACRoute acFPRoute;
     bool multipleDiscrete{ false };
     bool manualCorr{ false };
+    int finalapproachcourse{ 400 };
 };
 
 struct SFocusItem {

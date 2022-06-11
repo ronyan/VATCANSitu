@@ -529,8 +529,25 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 
 					// Draw TBS Marker
+					// TBS only at CYYZ
 
-					HaloTool::drawTBS(&dc, radarTarget, this, p, 3, pixnm);
+					//Determine if the aircraft is on approach
+					if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
+						if (radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1 ||
+							radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2)
+						{
+							if (radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() < 20) {
+
+								if (radarTarget.GetTrackHeading() - mAcData[callSign].finalapproachcourse < 5 &&
+									radarTarget.GetTrackHeading() - mAcData[callSign].finalapproachcourse > -5)
+								{
+									HaloTool::drawTBS(&dc, radarTarget, this, p, 3, pixnm);
+								}
+							}
+						}
+					}
+
+
 
 					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
@@ -2918,6 +2935,28 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	{
 		acdata.isADSB = true;
 	}
+
+	// store the final approach track
+	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
+		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
+
+		string a = runway.GetAirportName();
+		string b = FlightPlan.GetFlightPlanData().GetDestination();
+		string c = runway.GetRunwayName(0);
+		string d = FlightPlan.GetFlightPlanData().GetArrivalRwy();
+		int e = runway.GetRunwayHeading(0);
+		int f = runway.GetRunwayHeading(1);
+
+		if (!strcmp(runway.GetAirportName(), FlightPlan.GetFlightPlanData().GetDestination())) {
+			if (!strcmp(runway.GetRunwayName(0), FlightPlan.GetFlightPlanData().GetArrivalRwy())) {
+				acdata.finalapproachcourse = runway.GetRunwayHeading(0);
+			}
+			else if (!strcmp(runway.GetRunwayName(1), FlightPlan.GetFlightPlanData().GetArrivalRwy())) {
+				acdata.finalapproachcourse = runway.GetRunwayHeading(1);
+			}
+		}
+	}
+
 	mAcData[callSign] = acdata;
 
 
