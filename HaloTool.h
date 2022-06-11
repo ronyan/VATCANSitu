@@ -100,35 +100,23 @@ public:
         return tbsEnd;
     };
 
-    static void drawTBS(CDC* dc, CRadarTarget radtar, CRadarScreen* radscr, POINT p, double tbsLen, double pixnm)
+    static POINT drawTBS(CDC* dc, CRadarTarget radtar, CRadarScreen* radscr, POINT p, double tbsLen, double pixnm, double theta)
     {
         int sDC = dc->SaveDC();
 
         CPosition pos1 = radtar.GetPreviousPosition(radtar.GetPosition()).GetPosition();
         CPosition pos2 = radtar.GetPosition().GetPosition();
-        double theta = calcBearing(pos2, pos1); // opposite direction of plane's travel
+        theta = theta + 180;
+        if (theta > 360) { theta = theta - 360; }
         CPosition ptl = calcTBS(radtar.GetPosition().GetPosition(), tbsLen, radtar.GetPosition().GetReportedGS(), theta);
         POINT p2 = radscr->ConvertCoordFromPositionToPixel(ptl);
 
-        // Draw a perpendicular line segment at pt p2
-        /*
-        dx = x1 - x2
-            dy = y1 - y2
-            dist = sqrt(dx * dx + dy * dy)
-            dx /= dist
-            dy /= dist
-            x3 = x1 + (N / 2) * dy
-            y3 = y1 - (N / 2) * dx
-            x4 = x1 - (N / 2) * dy
-            y4 = y1 + (N / 2) * dx
-            */
-
-        double nlen = 1*pixnm; // length of tbs barb
+        double nlen = 0.8*pixnm; // length of tbs barb
         POINT tbsp1;
         POINT tbsp2;
 
-        double dx = p2.x - p.x;
-        double dy = p2.y - p.y;
+        double dx = (double)(p2.x - p.x);
+        double dy = (double)(p2.y - p.y);
         double dist = sqrt(dx * dx + dy * dy);
         dx /= dist;
         dy /= dist;
@@ -138,7 +126,7 @@ public:
         tbsp2.y = (LONG)(p2.y + (nlen / 2) * dx);
 
 
-        COLORREF targetPenColor = C_PPS_MAGENTA;
+        COLORREF targetPenColor = C_PPS_TBS_PINK;
         HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
         dc->SelectObject(targetPen);
 
@@ -150,5 +138,6 @@ public:
         DeleteObject(targetPen);
 
         dc->RestoreDC(sDC);
+        return tbsp2;
     };
 };

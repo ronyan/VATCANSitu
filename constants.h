@@ -22,6 +22,7 @@ const COLORREF C_MENU_TEXT_WHITE = RGB(230, 230, 230);
 const COLORREF C_MENU_GREEN = RGB(0, 135, 0);
 const COLORREF C_PTL_GREEN = RGB(3, 102, 0);
 const COLORREF C_WX_BLUE = RGB(0, 32, 120);
+const COLORREF C_PPS_TBS_PINK = RGB(244, 186, 255);
 
 // Math
 const double PI = 3.14159;
@@ -82,6 +83,11 @@ const int BUTTON_MENU_QL_CJS = 234;
 const int BUTTON_MENU_RMB_MENU = 240;
 const int BUTTON_MENU_RMB_MENU_SECONDARY = 241;
 
+const int BUTTON_MENU_TBS_HDG = 250;
+const int BUTTON_MENU_TBS_MIXED = 251;
+const int BUTTON_MENU_CRDA = 252;
+const int BUTTON_MENU_CRDA_CLOSE = 253;
+
 // Menu Modules
 const int MODULE_1_X = 0;
 const int MODULE_1_Y = 2;
@@ -100,6 +106,9 @@ const int FUNCTION_DEST_ICAO_4 = 307;
 const int FUNCTION_DEST_ICAO_5 = 308;
 
 const int FUNCTION_RMB_POPUP = 309;
+
+const int FUNCTION_TBS_HDG = 310;
+const int TBS_FOLLOWER_TOGGLE = 311;
 
 // Radar Background
 const int SCREEN_BACKGROUND = 501;

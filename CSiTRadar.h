@@ -87,6 +87,7 @@ struct buttonStates {
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
     bool destAirport{ false };
+    bool crda{ false };
     bool haloCursor{ false };
 
     int numHistoryDots{ 4 };
@@ -113,6 +114,7 @@ struct buttonStates {
     bool destVFR;
     bool destDME;
     int tbsHdg;
+    bool tbsMixed{ false };
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;
