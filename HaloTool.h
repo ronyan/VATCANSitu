@@ -82,4 +82,62 @@ public:
 
         dc->RestoreDC(sDC);
     };
+
+    static CPosition calcTBS(CPosition origin, double tbsLen, double gs, double bearing) {
+        double lat2;
+        double long2;
+        double earthRad = 3440; // in nautical miles
+
+        // tbsLen should be in nm
+
+        lat2 = asin(sin(origin.m_Latitude * PI / 180) * cos(tbsLen / earthRad) + cos(origin.m_Latitude * PI / 180) * sin(tbsLen / earthRad) * cos(bearing * PI / 180));
+        long2 = degtorad(origin.m_Longitude) + atan2((sin(bearing * PI / 180)) * sin(tbsLen / earthRad) * cos(origin.m_Latitude * PI / 180), (cos(sin(bearing * PI / 180) / earthRad) - sin(origin.m_Latitude * PI / 180) * sin(lat2)));
+        CPosition tbsEnd;
+
+        tbsEnd.m_Latitude = lat2 * 180 / PI;
+        tbsEnd.m_Longitude = long2 * 180 / PI;
+
+        return tbsEnd;
+    };
+
+    static POINT drawTBS(CDC* dc, CRadarTarget radtar, CRadarScreen* radscr, POINT p, double tbsLen, double pixnm, double theta)
+    {
+        int sDC = dc->SaveDC();
+
+        CPosition pos1 = radtar.GetPreviousPosition(radtar.GetPosition()).GetPosition();
+        CPosition pos2 = radtar.GetPosition().GetPosition();
+        theta = theta + 180;
+        if (theta > 360) { theta = theta - 360; }
+        CPosition ptl = calcTBS(radtar.GetPosition().GetPosition(), tbsLen, radtar.GetPosition().GetReportedGS(), theta);
+        POINT p2 = radscr->ConvertCoordFromPositionToPixel(ptl);
+
+        double nlen = 0.8*pixnm; // length of tbs barb
+        POINT tbsp1;
+        POINT tbsp2;
+
+        double dx = (double)(p2.x - p.x);
+        double dy = (double)(p2.y - p.y);
+        double dist = sqrt(dx * dx + dy * dy);
+        dx /= dist;
+        dy /= dist;
+        tbsp1.x = (LONG)(p2.x + (nlen / 2) * dy);
+        tbsp1.y = (LONG)(p2.y - (nlen / 2) * dx);
+        tbsp2.x = (LONG)(p2.x - (nlen / 2) * dy);
+        tbsp2.y = (LONG)(p2.y + (nlen / 2) * dx);
+
+
+        COLORREF targetPenColor = C_PPS_TBS_PINK;
+        HPEN targetPen = CreatePen(PS_SOLID, 1, targetPenColor);
+        dc->SelectObject(targetPen);
+
+        // Draw text box to toggle follower L, M, H
+
+        dc->MoveTo(tbsp1);
+        dc->LineTo(tbsp2);
+
+        DeleteObject(targetPen);
+
+        dc->RestoreDC(sDC);
+        return tbsp2;
+    };
 };

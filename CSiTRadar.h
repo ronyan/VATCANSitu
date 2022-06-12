@@ -66,6 +66,7 @@ struct ACData {
     ACRoute acFPRoute;
     bool multipleDiscrete{ false };
     bool manualCorr{ false };
+    int follower{ 1 }; // 0 is light, 1 is med, 2 heavy, 3 super
 };
 
 struct SFocusItem {
@@ -85,8 +86,11 @@ struct buttonStates {
     bool quickLookDelta{ false };
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
+    bool setup{ false };
     bool destAirport{ false };
+    bool crda{ false };
     bool haloCursor{ false };
+    bool bigACID{ true };
 
     int numHistoryDots{ 4 };
 
@@ -111,6 +115,8 @@ struct buttonStates {
     bool destEST;
     bool destVFR;
     bool destDME;
+    int tbsHdg;
+    bool tbsMixed{ false };
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;

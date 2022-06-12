@@ -528,6 +528,148 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
+					// Draw TBS Marker
+					// TBS only at CYYZ
+
+					//Determine if the aircraft is on approach
+					if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
+						if (radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1 ||
+							radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2)
+						{
+							if (radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() < 20 &&
+								radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() > 1 &&
+								radarTarget.GetPosition().GetPressureAltitude() > 500) {
+
+								int i = radarTarget.GetTrackHeading() - menuState.tbsHdg + 10 ; // ES reports in true, 10 for mag var in CYYZ
+
+								if (i < 7 && i > -7)
+								{
+									double tbsDist = 0;
+									// Lead plane is L
+									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'L') {
+										tbsDist = 3; // min radar 
+										if ((double)radarTarget.GetGS() / 3600 * 68 < tbsDist) {
+											tbsDist = (double)radarTarget.GetGS() / 3600 * 68;
+										}
+									}
+
+									// Lead plane is M
+									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'M') {
+										if (mAcData[callSign].follower == 0) {
+											tbsDist = 4;
+											if ((double)radarTarget.GetGS() / 3600 * 90 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 90;
+											}
+										}
+										else if (mAcData[callSign].follower >= 1) {
+											tbsDist = 3; // min radar
+
+											if ((double)radarTarget.GetGS() / 3600 * 68 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 68;
+											}
+										}
+									}
+
+									// Lead Plane is H
+									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'H') {
+										if (mAcData[callSign].follower == 0) {
+											tbsDist = 6;
+											if ((double)radarTarget.GetGS() / 3600 * 135 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 135;
+											}
+										}
+										else if (mAcData[callSign].follower == 1) {
+											tbsDist = 5;
+											if ((double)radarTarget.GetGS() / 3600 * 113 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 113;
+											}
+										}
+										else if (mAcData[callSign].follower == 2) {
+											tbsDist = 4;
+											if ((double)radarTarget.GetGS() / 3600 * 90 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 90;
+											}
+										}
+										else if (mAcData[callSign].follower == 3) {
+											tbsDist = 3;
+											if ((double)radarTarget.GetGS() / 3600 * 68 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 68;
+											}
+										}
+									}
+
+									// Lead Plane is J
+									if (radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc() == 'J') {
+										if (mAcData[callSign].follower == 0) {
+											tbsDist = 8;
+											if ((double)radarTarget.GetGS() / 3600 * 180 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 180;
+											}
+										}
+										else if (mAcData[callSign].follower == 1) {
+											tbsDist = 7;
+											if ((double)radarTarget.GetGS() / 3600 * 158 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 158;
+											}
+										}
+										else if (mAcData[callSign].follower == 2) {
+											tbsDist = 6;
+											if ((double)radarTarget.GetGS() / 3600 * 135 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 135;
+											}
+										}
+										else if (mAcData[callSign].follower == 3) {
+											tbsDist = 4;
+											if ((double)radarTarget.GetGS() / 3600 * 90 < tbsDist) {
+												tbsDist = (double)radarTarget.GetGS() / 3600 * 90;
+											}
+										}
+									}
+									if (menuState.tbsMixed && tbsDist < 5) {
+										tbsDist = 5;
+									}
+
+									if (tbsDist != 0) {
+										POINT followerP = HaloTool::drawTBS(&dc, radarTarget, this, p, tbsDist, pixnm, (double)((double)menuState.tbsHdg - 10));
+
+										// draw letter to allow toggling of follower
+										CFont font;
+										LOGFONT lgfont;
+
+										memset(&lgfont, 0, sizeof(LOGFONT));
+										lgfont.lfWeight = 300;
+										strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+										lgfont.lfHeight = 14;
+										font.CreateFontIndirect(&lgfont);
+
+										dc.SelectObject(font);
+										dc.SetTextColor(C_PPS_TBS_PINK);
+
+										RECT rectTBS;
+										rectTBS.left = followerP.x + 5;
+										rectTBS.right = followerP.x + 15;
+										rectTBS.top = followerP.y - 5;
+										rectTBS.bottom = followerP.y + 10;
+
+										string tbsFollowerStr;
+										if (mAcData[callSign].follower == 0) { tbsFollowerStr = 'L'; }
+										if (mAcData[callSign].follower == 1) { tbsFollowerStr = 'M'; }
+										if (mAcData[callSign].follower == 2) { tbsFollowerStr = 'H'; }
+										if (mAcData[callSign].follower == 3) { tbsFollowerStr = 'J'; }
+
+										dc.DrawText(tbsFollowerStr.c_str(), &rectTBS, DT_LEFT);
+										AddScreenObject(TBS_FOLLOWER_TOGGLE, callSign.c_str(), rectTBS, false, "Toggle TBS Follower");
+
+
+										DeleteObject(font);
+									}
+								}
+							}
+						}
+					}
+
+
+
 					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
 					}
@@ -1002,49 +1144,68 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				if (menuLayer == 0 || menuLayer == 2) {
 
-					POINT modOrigin;
-					modOrigin.x = 8;
+						POINT modOrigin;
+						modOrigin.x = 8;
 
-					string numCJSAC = to_string(menuState.numJurisdictionAC);
-					TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
+						string numCJSAC = to_string(menuState.numJurisdictionAC);
+						TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
 
-					menuButton but_tagHL = { { modOrigin.x+50, radarea.top + 6 }, "Tag HL", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_tagHL);
-					ButtonToScreen(this, but, "Tag HL", 0);
+						if (!menuState.setup) {
 
-					menuButton but_setup = { { modOrigin.x + 95, radarea.top + 6 }, "Setup", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_setup);
-					ButtonToScreen(this, but, "Setup", 0);
+						menuButton but_tagHL = { { modOrigin.x + 50, radarea.top + 6 }, "Tag HL", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_tagHL);
+						ButtonToScreen(this, but, "Tag HL", 0);
 
-					menuButton but_aircraftState = { { modOrigin.x + 140, radarea.top + 6 }, "Aircraft State", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_aircraftState);
-					ButtonToScreen(this, but, "Aircraft State", 0);
+						menuButton but_setup = { { modOrigin.x + 95, radarea.top + 6 }, "Setup", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_setup);
+						ButtonToScreen(this, but, "Open Setup", BUTTON_MENU_SETUP);
 
-					menuButton but_SSR = { { modOrigin.x + 212, radarea.top + 6 }, "SSR:", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_SSR);
-					ButtonToScreen(this, but, "SSR", 0);
+						menuButton but_aircraftState = { { modOrigin.x + 140, radarea.top + 6 }, "Aircraft State", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_aircraftState);
+						ButtonToScreen(this, but, "Aircraft State", 0);
 
-
-
-					menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 48, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_misc);
-
-					menuButton but_areas = { { modOrigin.x + 50, radarea.top + 31 }, "Areas", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_areas);
-					ButtonToScreen(this, but, "Areas", 0);
-
-					menuButton but_tags = { { modOrigin.x + 95, radarea.top + 31 }, "Tags", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_tags);
-					ButtonToScreen(this, but, "Tags", 0);
+						menuButton but_SSR = { { modOrigin.x + 212, radarea.top + 6 }, "SSR:", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_SSR);
+						ButtonToScreen(this, but, "SSR", 0);
 
 
-					menuButton but_flightPlan = { { modOrigin.x + 140, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_flightPlan);
-					ButtonToScreen(this, but, "Flight Plan", 0);
 
-					menuButton but_destAirport = { { modOrigin.x + 212, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
-					but = TopMenu::DrawBut(&dc, but_destAirport);
-					ButtonToScreen(this, but, "Dest Airport", BUTON_MENU_DEST_APRT);
+						menuButton but_misc = { { modOrigin.x, radarea.top + 31 }, "Misc", 48, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_misc);
+
+						menuButton but_areas = { { modOrigin.x + 50, radarea.top + 31 }, "Areas", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_areas);
+						ButtonToScreen(this, but, "Areas", 0);
+
+						menuButton but_tags = { { modOrigin.x + 95, radarea.top + 31 }, "Tags", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_tags);
+						ButtonToScreen(this, but, "Tags", 0);
+
+
+						menuButton but_flightPlan = { { modOrigin.x + 140, radarea.top + 31 }, "Flight Plan", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_flightPlan);
+						ButtonToScreen(this, but, "Flight Plan", 0);
+
+						menuButton but_destAirport = { { modOrigin.x + 212, radarea.top + 31 }, "Dest Airport", 80, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_destAirport);
+						ButtonToScreen(this, but, "Dest Airport", BUTON_MENU_DEST_APRT);
+					}
+
+					if (menuState.setup) {
+
+						TopMenu::DrawBackground(dc, { 0 , radarea.top }, 305, 175);
+
+						TopMenu::MakeText(dc, { 240, 63 }, 45, 15, "Big ACID");
+
+						menuButton but_bigACID = { {225, 66}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.bigACID };
+						but = TopMenu::DrawBut(&dc, but_bigACID);
+						ButtonToScreen(this, but, "Big ACID Toggle", BUTTON_MENU_SETUP);
+
+						menuButton but_close_setup = { {245, 170}, "Close", 50, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_close_setup);
+						ButtonToScreen(this, but, "Close Setup", BUTTON_MENU_SETUP);
+
+					}
 
 					menutopleft.x = 310;
 
@@ -1195,87 +1356,91 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						menutopleft.y += 25;
 
-	
+
 						auto it = find_if(menuState.nearbyCJS.begin(), menuState.nearbyCJS.end(), [](const std::pair<string, bool>& c) { return c.second == true; });
 						bool qckl = false;
 						if (it != menuState.nearbyCJS.end()) { qckl = true; }
-					
+
 						but = TopMenu::DrawButton(&dc, menutopleft, 55, 23, "Qck Look", qckl);
 						menutopleft.y -= 25;
 						ButtonToScreen(this, but, "Qck Look", BUTTON_MENU_QUICK_LOOK);
 					}
 
-						POINT psrPoor[13] = {
-							{0,0},
-							{0,-5},
-							{0,5},
-							{0,0},
-							{4,-4},
-							{-4,4},
-							{0,0},
-							{4,4},
-							{-4,-4},
-							{0,0},
-							{-5,0},
-							{5,0},
-							{0,0}
-						};
-
-					POINT targetModuleOrigin = { 980, radarea.top + 6 };
-
-					menuButton but_psrpoor = { {targetModuleOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_psrpoor);
-					TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
-
-					menuButton but_ALL = { { targetModuleOrigin.x, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
-					but = TopMenu::DrawBut(&dc, but_ALL);
-					ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
-
-					menuButton but_EXT = { { targetModuleOrigin.x + 30, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
-					but = TopMenu::DrawBut(&dc, but_EXT);
-					ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
-
-					menuButton but_EMode = { { targetModuleOrigin.x + 30, radarea.top + 31 }, "EMode", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_EMode);
-
-					POINT plane[19] = {
+					POINT psrPoor[13] = {
+						{0,0},
 						{0,-5},
-						{-1,-4},
-						{-1,-2},
-						{-5,2},
-						{-5,3},
-						{-1,1},
-						{-1,4},
-						{-4,6},
-						{-4,7},
-						{0,6},
-						{4,7},
-						{4,6},
-						{1,4},
-						{1,1},
-						{5,3},
-						{5,2},
-						{1,-2},
-						{1,-4},
-						{0,-5}
+						{0,5},
+						{0,0},
+						{4,-4},
+						{-4,4},
+						{0,0},
+						{4,4},
+						{-4,-4},
+						{0,0},
+						{-5,0},
+						{5,0},
+						{0,0}
 					};
 
-					menuButton but_FPE = { { targetModuleOrigin.x + 60, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
-					but = TopMenu::DrawBut(&dc, but_FPE);
-					TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane) / sizeof(plane[0]));
-					ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
-							
-					menuButton but_autotag = { { targetModuleOrigin.x + 92, radarea.top + 6 }, "Auto Tag", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_autotag);
+					POINT targetModuleOrigin = { 980, radarea.top + 6 };
+					
+					if (!menuState.crda) {
 
-					menuButton but_CRDA = { { targetModuleOrigin.x + 92, radarea.top + 31 }, "CRDA", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_CRDA);
+						menuButton but_psrpoor = { {targetModuleOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_psrpoor);
+						TopMenu::DrawIconBut(&dc, but_psrpoor, psrPoor, 13);
 
-					menuButton but_ins1 = { { targetModuleOrigin.x + 162, radarea.top + 6 }, "Ins1", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_ins1);
+						menuButton but_ALL = { { targetModuleOrigin.x, radarea.top + 31 }, "ALL", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.filterBypassAll };
+						but = TopMenu::DrawBut(&dc, but_ALL);
+						ButtonToScreen(this, but, "Ovrd Filter ALL", BUTTON_MENU_OVRD_ALL);
 
-					menuButton but_ins2 = { { targetModuleOrigin.x + 162, radarea.top + 31 }, "Ins2", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
-					TopMenu::DrawBut(&dc, but_ins2);
+						menuButton but_EXT = { { targetModuleOrigin.x + 30, radarea.top + 6 }, "Ext", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.extAltToggle };
+						but = TopMenu::DrawBut(&dc, but_EXT);
+						ButtonToScreen(this, but, "ExtAlt Toggle", BUTTON_MENU_EXT_ALT);
+
+						menuButton but_EMode = { { targetModuleOrigin.x + 30, radarea.top + 31 }, "EMode", 60, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_EMode);
+
+						POINT plane[19] = {
+							{0,-5},
+							{-1,-4},
+							{-1,-2},
+							{-5,2},
+							{-5,3},
+							{-1,1},
+							{-1,4},
+							{-4,6},
+							{-4,7},
+							{0,6},
+							{4,7},
+							{4,6},
+							{1,4},
+							{1,1},
+							{5,3},
+							{5,2},
+							{1,-2},
+							{1,-4},
+							{0,-5}
+						};
+
+						menuButton but_FPE = { { targetModuleOrigin.x + 60, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.showExtrapFP };
+						but = TopMenu::DrawBut(&dc, but_FPE);
+						TopMenu::DrawIconBut(&dc, but_FPE, plane, sizeof(plane) / sizeof(plane[0]));
+						ButtonToScreen(this, but, "ExtrapolatedFP", BUTTON_MENU_EXTRAP_FP);
+
+						menuButton but_autotag = { { targetModuleOrigin.x + 92, radarea.top + 6 }, "Auto Tag", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_autotag);
+
+						menuButton but_CRDA = { { targetModuleOrigin.x + 92, radarea.top + 31 }, "CRDA", 62, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+						but = TopMenu::DrawBut(&dc, but_CRDA);
+						ButtonToScreen(this, but, "CRDA", BUTTON_MENU_CRDA);
+
+						menuButton but_ins1 = { { targetModuleOrigin.x + 162, radarea.top + 6 }, "Ins1", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_ins1);
+
+						menuButton but_ins2 = { { targetModuleOrigin.x + 162, radarea.top + 31 }, "Ins2", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+						TopMenu::DrawBut(&dc, but_ins2);
+					}
 
 					modOrigin.x = 1180;
 
@@ -1310,6 +1475,29 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menutopleft.x = menutopleft.x + 200;
 
 				}
+
+				// CRDA / TBS menu
+				if (menuState.crda) {
+				
+					TopMenu::DrawBackground(dc, { 975, radarea.top }, 200, 95);
+
+					TopMenu::MakeText(dc, { 990, 33 }, 45, 15, "TBS FAC \:");
+
+					auto crs = TopMenu::MakeField(dc, { 1040, 34 }, 32, 15, to_string(menuState.tbsHdg).c_str());
+					AddScreenObject(BUTTON_MENU_TBS_HDG, "tbscrs", crs, 0, "");
+
+					menuButton but_mixed_tbs = { {1100, 36}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.tbsMixed };
+					but = TopMenu::DrawBut(&dc, but_mixed_tbs);
+					ButtonToScreen(this, but, "Mixed TBS", BUTTON_MENU_TBS_MIXED);
+
+					TopMenu::MakeText(dc, { 1115, 33 }, 35, 15, "Mixed");
+
+					menuButton but_close_crda = { {1100, 90}, "Close", 40, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
+					but = TopMenu::DrawBut(&dc, but_close_crda);
+					ButtonToScreen(this, but, "Close Dest", BUTTON_MENU_CRDA_CLOSE);
+
+				}
+
 
 				// Destination Airport Menu
 
@@ -2206,6 +2394,44 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		menuLayer = 0;
 	}
 
+	if (ObjectType == BUTTON_MENU_SETUP) {
+		if (!strcmp(sObjectId, "Open Setup")) {
+			menuState.setup = true;
+		}
+		if (!strcmp(sObjectId, "Big ACID Toggle")) {
+			menuState.bigACID = !menuState.bigACID;
+		}
+		if (!strcmp(sObjectId, "Close Setup")) {
+			menuState.setup = false;
+		}
+	}
+
+	if (ObjectType == BUTTON_MENU_CRDA) {
+		menuState.crda = true;
+		menuState.quickLook = false;
+		menuLayer = 0;
+	}
+
+	if (ObjectType == BUTTON_MENU_CRDA_CLOSE) {
+		menuState.crda = false;
+	}
+
+	if (ObjectType == BUTTON_MENU_TBS_MIXED)
+	{
+		menuState.tbsMixed = !menuState.tbsMixed;
+	}
+
+	if (ObjectType == BUTTON_MENU_TBS_HDG) {
+		GetPlugIn()->OpenPopupEdit(Area, FUNCTION_TBS_HDG, to_string(menuState.tbsHdg).c_str());
+	}
+
+	if (ObjectType == TBS_FOLLOWER_TOGGLE) {
+		mAcData[sObjectId].follower++;
+		if (mAcData[sObjectId].follower > 3) {
+			mAcData[sObjectId].follower = 0;
+		}
+	}
+
 	if (ObjectType == BUTTON_MENU_CLOSE_DEST) {
 		menuState.destAirport = false;
 	}
@@ -2704,7 +2930,12 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 	if (FunctionId == FUNCTION_RMB_POPUP) {
 		// Draw the right click popup menu
 
-
+	}
+	if (FunctionId == FUNCTION_TBS_HDG) {
+		try {
+			menuState.tbsHdg = stoi(sItemString);
+		}
+		catch (...) {}
 	}
 }
 
@@ -2914,6 +3145,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	{
 		acdata.isADSB = true;
 	}
+
 	mAcData[callSign] = acdata;
 
 
