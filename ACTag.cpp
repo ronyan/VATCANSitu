@@ -361,7 +361,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	lgfont.lfWeight = 1200;
 	boldfont.CreateFontIndirect(&lgfont);
 	lgfont.lfWeight = 500;
-	lgfont.lfHeight = 17;
+	lgfont.lfHeight = 16;
 	bigACIDfont.CreateFontIndirect(&lgfont);
 	dc->SelectObject(font);
 
@@ -389,7 +389,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 
 		if (CSiTRadar::menuState.bigACID) {
 			dc->SelectObject(bigACIDfont);
-			rline1.top -= 3;
+			rline1.top -= 2;
 		}
 
 		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac)
