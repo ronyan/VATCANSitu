@@ -351,6 +351,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 
 	CFont font;
 	CFont boldfont;
+	CFont bigACIDfont;
 	LOGFONT lgfont;
 	std::memset(&lgfont, 0, sizeof(LOGFONT));
 	lgfont.lfHeight = 14;
@@ -359,6 +360,9 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	font.CreateFontIndirect(&lgfont);
 	lgfont.lfWeight = 1200;
 	boldfont.CreateFontIndirect(&lgfont);
+	lgfont.lfWeight = 500;
+	lgfont.lfHeight = 17;
+	bigACIDfont.CreateFontIndirect(&lgfont);
 	dc->SelectObject(font);
 
 	RECT rline1; // bring scope out to allow connector to be drawn
@@ -378,9 +382,15 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		}
 
 		// Line 1
+
 		rline1.top = line1.y;
 		rline1.left = line1.x;
 		rline1.bottom = line2.y;
+
+		if (CSiTRadar::menuState.bigACID) {
+			dc->SelectObject(bigACIDfont);
+			rline1.top -= 3;
+		}
 
 		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac)
 		{
@@ -400,7 +410,9 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		}
 
 		dc->SetTextColor(C_PPS_YELLOW);
-		dc->SelectObject(font);
+		if (CSiTRadar::menuState.bigACID) {
+			dc->SelectObject(bigACIDfont);
+		}
 		if (blinking && CSiTRadar::halfSecTick)
 		{
 			dc->SetTextColor(C_WHITE);
@@ -457,6 +469,8 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		{
 			CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 6;
 		}
+
+		dc->SelectObject(font);
 
 		// Line 2
 		RECT rline2;
@@ -943,6 +957,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	// cleanup
 	DeleteObject(font);
 	DeleteObject(boldfont);
+	DeleteObject(bigACIDfont);
 
 	// restore context
 	dc->RestoreDC(sDC);

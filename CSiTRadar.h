@@ -86,9 +86,11 @@ struct buttonStates {
     bool quickLookDelta{ false };
     bool extAltToggle{ FALSE };
     int numJurisdictionAC{ 0 };
+    bool setup{ false };
     bool destAirport{ false };
     bool crda{ false };
     bool haloCursor{ false };
+    bool bigACID{ true };
 
     int numHistoryDots{ 4 };
 
