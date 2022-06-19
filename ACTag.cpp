@@ -841,7 +841,11 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 			targetPen = CreatePen(PS_SOLID, 1, conColor);
 			dc->SelectObject(targetPen);
 
+			
 			dc->MoveTo(rline1.right + 5, rline1.top + 7);
+			if (CSiTRadar::menuState.bigACID) {
+				dc->MoveTo(rline1.right + 5, rline1.top + 9);
+			}
 			dc->LineTo((int)doglegX, (int)doglegY);
 
 			DeleteObject(targetPen);
@@ -1284,6 +1288,9 @@ void CACTag::DrawNARDSTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightP
 			dc->SelectObject(targetPen);
 
 			dc->MoveTo(rline1.right + 5, rline1.top + 7);
+			if (CSiTRadar::menuState.bigACID) {
+				dc->MoveTo(rline1.right + 5, rline1.top + 9);
+			}
 			dc->LineTo((int)doglegX, (int)doglegY);
 
 			DeleteObject(targetPen);

@@ -532,9 +532,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					// TBS only at CYYZ
 
 					//Determine if the aircraft is on approach
-					if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ")) {
-						if (radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1 ||
-							radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2)
+					if (radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 1 ||
+						radarTarget.GetCorrelatedFlightPlan().GetControllerAssignedData().GetClearedAltitude() == 2)
+					{
+						if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetFlightPlanData().GetDestination(), "CYYZ"))
 						{
 							if (radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() < 20 &&
 								radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() > 1 &&
