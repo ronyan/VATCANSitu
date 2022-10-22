@@ -3874,102 +3874,102 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		// Add the aircraft
 		for (CFlightPlan fp = GetPlugIn()->FlightPlanSelectFirst(); fp.IsValid(); fp = GetPlugIn()->FlightPlanSelectNext(fp))
 		{
-
-			fpl.push_back(fp);
+			if (!strcmp(fp.GetFlightPlanData().GetPlanType(), "I") && depAirports.find(fp.GetFlightPlanData().GetOrigin()) != depAirports.end()) {
+				fpl.push_back(fp);
+			}
 		}
 		std::sort(fpl.begin(), fpl.end(), [](const CFlightPlan& a, const CFlightPlan& b) { return a.GetCallsign() < b.GetCallsign(); });
 
 		for(auto it = fpl.begin(); it != fpl.end(); it++) {
 			CFlightPlan fp = *it;
-			if (!strcmp(fp.GetFlightPlanData().GetPlanType(), "I") && depAirports.find(fp.GetFlightPlanData().GetOrigin()) != depAirports.end())
-			{
-				if (!acLists[LIST_DEPARTURES].collapsed) {
-					listArcft.left = p.x;
 
-					// CJS
-					dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT);
-					listArcft.left += 20;
+			if (!acLists[LIST_DEPARTURES].collapsed) {
+				listArcft.left = p.x;
 
-					// Callsign
-					dc->SetTextColor(C_TAG_GREEN);
-					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
-					listArcft.left += 60;
+				// CJS
+				dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT);
+				listArcft.left += 20;
 
-					// Wake turbulence
-					dc->SetTextColor(C_WHITE);
-					string wakeTurb;
-					switch (fp.GetFlightPlanData().GetAircraftWtc()) {
-						case 'L':
-							wakeTurb = "-";
-							break;
-						case 'H':
-							wakeTurb = "+";
-							break;
-						case 'J': // Super
-							wakeTurb = "$";
-							break;
-						default:
-							wakeTurb = " ";
-					}
-					dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
-					listArcft.left += 10;
+				// Callsign
+				dc->SetTextColor(C_TAG_GREEN);
+				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+				listArcft.left += 60;
 
-					// SFI
-					string sfi = "";
-					if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
-						sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
-					dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
-					listArcft.left += 10;
-
-					// Assigned transponder code
-					dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT);
-					listArcft.left += 35;
-
-					// Aircraft type
-					dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT);
-					listArcft.left += 35;
-
-					// Departure airport
-					dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT);
-					listArcft.left += 35;
-
-					// Final altitude
-					string finalAlt;
-					if (fp.GetFlightPlanData().GetFinalAltitude() < 1)
-						finalAlt = "fld";
-					else
-						finalAlt = to_string(fp.GetFlightPlanData().GetFinalAltitude() / 100);
-					finalAlt.insert(finalAlt.begin(), 3 - finalAlt.length(), '0');
-					dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT);
-					listArcft.left += 35;
-
-					// Destination airport
-					dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
-
-					AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
-
-					listArcft.left += 35;
-
-					// Proposed takeoff time
-					string depTime = fp.GetFlightPlanData().GetEstimatedDepartureTime();
-					depTime.insert(depTime.begin(), 4 - depTime.length(), '0');
-					dc->DrawText(depTime.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(depTime.c_str(), &listArcft, DT_LEFT);
-					listArcft.left += 35;
-					
-					listArcft.top += 13;
+				// Wake turbulence
+				dc->SetTextColor(C_WHITE);
+				string wakeTurb;
+				switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+					case 'L':
+						wakeTurb = "-";
+						break;
+					case 'H':
+						wakeTurb = "+";
+						break;
+					case 'J': // Super
+						wakeTurb = "$";
+						break;
+					default:
+						wakeTurb = " ";
 				}
-				showArrow = true;
+				dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// SFI
+				string sfi = "";
+				if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+					sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+				dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// Assigned transponder code
+				dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Aircraft type
+				dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Departure airport
+				dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Final altitude
+				string finalAlt;
+				if (fp.GetFlightPlanData().GetFinalAltitude() < 1)
+					finalAlt = "fld";
+				else
+					finalAlt = to_string(fp.GetFlightPlanData().GetFinalAltitude() / 100);
+				finalAlt.insert(finalAlt.begin(), 3 - finalAlt.length(), '0');
+				dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Destination airport
+				dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+
+				AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+				listArcft.left += 35;
+
+				// Proposed takeoff time
+				string depTime = fp.GetFlightPlanData().GetEstimatedDepartureTime();
+				depTime.insert(depTime.begin(), 4 - depTime.length(), '0');
+				dc->DrawText(depTime.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(depTime.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+					
+				listArcft.top += 13;
 			}
+			showArrow = true;
+			
 		}
 
 		if (showArrow) {
