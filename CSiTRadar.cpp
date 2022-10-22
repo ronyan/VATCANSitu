@@ -3869,9 +3869,18 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
 		AddScreenObject(LIST_DEPARTURES, to_string(LIST_DEPARTURES).c_str(), listHeading, true, "");
 
+		vector<CFlightPlan> fpl;
+
 		// Add the aircraft
 		for (CFlightPlan fp = GetPlugIn()->FlightPlanSelectFirst(); fp.IsValid(); fp = GetPlugIn()->FlightPlanSelectNext(fp))
 		{
+
+			fpl.push_back(fp);
+		}
+		std::sort(fpl.begin(), fpl.end(), [](const CFlightPlan& a, const CFlightPlan& b) { return a.GetCallsign() < b.GetCallsign(); });
+
+		for(auto it = fpl.begin(); it != fpl.end(); it++) {
+			CFlightPlan fp = *it;
 			if (!strcmp(fp.GetFlightPlanData().GetPlanType(), "I") && depAirports.find(fp.GetFlightPlanData().GetOrigin()) != depAirports.end())
 			{
 				if (!acLists[LIST_DEPARTURES].collapsed) {
@@ -3945,6 +3954,9 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					// Destination airport
 					dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
 					dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+
+					AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
 					listArcft.left += 35;
 
 					// Proposed takeoff time
