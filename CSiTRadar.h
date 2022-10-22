@@ -84,7 +84,7 @@ struct buttonStates {
     int haloRad;
     bool quickLook{ FALSE };
     bool quickLookDelta{ false };
-    bool extAltToggle{ FALSE };
+    bool extAltToggle{ TRUE };
     int numJurisdictionAC{ 0 };
     bool setup{ false };
     bool destAirport{ false };
@@ -92,9 +92,9 @@ struct buttonStates {
     bool haloCursor{ false };
     bool bigACID{ true };
 
-    int numHistoryDots{ 4 };
+    int numHistoryDots{ 10 };
 
-    bool wxAll{ FALSE };
+    bool wxAll{ TRUE };
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
     bool mvaDisp{ false };
@@ -156,9 +156,6 @@ struct buttonStates {
     map<int, CAppWindows> radarScrWindows;
     map<int, CACList> radarScrLists;
     vector<SSquawkCodeManagement> squawkCodes;
-
-
-
 };
 
 class CAircraftList {
