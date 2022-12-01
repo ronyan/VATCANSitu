@@ -90,11 +90,11 @@ struct buttonStates {
     bool destAirport{ false };
     bool crda{ false };
     bool haloCursor{ false };
-    bool bigACID{ true };
+    bool bigACID{ false };
 
-    int numHistoryDots{ 10 };
+    int numHistoryDots{ 5 };
 
-    bool wxAll{ TRUE };
+    bool wxAll{ FALSE };
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
     bool mvaDisp{ false };

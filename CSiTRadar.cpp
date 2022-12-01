@@ -91,11 +91,6 @@ CSiTRadar::CSiTRadar()
 			wxRadar::wxLatCtr = j["wxlat"];
 			wxRadar::wxLongCtr = j["wxlong"];
 
-			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
-			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
-
-			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
-			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
 
 			if (!j["prefSFI"].is_null()) {
 				menuState.SFIPrefStringDefault = j["prefSFI"];
@@ -106,6 +101,44 @@ CSiTRadar::CSiTRadar()
 				}
 			}
 
+			menuState.numHistoryDots = j["menuState"]["numHistoryDots"];
+			menuState.bigACID = j["menuState"]["bigACID"];
+			menuState.wxAll = j["menuState"]["wxAll"];
+			menuState.filterBypassAll = j["menuState"]["filterBypassAll"];
+
+			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
+			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
+
+			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
+			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
+
+			acLists[LIST_DEPARTURES].p.x = j["departureList"]["x"];
+			acLists[LIST_DEPARTURES].p.y = j["departureList"]["y"];
+
+			acLists[LIST_MESSAGES].p.x = j["messageList"]["x"];
+			acLists[LIST_MESSAGES].p.y = j["messageList"]["y"];
+
+			acLists[LIST_ARRIVALS].p.x = j["arrivalList"]["x"];
+			acLists[LIST_ARRIVALS].p.y = j["arrivalList"]["y"];
+
+			acLists[LIST_ACTIVE].p.x = j["activeList"]["x"];
+			acLists[LIST_ACTIVE].p.y = j["activeList"]["y"];
+
+			acLists[LIST_VFR_CONTROL].p.x = j["vfrControlList"]["x"];
+			acLists[LIST_VFR_CONTROL].p.y = j["vfrControlList"]["y"];
+
+			acLists[LIST_VFR_COLLECTOR].p.x = j["vfrCollectorList"]["x"];
+			acLists[LIST_VFR_COLLECTOR].p.y = j["vfrCollectorList"]["y"];
+
+			acLists[LIST_HOLD].p.x = j["holdList"]["x"];
+			acLists[LIST_HOLD].p.y = j["holdList"]["y"];
+
+			acLists[LIST_COAST].p.x = j["coastList"]["x"];
+			acLists[LIST_COAST].p.y = j["coastList"]["y"];
+
+			acLists[LIST_CONFLICT].p.x = j["conflictList"]["x"];
+			acLists[LIST_CONFLICT].p.y = j["conflictList"]["y"];
+
 		}
 		// write defaults if no file
 		else {
@@ -115,15 +148,47 @@ CSiTRadar::CSiTRadar()
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
 
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
 
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-			j["prefSFI"] = menuState.SFIPrefStringDefault;
+			j["departureList"]["x"] = acLists[LIST_DEPARTURES].p.x;
+			j["departureList"]["y"] = acLists[LIST_DEPARTURES].p.y;
 
-			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+			j["messageList"]["x"] = acLists[LIST_MESSAGES].p.x;
+			j["messageList"]["y"] = acLists[LIST_MESSAGES].p.y;
+
+			j["arrivalList"]["x"] = acLists[LIST_ARRIVALS].p.x;
+			j["arrivalList"]["y"] = acLists[LIST_ARRIVALS].p.y;
+
+			j["activeList"]["x"] = acLists[LIST_ACTIVE].p.x;
+			j["activeList"]["y"] = acLists[LIST_ACTIVE].p.y;
+
+			j["vfrControlList"]["x"] = acLists[LIST_VFR_CONTROL].p.x;
+			j["vfrControlList"]["y"] = acLists[LIST_VFR_CONTROL].p.y;
+
+			j["vfrCollectorList"]["x"] = acLists[LIST_VFR_COLLECTOR].p.x;
+			j["vfrCollectorList"]["y"] = acLists[LIST_VFR_COLLECTOR].p.y;
+
+			j["holdList"]["x"] = acLists[LIST_HOLD].p.x;
+			j["holdList"]["y"] = acLists[LIST_HOLD].p.y;
+
+			j["coastList"]["x"] = acLists[LIST_COAST].p.x;
+			j["coastList"]["y"] = acLists[LIST_COAST].p.y;
+
+			j["conflictList"]["x"] = acLists[LIST_CONFLICT].p.x;
+			j["conflictList"]["y"] = acLists[LIST_CONFLICT].p.y;
 
 			settings_file << j;
 		}
@@ -178,15 +243,47 @@ CSiTRadar::~CSiTRadar()
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
 
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
 
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-			j["prefSFI"] = menuState.SFIPrefStringDefault;
+			j["departureList"]["x"] = acLists[LIST_DEPARTURES].p.x;
+			j["departureList"]["y"] = acLists[LIST_DEPARTURES].p.y;
 
-			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+			j["messageList"]["x"] = acLists[LIST_MESSAGES].p.x;
+			j["messageList"]["y"] = acLists[LIST_MESSAGES].p.y;
+
+			j["arrivalList"]["x"] = acLists[LIST_ARRIVALS].p.x;
+			j["arrivalList"]["y"] = acLists[LIST_ARRIVALS].p.y;
+
+			j["activeList"]["x"] = acLists[LIST_ACTIVE].p.x;
+			j["activeList"]["y"] = acLists[LIST_ACTIVE].p.y;
+
+			j["vfrControlList"]["x"] = acLists[LIST_VFR_CONTROL].p.x;
+			j["vfrControlList"]["y"] = acLists[LIST_VFR_CONTROL].p.y;
+
+			j["vfrCollectorList"]["x"] = acLists[LIST_VFR_COLLECTOR].p.x;
+			j["vfrCollectorList"]["y"] = acLists[LIST_VFR_COLLECTOR].p.y;
+
+			j["holdList"]["x"] = acLists[LIST_HOLD].p.x;
+			j["holdList"]["y"] = acLists[LIST_HOLD].p.y;
+
+			j["coastList"]["x"] = acLists[LIST_COAST].p.x;
+			j["coastList"]["y"] = acLists[LIST_COAST].p.y;
+
+			j["conflictList"]["x"] = acLists[LIST_CONFLICT].p.x;
+			j["conflictList"]["y"] = acLists[LIST_CONFLICT].p.y;
 
 			settings_file << j;
 		}
@@ -3528,6 +3625,9 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					dc->SetTextColor(C_TAG_GREEN);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+					AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
 					listArcft.left += 60;
 
 					// Wake turbulence
@@ -3608,6 +3708,9 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					dc->SetTextColor(C_TAG_GREEN);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+					AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
 					listArcft.left += 60;
 
 					// Wake turbulence
@@ -3719,6 +3822,8 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					dc->SetTextColor(C_TAG_GREEN);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+					AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
 					listArcft.left += 60;
 
 					// Wake turbulence
@@ -3895,6 +4000,9 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 				dc->SetTextColor(C_TAG_GREEN);
 				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
 				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+				AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
 				listArcft.left += 60;
 
 				// Wake turbulence
@@ -4013,6 +4121,9 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 					dc->SetTextColor(C_TAG_GREEN);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
 					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+					AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
 					listArcft.left += 60;
 
 					// Wake turbulence
