@@ -383,6 +383,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		// Garbage collect every 5 minutes
 		if (((clock() - menuState.lastAcListMaint) / CLOCKS_PER_SEC) > 300) {
 
+			menuState.recentCallsignsSeen.clear();
+
 			for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 				radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 			{
@@ -400,7 +402,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			{
 				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), it->first) == menuState.recentCallsignsSeen.end())
 				{
-					// supported in C++11
 					it = mAcData.erase(it);
 				}
 				else {
