@@ -379,6 +379,40 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			CSiTRadar::menuState.jurisdictionIndex = 0;
 			SituPlugin::SendKeyboardPresses({ 0x01 });
 		}
+
+		// Garbage collect every 5 minutes
+		if (((clock() - menuState.lastAcListMaint) / CLOCKS_PER_SEC) > 300) {
+
+			for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
+				radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
+			{
+
+				string callSign = radarTarget.GetCallsign();
+
+				// Get active radar targets for garbage cleaning
+				menuState.recentCallsignsSeen.emplace_back(callSign);
+
+			}
+
+			auto it = mAcData.cbegin();
+
+			while (it != mAcData.cend())
+			{
+				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), it->first) == menuState.recentCallsignsSeen.end())
+				{
+					// supported in C++11
+					it = mAcData.erase(it);
+				}
+				else {
+					++it;
+				}
+			}
+
+			menuState.lastAcListMaint = clock();
+			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
+
+		}
+
 	}
 #pragma endregion 
 
