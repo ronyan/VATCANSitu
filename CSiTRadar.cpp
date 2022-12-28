@@ -3254,7 +3254,19 @@ void CSiTRadar::updateActiveRunways(int i) {
 		}
 	}
 
-	
+	menuState.depAirports.clear();
+	menuState.arrAirports.clear();
+
+	for (CSectorElement airport = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); airport.IsValid();
+		airport = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(airport, SECTOR_ELEMENT_AIRPORT))
+	{
+		if (airport.IsElementActive(true)) {
+			menuState.depAirports.insert(airport.GetName());
+		}
+		if (airport.IsElementActive(false)) {
+			menuState.arrAirports.insert(airport.GetName());
+		}
+	}
 
 	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_GEO); sectorElement.IsValid();
 		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_GEO)) {
@@ -3766,56 +3778,59 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
 
-			if (fp.GetState() > 2) {
+			if (aircraft.second.hasVFRFP) {
 
-				if (!acLists[LIST_VFR_CONTROL].collapsed) {
-					listArcft.left = p.x;
+				if (fp.GetState() > 2) {
 
-					// Callsign
-					dc->SetTextColor(C_TAG_GREEN);
-					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+					if (!acLists[LIST_VFR_CONTROL].collapsed) {
+						listArcft.left = p.x;
 
-					AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+						// Callsign
+						dc->SetTextColor(C_TAG_GREEN);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
 
-					listArcft.left += 60;
+						AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
 
-					// Wake turbulence
-					dc->SetTextColor(C_WHITE);
-					string wakeTurb;
-					switch (fp.GetFlightPlanData().GetAircraftWtc()) {
-					case 'L':
-						wakeTurb = "-";
-						break;
-					case 'H':
-						wakeTurb = "+";
-						break;
-					case 'J': // Super
-						wakeTurb = "$";
-						break;
-					default:
-						wakeTurb = " ";
+						listArcft.left += 60;
+
+						// Wake turbulence
+						dc->SetTextColor(C_WHITE);
+						string wakeTurb;
+						switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+						case 'L':
+							wakeTurb = "-";
+							break;
+						case 'H':
+							wakeTurb = "+";
+							break;
+						case 'J': // Super
+							wakeTurb = "$";
+							break;
+						default:
+							wakeTurb = " ";
+						}
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// SFI
+						string sfi = "";
+						if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+							sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// Destination airport
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						listArcft.top += 13;
 					}
-					dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
-					listArcft.left += 10;
-
-					// SFI
-					string sfi = "";
-					if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
-						sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
-					dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
-					listArcft.left += 10;
-
-					// Destination airport
-					dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
-					dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
-					listArcft.left += 35;
-
-					listArcft.top += 13;
+					showArrow = true;
 				}
-				showArrow = true;
 			}
 			
 		}
@@ -3966,7 +3981,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 						gmtime_s(&gmt, &t);
 
 						char timeStr[50];
-						std::strftime(timeStr, 50, "%H%I", &gmt);
+						std::strftime(timeStr, 50, "%H%M", &gmt);
 
 						sectorExitTime = timeStr;
 
@@ -4018,23 +4033,6 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		}
 	}
 
-	// Create a vector of active airports
-	set<string> depAirports{};
-	set<string> arrAirports{};
-
-	m_pRadScr->GetPlugIn()->SelectActiveSectorfile();
-
-	for (CSectorElement airport = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); airport.IsValid();
-		airport = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(airport, SECTOR_ELEMENT_AIRPORT))
-	{
-		if (airport.IsElementActive(true)) {
-			depAirports.insert(airport.GetName());
-		}
-		if (airport.IsElementActive(false)) {
-			arrAirports.insert(airport.GetName());
-		}
-	}
-
 	if (listType == LIST_DEPARTURES) {
 		// 1st aircraft of a list
 		RECT listArcft{};
@@ -4054,7 +4052,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		{
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
 
-			if (!aircraft.second.hasVFRFP && depAirports.find(fp.GetFlightPlanData().GetOrigin()) != depAirports.end()) {
+			if (!aircraft.second.hasVFRFP && menuState.depAirports.find(fp.GetFlightPlanData().GetOrigin()) != menuState.depAirports.end() && fp.GetState() >= 1) {
 				fpl.push_back(fp);
 			}
 		}
@@ -4186,7 +4184,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		{
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
 
-			if (!aircraft.second.hasVFRFP && arrAirports.find(fp.GetFlightPlanData().GetDestination()) != arrAirports.end()) {
+			if (!aircraft.second.hasVFRFP && menuState.arrAirports.find(fp.GetFlightPlanData().GetDestination()) != menuState.arrAirports.end() && fp.GetState() >= 1) {
 				fpl.push_back(fp);
 			}
 		}

@@ -118,6 +118,8 @@ struct buttonStates {
     bool destDME;
     int tbsHdg;
     bool tbsMixed{ false };
+    set<string> depAirports{};
+    set<string> arrAirports{};
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;
