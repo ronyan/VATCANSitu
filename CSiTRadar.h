@@ -62,6 +62,7 @@ struct ACData {
     bool directToLineOn{ false };
     CPosition directToPendingPosition{};
     CPosition dest{};
+    CPosition orig{};
     string directToPendingFixName;
     string POString{};
     ACRoute acFPRoute;

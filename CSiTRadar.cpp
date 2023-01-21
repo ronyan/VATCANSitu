@@ -410,7 +410,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			menuState.lastAcListMaint = clock();
-			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
+			// GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
 
 		}
 
@@ -4051,9 +4051,10 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		for (auto& aircraft : mAcData)
 		{
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
-
-			if (!aircraft.second.hasVFRFP && menuState.depAirports.find(fp.GetFlightPlanData().GetOrigin()) != menuState.depAirports.end() && fp.GetState() >= 1) {
-				fpl.push_back(fp);
+			if (fp.IsValid()) {
+				if (!aircraft.second.hasVFRFP && menuState.depAirports.find(fp.GetFlightPlanData().GetOrigin()) != menuState.depAirports.end() && fp.GetState() >= 1 && fp.GetFPState() != 1) {
+					fpl.push_back(fp);
+				}
 			}
 		}
 		std::sort(fpl.begin(), fpl.end(), [](const CFlightPlan& a, const CFlightPlan& b) { return (std::string)a.GetCallsign() < (std::string)b.GetCallsign(); });
@@ -4183,9 +4184,10 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		for (auto& aircraft : mAcData)
 		{
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
-
-			if (!aircraft.second.hasVFRFP && menuState.arrAirports.find(fp.GetFlightPlanData().GetDestination()) != menuState.arrAirports.end() && fp.GetState() >= 1) {
-				fpl.push_back(fp);
+			if (fp.IsValid()) {
+				if (!aircraft.second.hasVFRFP && menuState.arrAirports.find(fp.GetFlightPlanData().GetDestination()) != menuState.arrAirports.end() && fp.GetState() >= 1) {
+					fpl.push_back(fp);
+				}
 			}
 		}
 
