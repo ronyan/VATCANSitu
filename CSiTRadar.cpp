@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CSiTRadar.h"
+#include <string>
 
 using namespace Gdiplus;
 
@@ -27,13 +28,52 @@ CSiTRadar::CSiTRadar()
 
 #pragma region intializeLists
 	//initialize lists
-	ACList atisList, offScreenList;
+	ACList atisList, offScreenList, departureList, arrivalsList, activeList, vfrControlList, vfrCollectorList, holdList, coastList, messageList, conflictList;
+
+	atisList.p = { 0, 300 }; // Default Location
 	atisList.listType = LIST_TIME_ATIS;
-	atisList.p = { 500,84 }; // Default Location
-	offScreenList.p = { 0,500 }; // Default Location
-	offScreenList.listType = LIST_OFF_SCREEN;
 	acLists[LIST_TIME_ATIS] = atisList;
+
+	offScreenList.p = { 0, 400 }; // Default Location
+	offScreenList.listType = LIST_OFF_SCREEN;
 	acLists[LIST_OFF_SCREEN] = offScreenList;
+
+	departureList.p = { 50, 84 };
+	departureList.listType = LIST_DEPARTURES;
+	acLists[LIST_DEPARTURES] = departureList;
+
+	arrivalsList.p = { 1100, 84 };
+	arrivalsList.listType = LIST_ARRIVALS;
+	acLists[LIST_ARRIVALS] = arrivalsList;
+
+	activeList.p = { 700, 84 };
+	activeList.listType = LIST_ACTIVE;
+	acLists[LIST_ACTIVE] = activeList;
+
+	vfrControlList.p = { 0, 400 };
+	vfrControlList.listType = LIST_VFR_CONTROL;
+	acLists[LIST_VFR_CONTROL] = vfrControlList;
+
+	vfrCollectorList.p = { 0, 450 };
+	vfrCollectorList.listType = LIST_VFR_COLLECTOR;
+	acLists[LIST_VFR_COLLECTOR] = vfrCollectorList;
+
+	holdList.p = { 0, 650 };
+	holdList.listType = LIST_HOLD;
+	acLists[LIST_HOLD] = holdList;
+
+	coastList.p = { 0, 700 };
+	coastList.listType = LIST_COAST;
+	acLists[LIST_COAST] = coastList;
+
+	messageList.p = { 0, 750 };
+	messageList.listType = LIST_MESSAGES;
+	acLists[LIST_MESSAGES] = messageList;
+
+	conflictList.p = { 500, 500 };
+	conflictList.listType = LIST_CONFLICT;
+	acLists[LIST_CONFLICT] = conflictList;
+
 #pragma endregion
 
 	// load settings file
@@ -51,11 +91,6 @@ CSiTRadar::CSiTRadar()
 			wxRadar::wxLatCtr = j["wxlat"];
 			wxRadar::wxLongCtr = j["wxlong"];
 
-			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
-			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
-
-			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
-			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
 
 			if (!j["prefSFI"].is_null()) {
 				menuState.SFIPrefStringDefault = j["prefSFI"];
@@ -66,6 +101,45 @@ CSiTRadar::CSiTRadar()
 				}
 			}
 
+			menuState.numHistoryDots = j["menuState"]["numHistoryDots"];
+			menuState.bigACID = j["menuState"]["bigACID"];
+			menuState.wxAll = j["menuState"]["wxAll"];
+			menuState.filterBypassAll = j["menuState"]["filterBypassAll"];
+			menuState.extAltToggle = j["menuState"]["extAltToggle"];
+
+			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
+			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
+
+			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
+			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
+
+			acLists[LIST_DEPARTURES].p.x = j["departureList"]["x"];
+			acLists[LIST_DEPARTURES].p.y = j["departureList"]["y"];
+
+			acLists[LIST_MESSAGES].p.x = j["messageList"]["x"];
+			acLists[LIST_MESSAGES].p.y = j["messageList"]["y"];
+
+			acLists[LIST_ARRIVALS].p.x = j["arrivalList"]["x"];
+			acLists[LIST_ARRIVALS].p.y = j["arrivalList"]["y"];
+
+			acLists[LIST_ACTIVE].p.x = j["activeList"]["x"];
+			acLists[LIST_ACTIVE].p.y = j["activeList"]["y"];
+
+			acLists[LIST_VFR_CONTROL].p.x = j["vfrControlList"]["x"];
+			acLists[LIST_VFR_CONTROL].p.y = j["vfrControlList"]["y"];
+
+			acLists[LIST_VFR_COLLECTOR].p.x = j["vfrCollectorList"]["x"];
+			acLists[LIST_VFR_COLLECTOR].p.y = j["vfrCollectorList"]["y"];
+
+			acLists[LIST_HOLD].p.x = j["holdList"]["x"];
+			acLists[LIST_HOLD].p.y = j["holdList"]["y"];
+
+			acLists[LIST_COAST].p.x = j["coastList"]["x"];
+			acLists[LIST_COAST].p.y = j["coastList"]["y"];
+
+			acLists[LIST_CONFLICT].p.x = j["conflictList"]["x"];
+			acLists[LIST_CONFLICT].p.y = j["conflictList"]["y"];
+
 		}
 		// write defaults if no file
 		else {
@@ -75,15 +149,48 @@ CSiTRadar::CSiTRadar()
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
 
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
+
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
 
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-			j["prefSFI"] = menuState.SFIPrefStringDefault;
+			j["departureList"]["x"] = acLists[LIST_DEPARTURES].p.x;
+			j["departureList"]["y"] = acLists[LIST_DEPARTURES].p.y;
 
-			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+			j["messageList"]["x"] = acLists[LIST_MESSAGES].p.x;
+			j["messageList"]["y"] = acLists[LIST_MESSAGES].p.y;
+
+			j["arrivalList"]["x"] = acLists[LIST_ARRIVALS].p.x;
+			j["arrivalList"]["y"] = acLists[LIST_ARRIVALS].p.y;
+
+			j["activeList"]["x"] = acLists[LIST_ACTIVE].p.x;
+			j["activeList"]["y"] = acLists[LIST_ACTIVE].p.y;
+
+			j["vfrControlList"]["x"] = acLists[LIST_VFR_CONTROL].p.x;
+			j["vfrControlList"]["y"] = acLists[LIST_VFR_CONTROL].p.y;
+
+			j["vfrCollectorList"]["x"] = acLists[LIST_VFR_COLLECTOR].p.x;
+			j["vfrCollectorList"]["y"] = acLists[LIST_VFR_COLLECTOR].p.y;
+
+			j["holdList"]["x"] = acLists[LIST_HOLD].p.x;
+			j["holdList"]["y"] = acLists[LIST_HOLD].p.y;
+
+			j["coastList"]["x"] = acLists[LIST_COAST].p.x;
+			j["coastList"]["y"] = acLists[LIST_COAST].p.y;
+
+			j["conflictList"]["x"] = acLists[LIST_CONFLICT].p.x;
+			j["conflictList"]["y"] = acLists[LIST_CONFLICT].p.y;
 
 			settings_file << j;
 		}
@@ -138,15 +245,48 @@ CSiTRadar::~CSiTRadar()
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
 
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
+
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
+
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
 
 			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
 			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-			j["prefSFI"] = menuState.SFIPrefStringDefault;
+			j["departureList"]["x"] = acLists[LIST_DEPARTURES].p.x;
+			j["departureList"]["y"] = acLists[LIST_DEPARTURES].p.y;
 
-			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+			j["messageList"]["x"] = acLists[LIST_MESSAGES].p.x;
+			j["messageList"]["y"] = acLists[LIST_MESSAGES].p.y;
+
+			j["arrivalList"]["x"] = acLists[LIST_ARRIVALS].p.x;
+			j["arrivalList"]["y"] = acLists[LIST_ARRIVALS].p.y;
+
+			j["activeList"]["x"] = acLists[LIST_ACTIVE].p.x;
+			j["activeList"]["y"] = acLists[LIST_ACTIVE].p.y;
+
+			j["vfrControlList"]["x"] = acLists[LIST_VFR_CONTROL].p.x;
+			j["vfrControlList"]["y"] = acLists[LIST_VFR_CONTROL].p.y;
+
+			j["vfrCollectorList"]["x"] = acLists[LIST_VFR_COLLECTOR].p.x;
+			j["vfrCollectorList"]["y"] = acLists[LIST_VFR_COLLECTOR].p.y;
+
+			j["holdList"]["x"] = acLists[LIST_HOLD].p.x;
+			j["holdList"]["y"] = acLists[LIST_HOLD].p.y;
+
+			j["coastList"]["x"] = acLists[LIST_COAST].p.x;
+			j["coastList"]["y"] = acLists[LIST_COAST].p.y;
+
+			j["conflictList"]["x"] = acLists[LIST_CONFLICT].p.x;
+			j["conflictList"]["y"] = acLists[LIST_CONFLICT].p.y;
 
 			settings_file << j;
 		}
@@ -242,6 +382,41 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			CSiTRadar::menuState.jurisdictionIndex = 0;
 			SituPlugin::SendKeyboardPresses({ 0x01 });
 		}
+
+		// Garbage collect every 5 minutes
+		if (((clock() - menuState.lastAcListMaint) / CLOCKS_PER_SEC) > 300) {
+
+			menuState.recentCallsignsSeen.clear();
+
+			for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
+				radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
+			{
+
+				string callSign = radarTarget.GetCallsign();
+
+				// Get active radar targets for garbage cleaning
+				menuState.recentCallsignsSeen.emplace_back(callSign);
+
+			}
+
+			auto it = mAcData.cbegin();
+
+			while (it != mAcData.cend())
+			{
+				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), it->first) == menuState.recentCallsignsSeen.end())
+				{
+					it = mAcData.erase(it);
+				}
+				else {
+					++it;
+				}
+			}
+
+			menuState.lastAcListMaint = clock();
+			// GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
+
+		}
+
 	}
 #pragma endregion 
 
@@ -302,7 +477,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					else if (isVFR && isCorrelated) { ppsColor = C_PPS_ORANGE; }
 					else { ppsColor = C_PPS_YELLOW; }
 
-					if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
+					if (radarTarget.GetPosition().GetTransponderI() == TRUE) {
+						if (halfSecTick)
+							ppsColor = C_GREY;
+						else
+							ppsColor = C_WHITE;
+					}
 
 					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
@@ -356,8 +536,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					SituPlugin::prevMouseDelta = 0; // sync refrehes
 				}
 
+				/* remove some lists due to performance */
+
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList(acLists[LIST_OFF_SCREEN].p, &dc, mAcData, LIST_OFF_SCREEN);
+				// DrawACList(acLists[LIST_DEPARTURES].p, &dc, mAcData, LIST_DEPARTURES);
+				DrawACList(acLists[LIST_MESSAGES].p, &dc, mAcData, LIST_MESSAGES);
+				// DrawACList(acLists[LIST_ARRIVALS].p, &dc, mAcData, LIST_ARRIVALS);
+				DrawACList(acLists[LIST_ACTIVE].p, &dc, mAcData, LIST_ACTIVE);
+				DrawACList(acLists[LIST_VFR_CONTROL].p, &dc, mAcData, LIST_VFR_CONTROL);
+				DrawACList(acLists[LIST_VFR_COLLECTOR].p, &dc, mAcData, LIST_VFR_COLLECTOR);
+				DrawACList(acLists[LIST_HOLD].p, &dc, mAcData, LIST_HOLD);
+				DrawACList(acLists[LIST_COAST].p, &dc, mAcData, LIST_COAST);
+				DrawACList(acLists[LIST_CONFLICT].p, &dc, mAcData, LIST_CONFLICT);
 
 				/*
 				CACList MessageList;
@@ -374,13 +565,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				MessageList.DrawList();
 				*/
 				
-
+				// Radar sector element is 18
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
 					string callSign = radarTarget.GetCallsign();
 
+					if (radarTarget.GetPosition().GetRadarFlags() == 0) continue;
 
 					if (menuState.filterBypassAll) {
 						mAcData[radarTarget.GetCallsign()].tagType = 1;
@@ -669,8 +861,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-
-
 					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
 					}
@@ -680,13 +870,30 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					COLORREF ppsColor;
 
 					// logic for the color of the PPS
-					if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
-					else if (radarTarget.GetPosition().GetRadarFlags() == 1 ) { ppsColor = C_PPS_MAGENTA; }
-					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
-					else if (isVFR && isCorrelated) { ppsColor = C_PPS_ORANGE; }
-					else { ppsColor = C_PPS_YELLOW; }
+					if (radarTarget.GetPosition().GetRadarFlags() == 0)
+						ppsColor = C_PPS_YELLOW;
+					else if (radarTarget.GetPosition().GetRadarFlags() == 1 )
+						ppsColor = C_PPS_MAGENTA;
+					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700"))
+						ppsColor = C_PPS_RED;
+					else if (isVFR && isCorrelated)
+						ppsColor = C_PPS_ORANGE;
+					else if (
+						radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() &&
+						radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() < 3 &&
+						radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() > 0 &&
+						strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0
+					)
+						CSiTRadar::halfSecTick ? ppsColor = C_PPS_DARK_YELOW : ppsColor = C_PPS_YELLOW;
+					else
+						ppsColor = C_PPS_YELLOW;
 
-					if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
+					if (radarTarget.GetPosition().GetTransponderI() == TRUE) {
+						if (halfSecTick)
+							ppsColor = C_GREY;
+						else
+							ppsColor = C_WHITE;
+					}
 
 					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
@@ -705,16 +912,17 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 					
 					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
-					/*
-					if (radarTarget.GetPosition().GetRadarFlags() == 0
-						&& isADSB) {
-						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
+					//if (radarTarget.GetPosition().GetRadarFlags() < 2 && isADSB)
+					//{
+					//	if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1)
+					//	{
+					//		mAcData[callSign].tagType = 1;
+					//	}
 
-						CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
-						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
-						CACTag::DrawHistoryDots(&dc, &radarTarget);
-					}
-					*/
+					//	CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
+					//	CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
+					//	CACTag::DrawHistoryDots(&dc, &radarTarget);
+					//}
 
 					// Tag Level Logic
 					if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
@@ -729,6 +937,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
 						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = false;
+					}
+
+					// Auto alpha tag any emergency aircraft
+					if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) {
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
 					}
 
 					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
@@ -795,16 +1009,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					COLORREF cjsColor = C_PPS_YELLOW;
 
 					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
-						if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() <= 2
+						if (radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() < 3
 							&& radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() >= 0
 							&& halfSecTick == TRUE
 							&& strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
-							cjsColor = C_WHITE;
+							cjsColor = C_PPS_DARK_YELOW;
 						}
 					}
 
 					// show CJS for controller tracking aircraft // or if in handoff mode, show the target controller's CJS
-					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated)) { // || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
+					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
 							CFont font;
@@ -826,9 +1040,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							rectCJS.bottom = p.y;
 
 							string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
-
-							if (menuState.handoffMode &&
-								strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
+							if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe() &&
+								radarTarget.GetCorrelatedFlightPlan().GetSectorExitMinutes() > 0 &&
+								strcmp(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId(), "") != 0
+							)
+								CJS += ' ' + to_string(round(GetPlugIn()->ControllerSelectByPositionId(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()).GetPrimaryFrequency() * 100.0) / 100.0).substr(0, 6);
+							else if (menuState.handoffMode &&
+								strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0)
+							{
 								CJS = GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetCoordinatedNextController()).GetPositionId();
 								dc.SetTextColor(C_WHITE);
 							}
@@ -844,7 +1063,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (hashalo.find(radarTarget.GetCallsign()) != hashalo.end()) {
 						HaloTool::drawHalo(&dc, p, menuState.haloRad, pixnm);
 					}
-
 
 					// Draw the Selected Aircraft Box
 					HPEN targetPen;
@@ -868,7 +1086,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					dc.SelectObject(font);
 					dc.SetTextColor(C_WHITE);
-
 
 					if (CSiTRadar::menuState.handoffMode || CSiTRadar::menuState.SFIMode) {
 						if (strcmp(radarTarget.GetCallsign(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0) {
@@ -971,11 +1188,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-
 					DeleteObject(font);
 					DeleteObject(targetPen);
-
-
 				}
 
 				// Flight plan loop. Goes through flight plans, and if not correlated will display
@@ -1566,7 +1780,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 
 				// QUICK look menu
-
 				if (menuState.quickLook) {
 					TopMenu::DrawBackground(dc, { 306, radarea.top }, 670, 60);
 
@@ -2763,6 +2976,33 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == LIST_OFF_SCREEN) {
 		acLists[LIST_OFF_SCREEN].collapsed = !acLists[LIST_OFF_SCREEN].collapsed;
 	}
+	if (ObjectType == LIST_DEPARTURES) {
+		acLists[LIST_DEPARTURES].collapsed = !acLists[LIST_DEPARTURES].collapsed;
+	}
+	if (ObjectType == LIST_ARRIVALS) {
+		acLists[LIST_ARRIVALS].collapsed = !acLists[LIST_ARRIVALS].collapsed;
+	}
+	if (ObjectType == LIST_MESSAGES) {
+		acLists[LIST_MESSAGES].collapsed = !acLists[LIST_MESSAGES].collapsed;
+	}
+	if (ObjectType == LIST_ACTIVE) {
+		acLists[LIST_ACTIVE].collapsed = !acLists[LIST_ACTIVE].collapsed;
+	}
+	if (ObjectType == LIST_VFR_CONTROL) {
+		acLists[LIST_VFR_CONTROL].collapsed = !acLists[LIST_VFR_CONTROL].collapsed;
+	}
+	if (ObjectType == LIST_VFR_COLLECTOR) {
+		acLists[LIST_VFR_COLLECTOR].collapsed = !acLists[LIST_VFR_COLLECTOR].collapsed;
+	}
+	if (ObjectType == LIST_HOLD) {
+		acLists[LIST_HOLD].collapsed = !acLists[LIST_HOLD].collapsed;
+	}
+	if (ObjectType == LIST_COAST) {
+		acLists[LIST_COAST].collapsed = !acLists[LIST_COAST].collapsed;
+	}
+	if (ObjectType == LIST_CONFLICT) {
+		acLists[LIST_CONFLICT].collapsed = !acLists[LIST_CONFLICT].collapsed;
+	}
 }
 
 void CSiTRadar::OnOverScreenObject(int ObjectType,
@@ -2896,6 +3136,33 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 		if (ObjectType == LIST_OFF_SCREEN) {
 			acLists[LIST_OFF_SCREEN].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
 		}
+		if (ObjectType == LIST_MESSAGES) {
+			acLists[LIST_MESSAGES].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_DEPARTURES) {
+			acLists[LIST_DEPARTURES].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_ARRIVALS) {
+			acLists[LIST_ARRIVALS].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_ACTIVE) {
+			acLists[LIST_ACTIVE].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_VFR_CONTROL) {
+			acLists[LIST_VFR_CONTROL].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_VFR_COLLECTOR) {
+			acLists[LIST_VFR_COLLECTOR].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_HOLD) {
+			acLists[LIST_HOLD].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_COAST) {
+			acLists[LIST_COAST].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
+		if (ObjectType == LIST_CONFLICT) {
+			acLists[LIST_CONFLICT].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
+		}
 
 		if (ObjectType == WINDOW_TITLE_BAR) {
 			if (menuState.radarScrWindows.count(stoi(sObjectId)) != 0) {
@@ -2992,7 +3259,19 @@ void CSiTRadar::updateActiveRunways(int i) {
 		}
 	}
 
-	
+	menuState.depAirports.clear();
+	menuState.arrAirports.clear();
+
+	for (CSectorElement airport = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); airport.IsValid();
+		airport = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(airport, SECTOR_ELEMENT_AIRPORT))
+	{
+		if (airport.IsElementActive(true)) {
+			menuState.depAirports.insert(airport.GetName());
+		}
+		if (airport.IsElementActive(false)) {
+			menuState.arrAirports.insert(airport.GetName());
+		}
+	}
 
 	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_GEO); sectorElement.IsValid();
 		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_GEO)) {
@@ -3076,6 +3355,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	ACData acdata;
 	int count = 0;
 	CSiTRadar::menuState.jurisdictionalAC.clear();
+	CPosition dest;
 
 	for (auto& ac : CSiTRadar::mAcData) {
 
@@ -3146,6 +3426,28 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	{
 		acdata.isADSB = true;
 	}
+
+	GetPlugIn()->SelectActiveSectorfile();
+	for (CSectorElement sectorElement = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT); sectorElement.IsValid();
+		sectorElement = GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_AIRPORT))
+	{
+		if (!strcmp(sectorElement.GetName(), destin.c_str()))
+		{
+			sectorElement.GetPosition(&dest, 0);
+		}
+	}
+	string destinationDist, destinationTime;
+	// if the destination airport is not in the sector file, have to use Euroscope's FP calculated distance and not a direct distance
+	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0)
+	{
+		destinationDist = to_string((long)FlightPlan.GetDistanceToDestination());
+	}
+	// otherwise, the display should be direct distance which can be more accurate calculated if in the SCT file.
+	else
+	{
+		destinationDist = to_string((long)FlightPlan.GetFPTrackPosition().GetPosition().DistanceTo(dest));
+	}
+	acdata.dest = dest;
 
 	mAcData[callSign] = acdata;
 
@@ -3231,7 +3533,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		gmtime_s(&gmt, &t);
 
 		char timeStr[50];
-		strftime(timeStr, 50, "%y-%m-%d %R", &gmt);
+		std::strftime(timeStr, 50, "%y-%m-%d %R", &gmt);
 
 		dc->DrawText(timeStr, &listHeading, DT_LEFT | DT_CALCRECT);
 		dc->DrawText(timeStr, &listHeading, DT_LEFT);
@@ -3375,12 +3677,684 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 		}
 	}
 
+	if (listType == LIST_VFR_COLLECTOR) {
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
+
+		header = "VFR Collector";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_VFR_COLLECTOR, to_string(LIST_VFR_COLLECTOR).c_str(), listHeading, true, "");
+
+		for (auto& aircraft : mAcData) {
+			
+			if (aircraft.second.hasVFRFP) {
+
+				CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
+
+				if (fp.GetState() > 1) {
+
+					if (!acLists[LIST_VFR_COLLECTOR].collapsed) {
+						listArcft.left = p.x;
+
+						// Callsign
+						dc->SetTextColor(C_TAG_GREEN);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+						AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+						listArcft.left += 60;
+
+						// Wake turbulence
+						dc->SetTextColor(C_WHITE);
+						string wakeTurb;
+						switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+						case 'L':
+							wakeTurb = "-";
+							break;
+						case 'H':
+							wakeTurb = "+";
+							break;
+						case 'J': // Super
+							wakeTurb = "$";
+							break;
+						default:
+							wakeTurb = " ";
+						}
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// SFI
+						string sfi = "";
+						if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+							sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+
+						AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+						listArcft.left += 10;
+
+						// Destination airport
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+
+						AddScreenObject(TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+						listArcft.left += 35;
+
+						listArcft.top += 13;
+					}
+
+					showArrow = true;
+				}
+			}
+			
+
+			if (showArrow) {
+				POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+				if (!acLists[LIST_VFR_COLLECTOR].collapsed)
+				{
+					vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+					vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+					vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+				}
+				dc->Polygon(vertices, 3);
+			}
+		}
+	}
+
+	if (listType == LIST_VFR_CONTROL) {
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
+
+		header = "VFR Control";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_VFR_CONTROL, to_string(LIST_VFR_CONTROL).c_str(), listHeading, true, "");
+
+		for (auto& aircraft : mAcData) {
+
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
+
+			if (aircraft.second.hasVFRFP) {
+
+				if (fp.GetState() > 2) {
+
+					if (!acLists[LIST_VFR_CONTROL].collapsed) {
+						listArcft.left = p.x;
+
+						// Callsign
+						dc->SetTextColor(C_TAG_GREEN);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+						AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+						listArcft.left += 60;
+
+						// Wake turbulence
+						dc->SetTextColor(C_WHITE);
+						string wakeTurb;
+						switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+						case 'L':
+							wakeTurb = "-";
+							break;
+						case 'H':
+							wakeTurb = "+";
+							break;
+						case 'J': // Super
+							wakeTurb = "$";
+							break;
+						default:
+							wakeTurb = " ";
+						}
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// SFI
+						string sfi = "";
+						if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+							sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// Destination airport
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						listArcft.top += 13;
+					}
+					showArrow = true;
+				}
+			}
+			
+		}
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_VFR_CONTROL].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
+	}
+
+	if (listType == LIST_MESSAGES) {
+		RECT listArcft{};
+		listArcft.left = p.x;
+		listArcft.top = p.y + 13;
+
+		header = "Message List (1)";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_MESSAGES, to_string(LIST_MESSAGES).c_str(), listHeading, true, "");
+
+		dc->SetTextColor(COLORREF RGB(170, 109, 0));
+		dc->DrawText("Lightning Feed Lost", &listArcft, DT_LEFT | DT_CALCRECT);
+		dc->DrawText("Lightning Feed Lost", &listArcft, DT_LEFT);
+		showArrow = true;
+		dc->SetTextColor(C_WHITE);
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_MESSAGES].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
+	}
+
+	if (listType == LIST_ACTIVE) {
+
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
+
+		header = "ACTIVE";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_ACTIVE, to_string(LIST_ACTIVE).c_str(), listHeading, true, "");
+
+		for (auto& aircraft : mAcData) {
+
+			if (!aircraft.second.hasVFRFP) {
+
+				CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
+
+				if (fp.GetState() > 2)
+				{
+					if (!acLists[LIST_ACTIVE].collapsed) {
+						listArcft.left = p.x;
+
+						// CJS
+						dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT);
+						listArcft.left += 20;
+
+						// Callsign
+						dc->SetTextColor(C_TAG_GREEN);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+						AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+						listArcft.left += 60;
+
+						// Wake turbulence
+						dc->SetTextColor(C_WHITE);
+						string wakeTurb;
+						switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+						case 'L':
+							wakeTurb = "-";
+							break;
+						case 'H':
+							wakeTurb = "+";
+							break;
+						case 'J': // Super
+							wakeTurb = "$";
+							break;
+						default:
+							wakeTurb = " ";
+						}
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// SFI
+						string sfi = "";
+						if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+							sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// Assigned transponder code
+						dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						// Aircraft type
+						dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						// Departure airport
+						dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						// Final altitude
+						string finalAlt;
+						if (fp.GetFlightPlanData().GetFinalAltitude() < 1)
+							finalAlt = "fld";
+						else
+							finalAlt = to_string(fp.GetFlightPlanData().GetFinalAltitude() / 100);
+						finalAlt.insert(finalAlt.begin(), 3 - finalAlt.length(), '0');
+						dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						// Destination airport
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						// Sector Exit Time
+						string sectorExitTime;
+
+						struct tm gmt;
+						time_t t = std::time(0);
+						t += static_cast<time_t>(fp.GetSectorExitMinutes() * 60);
+						gmtime_s(&gmt, &t);
+
+						char timeStr[50];
+						std::strftime(timeStr, 50, "%H%M", &gmt);
+
+						sectorExitTime = timeStr;
+
+						sectorExitTime.insert(sectorExitTime.begin(), 4 - sectorExitTime.length(), '0');
+						dc->DrawText(sectorExitTime.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(sectorExitTime.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						// VMI
+						string vmi;
+						CRadarTarget rt = fp.GetCorrelatedRadarTarget();
+						if (rt.GetVerticalSpeed() > 400)
+							vmi = "^";
+						if (rt.GetVerticalSpeed() < -400)
+							vmi = "|"; // up arrow "??!" = downarrow
+						dc->DrawText(vmi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(vmi.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 10;
+
+						// Cleared altitude
+						string clearedAlt;
+						if (fp.GetControllerAssignedData().GetClearedAltitude() < 2)
+							clearedAlt = to_string(fp.GetFlightPlanData().GetFinalAltitude() / 100);
+						else if (fp.GetControllerAssignedData().GetClearedAltitude() < 0)
+							clearedAlt = "APR";
+						else
+							clearedAlt = to_string(fp.GetControllerAssignedData().GetClearedAltitude() / 100);
+						clearedAlt.insert(clearedAlt.begin(), 3 - clearedAlt.length(), '0');
+						dc->DrawText(clearedAlt.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+						dc->DrawText(clearedAlt.c_str(), &listArcft, DT_LEFT);
+						listArcft.left += 35;
+
+						listArcft.top += 13;
+					}
+					showArrow = true;
+				}
+			}
+		}
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_ACTIVE].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
+	}
+
+	if (listType == LIST_DEPARTURES) {
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
+
+		header = "DEPARTURES";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_DEPARTURES, to_string(LIST_DEPARTURES).c_str(), listHeading, true, "");
+
+		vector<CFlightPlan> fpl;
+
+		// Add the aircraft
+		for (auto& aircraft : mAcData)
+		{
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
+			if (fp.IsValid()) {
+				if (!aircraft.second.hasVFRFP && menuState.depAirports.find(fp.GetFlightPlanData().GetOrigin()) != menuState.depAirports.end() && fp.GetState() >= 1 && fp.GetFPState() != 1) {
+					fpl.push_back(fp);
+				}
+			}
+		}
+		std::sort(fpl.begin(), fpl.end(), [](const CFlightPlan& a, const CFlightPlan& b) { return (std::string)a.GetCallsign() < (std::string)b.GetCallsign(); });
+
+		for(auto& fp : fpl) {
+
+			if (!acLists[LIST_DEPARTURES].collapsed) {
+				listArcft.left = p.x;
+
+				// CJS
+				dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT);
+				listArcft.left += 20;
+
+				// Callsign
+				dc->SetTextColor(C_TAG_GREEN);
+				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+				AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+				listArcft.left += 60;
+
+				// Wake turbulence
+				dc->SetTextColor(C_WHITE);
+				string wakeTurb;
+				switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+					case 'L':
+						wakeTurb = "-";
+						break;
+					case 'H':
+						wakeTurb = "+";
+						break;
+					case 'J': // Super
+						wakeTurb = "$";
+						break;
+					default:
+						wakeTurb = " ";
+				}
+				dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// SFI
+				string sfi = "";
+				if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+					sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+				dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// Assigned transponder code
+				dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Aircraft type
+				dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Departure airport
+				dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetOrigin(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Final altitude
+				string finalAlt;
+				if (fp.GetFlightPlanData().GetFinalAltitude() < 1)
+					finalAlt = "fld";
+				else
+					finalAlt = to_string(fp.GetFlightPlanData().GetFinalAltitude() / 100);
+				finalAlt.insert(finalAlt.begin(), 3 - finalAlt.length(), '0');
+				dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(finalAlt.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Destination airport
+				dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+
+				AddScreenObject(TAG_ITEM_TYPE_PLANE_TYPE, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+				listArcft.left += 35;
+
+				// Proposed takeoff time
+				string depTime = fp.GetFlightPlanData().GetEstimatedDepartureTime();
+				depTime.insert(depTime.begin(), 4 - depTime.length(), '0');
+				dc->DrawText(depTime.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(depTime.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+					
+				listArcft.top += 13;
+			}
+			showArrow = true;
+			
+		}
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_DEPARTURES].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
+	}
+	
+	if (listType == LIST_ARRIVALS) {
+		// 1st aircraft of a list
+		RECT listArcft{};
+		listArcft.left = p.x + 10;
+		listArcft.top = p.y + 13;
+
+		header = "ARRIVALS";
+
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT | DT_CALCRECT);
+		dc->DrawText(header.c_str(), &listHeading, DT_LEFT);
+		AddScreenObject(LIST_ARRIVALS, to_string(LIST_ARRIVALS).c_str(), listHeading, true, "");
+
+
+		vector<CFlightPlan> fpl;
+
+		// Add the aircraft
+		for (auto& aircraft : mAcData)
+		{
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(aircraft.first.c_str());
+			if (fp.IsValid()) {
+				if (!aircraft.second.hasVFRFP && menuState.arrAirports.find(fp.GetFlightPlanData().GetDestination()) != menuState.arrAirports.end() && fp.GetState() >= 1) {
+					fpl.push_back(fp);
+				}
+			}
+		}
+
+		std::sort(fpl.begin(), fpl.end(), [](const CFlightPlan& a, const CFlightPlan& b) { return (std::string)a.GetCallsign() < (std::string)b.GetCallsign(); });
+
+		for (auto it = fpl.begin(); it != fpl.end(); it++) {
+			CFlightPlan fp = *it;
+
+			if (!acLists[LIST_ARRIVALS].collapsed) {
+				listArcft.left = p.x;
+
+				// CJS
+				dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetTrackingControllerId(), &listArcft, DT_LEFT);
+				listArcft.left += 20;
+
+				// Callsign
+				dc->SetTextColor(C_TAG_GREEN);
+				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetCallsign(), &listArcft, DT_LEFT);
+
+				AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp.GetCallsign(), listArcft, TRUE, fp.GetCallsign());
+
+				listArcft.left += 60;
+
+				// Wake turbulence
+				dc->SetTextColor(C_WHITE);
+				string wakeTurb;
+				switch (fp.GetFlightPlanData().GetAircraftWtc()) {
+				case 'L':
+					wakeTurb = "-";
+					break;
+				case 'H':
+					wakeTurb = "+";
+					break;
+				case 'J': // Super
+					wakeTurb = "$";
+					break;
+				default:
+					wakeTurb = " ";
+				}
+				dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(wakeTurb.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// SFI
+				string sfi = "";
+				if (!fp.GetControllerAssignedData().GetScratchPadString()[1])
+					sfi = fp.GetControllerAssignedData().GetScratchPadString()[1];
+				dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(sfi.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// Assigned transponder code
+				dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetControllerAssignedData().GetSquawk(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Aircraft type
+				dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetAircraftFPType(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Current Altitude
+				int alt;
+				CRadarTarget rt = fp.GetCorrelatedRadarTarget();
+
+				if (rt.GetPosition().IsValid())
+				{
+					alt = rt.GetPosition().GetPressureAltitude() / 100;
+				}
+				else
+				{
+					alt = fp.GetFlightPlanData().GetFinalAltitude() / 100;
+				}
+
+				string altPadded = to_string(alt);
+				altPadded.insert(altPadded.begin(), 3 - altPadded.length(), '0');
+				dc->DrawText(altPadded.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(altPadded.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// VMI
+				string vmi;
+				if (rt.GetVerticalSpeed() > 400)
+					vmi = "^";
+				if (rt.GetVerticalSpeed() < -400)
+					vmi = "|"; // up arrow "??!" = downarrow
+				dc->DrawText(vmi.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(vmi.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 10;
+
+				// Cleared altitude
+				string clearedAlt;
+				if (fp.GetControllerAssignedData().GetClearedAltitude() < 2)
+					clearedAlt = to_string(fp.GetFlightPlanData().GetFinalAltitude() / 100);
+				else if (fp.GetControllerAssignedData().GetClearedAltitude() < 0)
+					clearedAlt = "APR";
+				else
+					clearedAlt = to_string(fp.GetControllerAssignedData().GetClearedAltitude() / 100);
+				clearedAlt.insert(clearedAlt.begin(), 3 - clearedAlt.length(), '0');
+				dc->DrawText(clearedAlt.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(clearedAlt.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Destination airport
+				dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetDestination(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Estimated arrival time
+
+				string eta;
+				struct tm gmt;
+
+				if (fp.GetCorrelatedRadarTarget().GetGS() > 0)
+				{
+					time_t t = std::time(0);
+					t += static_cast<time_t>(((fp.GetFPTrackPosition().GetPosition().DistanceTo(mAcData[fp.GetCallsign()].dest) / fp.GetCorrelatedRadarTarget().GetGS()) * 3600));
+					gmtime_s(&gmt, &t);
+
+					char timeStr[50];
+					std::strftime(timeStr, 50, "%H%M", &gmt);
+
+					eta = timeStr;
+				}
+				else {
+					eta = "0000";
+				}
+
+				//eta.insert(eta.begin(), 4 - eta.length(), '0');
+				dc->DrawText(eta.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(eta.c_str(), &listArcft, DT_LEFT);
+				listArcft.left += 35;
+
+				// Arrival runway
+				dc->DrawText(fp.GetFlightPlanData().GetArrivalRwy(), &listArcft, DT_LEFT | DT_CALCRECT);
+				dc->DrawText(fp.GetFlightPlanData().GetArrivalRwy(), &listArcft, DT_LEFT);
+
+				listArcft.top += 13;
+			}
+			showArrow = true;
+
+		}
+
+		if (showArrow) {
+			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
+			if (!acLists[LIST_ARRIVALS].collapsed)
+			{
+				vertices[0] = { listHeading.right + 5, listHeading.top + 10 };
+				vertices[1] = { listHeading.right + 15, listHeading.top + 10 };
+				vertices[2] = { listHeading.right + 10, listHeading.top + 3 };
+			}
+			dc->Polygon(vertices, 3);
+		}
+	}
+
 	dc->RestoreDC(sDC);
 	DeleteObject(font);
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 }
-
 
 void CSiTRadar::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {

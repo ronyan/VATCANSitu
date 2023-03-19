@@ -61,6 +61,8 @@ struct ACData {
     bool pointOutPendingApproval{ false };
     bool directToLineOn{ false };
     CPosition directToPendingPosition{};
+    CPosition dest{};
+    CPosition orig{};
     string directToPendingFixName;
     string POString{};
     ACRoute acFPRoute;
@@ -84,15 +86,15 @@ struct buttonStates {
     int haloRad;
     bool quickLook{ FALSE };
     bool quickLookDelta{ false };
-    bool extAltToggle{ FALSE };
+    bool extAltToggle{ TRUE };
     int numJurisdictionAC{ 0 };
     bool setup{ false };
     bool destAirport{ false };
     bool crda{ false };
     bool haloCursor{ false };
-    bool bigACID{ true };
+    bool bigACID{ false };
 
-    int numHistoryDots{ 4 };
+    int numHistoryDots{ 5 };
 
     bool wxAll{ FALSE };
     bool wxHigh{ FALSE };
@@ -117,6 +119,8 @@ struct buttonStates {
     bool destDME;
     int tbsHdg;
     bool tbsMixed{ false };
+    set<string> depAirports{};
+    set<string> arrAirports{};
 
     vector<CSectorElement> activeRunways;
     vector<CSectorElement> activeRunwaysList;
@@ -157,8 +161,10 @@ struct buttonStates {
     map<int, CACList> radarScrLists;
     vector<SSquawkCodeManagement> squawkCodes;
 
-
-
+    // mAcData garbage cleaning
+    vector<string> recentCallsignsSeen;
+    bool acListMaint;
+    clock_t lastAcListMaint{};
 };
 
 class CAircraftList {
