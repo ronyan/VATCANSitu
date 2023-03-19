@@ -105,6 +105,7 @@ CSiTRadar::CSiTRadar()
 			menuState.bigACID = j["menuState"]["bigACID"];
 			menuState.wxAll = j["menuState"]["wxAll"];
 			menuState.filterBypassAll = j["menuState"]["filterBypassAll"];
+			menuState.extAltToggle = j["menuState"]["extAltToggle"];
 
 			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
 			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
@@ -156,6 +157,7 @@ CSiTRadar::CSiTRadar()
 			j["menuState"]["bigACID"] = menuState.bigACID;
 			j["menuState"]["wxAll"] = menuState.wxAll;
 			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
 
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
@@ -251,6 +253,7 @@ CSiTRadar::~CSiTRadar()
 			j["menuState"]["bigACID"] = menuState.bigACID;
 			j["menuState"]["wxAll"] = menuState.wxAll;
 			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
 
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
@@ -533,11 +536,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					SituPlugin::prevMouseDelta = 0; // sync refrehes
 				}
 
+				/* remove some lists due to performance */
+
 				DrawACList(acLists[LIST_TIME_ATIS].p, &dc, mAcData, LIST_TIME_ATIS);
 				DrawACList(acLists[LIST_OFF_SCREEN].p, &dc, mAcData, LIST_OFF_SCREEN);
-				DrawACList(acLists[LIST_DEPARTURES].p, &dc, mAcData, LIST_DEPARTURES);
+				// DrawACList(acLists[LIST_DEPARTURES].p, &dc, mAcData, LIST_DEPARTURES);
 				DrawACList(acLists[LIST_MESSAGES].p, &dc, mAcData, LIST_MESSAGES);
-				DrawACList(acLists[LIST_ARRIVALS].p, &dc, mAcData, LIST_ARRIVALS);
+				// DrawACList(acLists[LIST_ARRIVALS].p, &dc, mAcData, LIST_ARRIVALS);
 				DrawACList(acLists[LIST_ACTIVE].p, &dc, mAcData, LIST_ACTIVE);
 				DrawACList(acLists[LIST_VFR_CONTROL].p, &dc, mAcData, LIST_VFR_CONTROL);
 				DrawACList(acLists[LIST_VFR_COLLECTOR].p, &dc, mAcData, LIST_VFR_COLLECTOR);
