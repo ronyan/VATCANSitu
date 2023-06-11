@@ -57,6 +57,12 @@ CSiTRadar::CSiTRadar()
 			acLists[LIST_OFF_SCREEN].p.x = j["offScreenList"]["x"];
 			acLists[LIST_OFF_SCREEN].p.y = j["offScreenList"]["y"];
 
+			menuState.numHistoryDots = j["menuState"]["numHistoryDots"];
+			menuState.bigACID = j["menuState"]["bigACID"];
+			menuState.wxAll = j["menuState"]["wxAll"];
+			menuState.filterBypassAll = j["menuState"]["filterBypassAll"];
+			menuState.extAltToggle = j["menuState"]["extAltToggle"];
+
 			if (!j["prefSFI"].is_null()) {
 				menuState.SFIPrefStringDefault = j["prefSFI"];
 			}
@@ -84,6 +90,13 @@ CSiTRadar::CSiTRadar()
 			j["prefSFI"] = menuState.SFIPrefStringDefault;
 
 			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
+
 
 			settings_file << j;
 		}
@@ -147,6 +160,12 @@ CSiTRadar::~CSiTRadar()
 			j["prefSFI"] = menuState.SFIPrefStringDefault;
 
 			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
 
 			settings_file << j;
 		}
@@ -241,6 +260,41 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			menuState.SFIMode = false;
 			CSiTRadar::menuState.jurisdictionIndex = 0;
 			SituPlugin::SendKeyboardPresses({ 0x01 });
+		}
+
+		// Garbage collect every 5 minutes
+		if (((clock() - menuState.lastAcListMaint) / CLOCKS_PER_SEC) > 300) {
+
+			menuState.recentCallsignsSeen.clear();
+
+			for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
+				radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
+			{
+
+				string callSign = radarTarget.GetCallsign();
+
+				// Get active radar targets for garbage cleaning
+				menuState.recentCallsignsSeen.emplace_back(callSign);
+
+			}
+
+			auto it = mAcData.cbegin();
+
+			while (it != mAcData.cend())
+			{
+				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), it->first) == menuState.recentCallsignsSeen.end())
+				{
+					// supported in C++11
+					it = mAcData.erase(it);
+				}
+				else {
+					++it;
+				}
+			}
+
+			menuState.lastAcListMaint = clock();
+			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
+
 		}
 	}
 #pragma endregion 

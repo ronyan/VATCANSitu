@@ -157,6 +157,10 @@ struct buttonStates {
     map<int, CACList> radarScrLists;
     vector<SSquawkCodeManagement> squawkCodes;
 
+    // mAcData garbage cleaning
+    vector<string> recentCallsignsSeen;
+    bool acListMaint;
+    clock_t lastAcListMaint{};
 
 
 };
