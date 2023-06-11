@@ -266,15 +266,18 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		}
 	}
 	string destinationDist, destinationTime;
+	double distnm;
 	// if the destination airport is not in the sector file, have to use Euroscope's FP calculated distance and not a direct distance
 	if (dest.m_Latitude == 0.0 && dest.m_Longitude == 0.0)
 	{
-		destinationDist = to_string((long)fp->GetDistanceToDestination());
+		distnm = fp->GetDistanceToDestination();
+		destinationDist = to_string((int)distnm);
 	}
 	// otherwise, the display should be direct distance which can be more accurate calculated if in the SCT file.
 	else
 	{
-		destinationDist = to_string((long)rt->GetPosition().GetPosition().DistanceTo(dest));
+		distnm = rt->GetPosition().GetPosition().DistanceTo(dest);
+		destinationDist = to_string((int)distnm);
 	}
 
 	string est;
@@ -282,7 +285,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	{
 		struct tm gmt;
 		time_t t = std::time(0);
-		t += static_cast<time_t>(((rt->GetPosition().GetPosition().DistanceTo(dest) / rt->GetGS()) * 3600));
+		t += static_cast<time_t>(distnm * 3600 / rt->GetGS());
 		gmtime_s(&gmt, &t);
 
 		char timeStr[50];
