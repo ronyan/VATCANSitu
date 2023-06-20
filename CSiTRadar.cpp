@@ -3102,7 +3102,7 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 		//std::future<void> future = std::async(std::launch::async, CSiTRadar::updateActiveRunways, 0);
 	}
 
-	DisplayActiveRunways();
+	// DisplayActiveRunways();
 
 
 	const char* sfi;
