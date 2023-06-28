@@ -98,6 +98,8 @@ struct buttonStates {
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
     bool mvaDisp{ false };
+    bool lightningOn{ FALSE };
+    clock_t lightningLastCalc{};
 
     set<string> activeArpt;
     map<string, bool> nearbyCJS;

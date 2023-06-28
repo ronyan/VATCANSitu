@@ -2,6 +2,8 @@
 #include "wxRadar.h"
 
 cell wxRadar::wxReturn[256][256];
+lightningStrikeProb wxRadar::lightningProbMap[512][256];
+vector<lightningStrike> wxRadar::lightningBoltLoc;
 string wxRadar::wxLatCtr = { "0.0" };
 string wxRadar::wxLongCtr = { "0.0" };
 int wxRadar::zoomLevel;
@@ -28,6 +30,122 @@ void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& fil
         file.read((char*)(&buffer[0]), size);
     }
     else buffer.clear();
+}
+
+void wxRadar::parseLightningPNG(CRadarScreen* rad) {
+
+    if (CreateDirectory(".\\situWx\\", NULL)) {}
+
+    CURL* pngDL = curl_easy_init();
+    FILE* dlPNG;
+    errno_t err;
+    string tomorrowIOurl = "https://api.tomorrow.io/v4/map/tile/5/8/11/lightningFlashRateDensity/now.png?apikey=RmtPHTj25ePWp0e5piKy6sLxkm3T9CCZ";
+
+    const char* light1 = ".\\situWx\\lightning1.png";
+    curl_easy_setopt(pngDL, CURLOPT_URL, tomorrowIOurl.c_str());
+    curl_easy_setopt(pngDL, CURLOPT_WRITEFUNCTION, write_file);
+
+    err = fopen_s(&dlPNG, light1, "wb");
+    if (err == 0) {
+
+        /* write the page body to this file handle */
+        curl_easy_setopt(pngDL, CURLOPT_WRITEDATA, dlPNG);
+
+        /* get it! */
+        curl_easy_perform(pngDL);
+
+        if (dlPNG != NULL) {
+            fclose(dlPNG);
+        }
+    }
+    else {
+        return;
+    }
+
+    /* cleanup curl stuff */
+    curl_easy_cleanup(pngDL);
+
+    pngDL = curl_easy_init();
+    dlPNG;
+    tomorrowIOurl = "https://api.tomorrow.io/v4/map/tile/5/" + (string)"9" + "/" + (string)"11" + "/lightningFlashRateDensity/now.png?apikey=RmtPHTj25ePWp0e5piKy6sLxkm3T9CCZ";
+
+    const char* light2 = ".\\situWx\\lightning2.png";
+    curl_easy_setopt(pngDL, CURLOPT_URL, tomorrowIOurl.c_str());
+    curl_easy_setopt(pngDL, CURLOPT_WRITEFUNCTION, write_file);
+
+    err = fopen_s(&dlPNG, light2, "wb");
+    if (err == 0) {
+
+        /* write the page body to this file handle */
+        curl_easy_setopt(pngDL, CURLOPT_WRITEDATA, dlPNG);
+
+        /* get it! */
+        curl_easy_perform(pngDL);
+
+        if (dlPNG != NULL) {
+            fclose(dlPNG);
+        }
+    }
+    else {
+        return;
+    }
+
+    /* cleanup curl stuff */
+    curl_easy_cleanup(pngDL);
+
+
+    std::vector<unsigned char> buffer, image1, image2;
+    loadPNG(buffer, light1);
+    unsigned long w, h;
+    int error = wxRadar::decodePNG(image1, w, h, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size());
+    loadPNG(buffer, light2);
+    error = wxRadar::decodePNG(image2, w, h, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size());
+
+    if (error != 0) {
+        rad->GetPlugIn()->DisplayUserMessage("VATCAN Situ", "WX Parser", string("Lightning PNG Failed to Parse").c_str(), true, false, false, false, false);
+    }
+    else {
+
+        // convert vector into 2d array with dBa values only;
+        // png starts as RGBARGBARGBA... etc. 
+        CPosition lightningLoc;
+
+        lightningLoc.m_Longitude = tilex2long(8,5);
+        lightningLoc.m_Latitude = tiley2lat(11,5);
+
+        // get the pixel coord of the latitude.
+        int yCoord = lat2pixel(lightningLoc.m_Latitude, 5 /*zoom level*/);
+
+        for (int i = 0; i < 256; i++) {
+
+            double pixLat = pixel2lat(yCoord + i, 5);
+            // calculate latitdue for each row, use the pixel coordinate
+
+            for (int j = 0; j < 256; j++) {
+
+                lightningProbMap[j][i].intensity = (int)image1[(i * 256 * 4 + 3 /*blue*/ ) + (j * 4)];
+                lightningProbMap[j][i].lightningPos.m_Longitude = lightningLoc.m_Longitude + (double)(j * (11.25 / 256.0));
+                lightningProbMap[j][i].lightningPos.m_Latitude = pixLat;
+            }
+        }
+
+        lightningLoc.m_Longitude = tilex2long(9, 5);
+        lightningLoc.m_Latitude = tiley2lat(11, 5);
+        
+        // repeat for second image
+        for (int i = 0; i < 256; i++) {
+
+            double pixLat = pixel2lat(yCoord + i, 5);
+            // calculate latitdue for each row, use the pixel coordinate
+
+            for (int j = 0; j < 256; j++) {
+
+                lightningProbMap[j+256][i].intensity = (int)image2[(i * 256 * 4 + 3 /*blue*/) + (j * 4)];
+                lightningProbMap[j+256][i].lightningPos.m_Longitude = lightningLoc.m_Longitude + (double)(j * (11.25 / 256.0));
+                lightningProbMap[j+256][i].lightningPos.m_Latitude = pixLat;
+            }
+        }
+    }
 }
 
 void wxRadar::parseRadarPNG(CRadarScreen* rad) {
@@ -102,6 +220,100 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
             }
         }
     }
+}
+
+int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
+
+    //calculate new strikes every minute
+    if (((clock() - CSiTRadar::menuState.lightningLastCalc) / CLOCKS_PER_SEC > 30 || lightningBoltLoc.empty())) {
+        // clean up old strikes > 5 minutes
+        lightningBoltLoc.erase(std::remove_if(lightningBoltLoc.begin(), lightningBoltLoc.end(), [](const lightningStrike& t) {
+
+            return (((clock() - t.strikeTime) / CLOCKS_PER_SEC) > 300);
+
+            }), lightningBoltLoc.end());
+
+        // seed new lightning strikes
+
+        for (int i = 0; i < 512; i++) {
+            for (int j = 0; j < 255; j++) {
+                // Lightning bolt 
+
+                if (lightningProbMap[i][j].intensity > 10) {
+
+                    //prob of a strike
+                    if (rand()%100 > 90) {
+                        lightningStrike ls;
+                        clock_t randToffset = rand() % 10;
+                        ls.strikeTime = clock() - randToffset;
+                        ls.strikePosition = lightningProbMap[i][j].lightningPos;
+
+                        //fudge factor for random;
+                        ls.strikePosition.m_Longitude = ls.strikePosition.m_Longitude + (rand() % 100) * (11.25 / 256.0) / 100;
+                        ls.strikePosition.m_Latitude = ls.strikePosition.m_Latitude + (rand() % 100) * (85.05 / 32.0) / 100;
+                        lightningBoltLoc.push_back(ls);
+
+                    }
+                }
+            }
+        }
+
+        CSiTRadar::menuState.lightningLastCalc = clock();
+    }
+
+    if (CSiTRadar::menuState.lightningOn) {
+        for (auto& strike : lightningBoltLoc) {
+
+            SolidBrush lightningBrush(Color(255, 222, 77));
+            Pen lightningPen(Color(255, 222, 77));
+
+            // draw lightning strikes
+            GraphicsContainer gCont;
+
+
+            Point points[8] = {
+                Point(0,-6),
+                Point(4,-6),
+                Point(1,-1),
+                Point(5,-2),
+                Point(-1,7),
+                Point(0,1),
+                Point(-4,1),
+                Point(0,-6),
+            };
+
+            Point points2[4] = {
+                Point(1, -6),
+                Point(-2, 0),
+                Point(+2, 0),
+                Point(-1, 6)
+            };
+
+            if (((clock() - strike.strikeTime) / CLOCKS_PER_SEC) < 90) {
+
+                gCont = g->BeginContainer();
+
+                g->TranslateTransform((REAL)rad->ConvertCoordFromPositionToPixel(strike.strikePosition).x, (REAL)rad->ConvertCoordFromPositionToPixel(strike.strikePosition).y, MatrixOrderAppend);
+                
+                if ( ((clock() - strike.strikeTime) / CLOCKS_PER_SEC) <  20) {
+                    g->FillPolygon(&lightningBrush, points, 8);
+                }
+                else if ( ((clock() - strike.strikeTime) / CLOCKS_PER_SEC ) < 40) {
+                    g->DrawPolygon(&lightningPen, points, 8);
+                }
+                else {
+                    g->DrawLines(&lightningPen, points2, 4);
+                    // draw line only
+                }
+                g->EndContainer(gCont);
+            }
+            DeleteObject(&lightningBrush);
+            DeleteObject(&lightningPen);
+
+        }
+    }
+    return 1;
+
 }
 
 int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {

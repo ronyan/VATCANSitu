@@ -107,10 +107,11 @@ CSiTRadar::CSiTRadar()
 
 
 	try {
-		if ( (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) ||
+		if ( (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh || menuState.lightningOn)) ||
 			menuState.lastWxRefresh == 0) {
 			std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 			std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			std::future<void> fc = std::async(std::launch::async, wxRadar::parseLightningPNG, this);
 			menuState.lastWxRefresh = clock();
 		}
 		// on intial load, only do once so that asr loading is not slowed (update will happen "on refresh" afterwards)
@@ -181,6 +182,15 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
 	std::future<void> fb, fc, fd;
 
+	// set up the drawing renderer
+	CDC dc;
+	dc.Attach(hdc);
+
+	Graphics g(hdc);
+	Graphics h(hdc);
+
+	double pixnm = PixelsPerNM();
+
 	if (m_pRadScr != this) {
 		m_pRadScr = this;
 
@@ -234,10 +244,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (phase == REFRESH_PHASE_BEFORE_TAGS) {
-		if (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
+		if (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh || menuState.lightningOn)) {
 
 			// autorefresh weather download every 10 minutes
 			fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			fc = std::async(std::launch::async, wxRadar::parseLightningPNG, this);
 			menuState.lastWxRefresh = clock();
 		}
 
@@ -296,16 +307,16 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
 
 		}
+
+		if (((clock() - menuState.lightningLastCalc) / CLOCKS_PER_SEC) > 30) {
+			// std::future<int> ltImg = std::async(std::launch::async, wxRadar::renderLightning, &h, this);
+			RefreshMapContent();
+		}
+
 	}
 #pragma endregion 
 
-	// set up the drawing renderer
-	CDC dc;
-	dc.Attach(hdc);
 
-	Graphics g(hdc);
-
-	double pixnm = PixelsPerNM();
 
 	// Check if ASR is an IFR file
 	if (GetDataFromAsr("DisplayTypeName") != NULL) {
@@ -1520,7 +1531,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						{-2,0}
 					};
 
-					menuButton but_lightning = { { modOrigin.x+62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					menuButton but_lightning = { { modOrigin.x+62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.lightningOn };
+					but = TopMenu::DrawBut(&dc, but_lightning);
+					ButtonToScreen(this, but, "lightning", BUTTON_MENU_LTNG_ON);
+					
 					TopMenu::DrawBut(&dc, but_lightning);
 					TopMenu::DrawIconBut(&dc, but_lightning, icon_bolt, 7);
 
@@ -1822,6 +1836,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				std::future<int> wxImg = std::async(std::launch::async, wxRadar::renderRadar, &g, this, menuState.wxAll);
 				// wxRadar::renderRadar( &g, this, menuState.wxAll);
+			}
+
+			if (menuState.lightningOn) {
+
+				std::future<int> ltImg = std::async(std::launch::async, wxRadar::renderLightning, &h, this);
+
 			}
 
 			// refresh jurisdictional list on zoom change
@@ -2690,6 +2710,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (menuState.lastWxRefresh == 0 || (clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC > 600) {
 			
 			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
+			std::future<void> fc = std::async(std::launch::async, wxRadar::parseLightningPNG, this);
 			menuState.lastWxRefresh = clock();
 		}
 	}
@@ -2705,6 +2726,18 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			menuState.lastWxRefresh = clock();
 		}
 	}
+
+	if (ObjectType == BUTTON_MENU_LTNG_ON) {
+
+		menuState.lightningOn = !menuState.lightningOn;
+		RefreshMapContent();
+
+		if (menuState.lastWxRefresh == 0 || (clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC > 600) {
+			std::future<void> fc = std::async(std::launch::async, wxRadar::parseLightningPNG, this);
+			menuState.lastWxRefresh = clock();
+		}
+	}
+	
 	
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL

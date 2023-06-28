@@ -21,6 +21,16 @@ struct cell {
     CPosition cellPos;
 };
 
+struct lightningStrikeProb {
+    int intensity;
+    CPosition lightningPos;
+};
+
+struct lightningStrike {
+    clock_t strikeTime;
+    CPosition strikePosition;
+};
+
 static size_t write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)buffer, size * nmemb);
     return size * nmemb;
@@ -548,7 +558,10 @@ public:
         return decoder.error;
     }
 
+
     static cell wxReturn[256][256];
+    static lightningStrikeProb lightningProbMap[512][256];
+    static vector<lightningStrike> lightningBoltLoc;
     static string wxLatCtr; 
     static string wxLongCtr;
     static int zoomLevel;
@@ -563,7 +576,10 @@ public:
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 
     static void parseRadarPNG(CRadarScreen* rad); 
+    static void parseLightningPNG(CRadarScreen* rad);
     static int renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
+    static int renderLightning(Graphics* g, CRadarScreen* rad);
+
 
     static vector<CAsyncResponse> asyncMessages;
 
@@ -606,5 +622,16 @@ public:
         double pixels = 256 * pow(2, zoom);
         long ans = (long)(pixels * (1 - log(tan(lat * PI / 180) + 1 / cos(lat * PI / 180)) / PI) / 2);
         return ans;
+    }
+
+    static double tilex2long(int x, int z)
+    {
+        return x / (double)(1 << z) * 360.0 - 180;
+    }
+
+    static double tiley2lat(int y, int z)
+    {
+        double n = PI - 2.0 * PI * y / (double)(1 << z);
+        return 180.0 / PI * atan(0.5 * (exp(n) - exp(-n)));
     }
 };

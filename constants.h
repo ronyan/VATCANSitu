@@ -76,6 +76,7 @@ const int BUTTON_MENU_DEST_ICAO = 230;
 const int BUTTON_MENU_DEST_DIST = 231;
 const int BUTTON_MENU_DEST_EST = 232;
 const int BUTTON_MENU_DEST_VFR = 233;
+const int BUTTON_MENU_LTNG_ON = 260;
 
 const int BUTTON_MENU_QL_CJS = 234;
 
