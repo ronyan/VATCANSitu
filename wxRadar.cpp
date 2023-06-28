@@ -241,8 +241,8 @@ int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
 
                 if (lightningProbMap[i][j].intensity > 10) {
 
-                    //prob of a strike
-                    if (rand()%100 > 90) {
+                    //prob of a strike - random fudge factor * intensity from API
+                    if ((rand()%100 * (lightningProbMap[i][j].intensity / 255.0)) < 0.5 ) {
                         lightningStrike ls;
                         clock_t randToffset = rand() % 10;
                         ls.strikeTime = clock() - randToffset;
