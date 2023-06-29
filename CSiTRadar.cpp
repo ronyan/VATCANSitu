@@ -307,10 +307,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
 
 		}
+		
+		// calculate new strikes every 15-20 seconds
+		std::random_device rand_dev;
+		std::mt19937 generator(rand_dev());
+		std::uniform_int_distribution<int>  rand_100(1, 100);
 
-		if (((clock() - menuState.lightningLastCalc) / CLOCKS_PER_SEC) > 30) {
-			// std::future<int> ltImg = std::async(std::launch::async, wxRadar::renderLightning, &h, this);
-			RefreshMapContent();
+		if (((clock() - menuState.lightningLastCalc) / CLOCKS_PER_SEC) > (15 + (rand_100(generator) % 5))) {
+			std::future<int> ltSeed = std::async(std::launch::async, wxRadar::seedLightning, this);
 		}
 
 	}
@@ -1839,9 +1843,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			}
 
 			if (menuState.lightningOn) {
-
 				std::future<int> ltImg = std::async(std::launch::async, wxRadar::renderLightning, &h, this);
-
 			}
 
 			// refresh jurisdictional list on zoom change

@@ -11,6 +11,7 @@
 #include "CAsyncResponse.h"
 #include <set>
 #include <shared_mutex>
+#include <random>
 
 using namespace Gdiplus;
 
@@ -578,6 +579,7 @@ public:
     static void parseRadarPNG(CRadarScreen* rad); 
     static void parseLightningPNG(CRadarScreen* rad);
     static int renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
+    static int seedLightning(CRadarScreen* rad);
     static int renderLightning(Graphics* g, CRadarScreen* rad);
 
 

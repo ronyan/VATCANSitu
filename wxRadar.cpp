@@ -222,16 +222,21 @@ void wxRadar::parseRadarPNG(CRadarScreen* rad) {
     }
 }
 
-int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
+int wxRadar::seedLightning(CRadarScreen* rad) {
+    std::random_device rand_dev;
+    std::mt19937 generator(rand_dev());
+    std::uniform_int_distribution<int>  rand_lat_long(1, 2);
+    std::uniform_int_distribution<int>  rand_100(1, 100);
 
-    //calculate new strikes every minute
-    if (((clock() - CSiTRadar::menuState.lightningLastCalc) / CLOCKS_PER_SEC > 30 || lightningBoltLoc.empty())) {
-        // clean up old strikes > 5 minutes
-        lightningBoltLoc.erase(std::remove_if(lightningBoltLoc.begin(), lightningBoltLoc.end(), [](const lightningStrike& t) {
+    // clean up old strikes > 3 minutes
+    lightningBoltLoc.erase(std::remove_if(lightningBoltLoc.begin(), lightningBoltLoc.end(), [](const lightningStrike& t) {
 
-            return (((clock() - t.strikeTime) / CLOCKS_PER_SEC) > 300);
+        return (((clock() - t.strikeTime) / CLOCKS_PER_SEC) > 180);
 
-            }), lightningBoltLoc.end());
+        }), lightningBoltLoc.end());
+
+    //calculate new strikes no more than every n seconds
+    if (((clock() - CSiTRadar::menuState.lightningLastCalc) / CLOCKS_PER_SEC > 10 || lightningBoltLoc.empty())) {
 
         // seed new lightning strikes
 
@@ -242,15 +247,16 @@ int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
                 if (lightningProbMap[i][j].intensity > 10) {
 
                     //prob of a strike - random fudge factor * intensity from API
-                    if ((rand()%100 * (lightningProbMap[i][j].intensity / 255.0)) < 0.5 ) {
+                    if ((rand_100(generator) * (lightningProbMap[i][j].intensity / 255.0)) < 1.0) {
                         lightningStrike ls;
-                        clock_t randToffset = rand() % 10;
+                        clock_t randToffset = rand_100(generator) % 10;
                         ls.strikeTime = clock() - randToffset;
                         ls.strikePosition = lightningProbMap[i][j].lightningPos;
 
-                        //fudge factor for random;
-                        ls.strikePosition.m_Longitude = ls.strikePosition.m_Longitude + (rand() % 100) * (11.25 / 256.0) / 100;
-                        ls.strikePosition.m_Latitude = ls.strikePosition.m_Latitude + (rand() % 100) * (85.05 / 32.0) / 100;
+                        //random factor to subdivide each pixel to 'j' = 2 divisions;
+                        // 11.25 corresponds to ZL 5 and 32 = 2^5
+                        ls.strikePosition.m_Longitude = ls.strikePosition.m_Longitude + (rand_lat_long(generator) * (11.25 / 256.0) / 2);
+                        ls.strikePosition.m_Latitude = ls.strikePosition.m_Latitude + (rand_lat_long(generator) * (85.05 / 32.0) / 2);
                         lightningBoltLoc.push_back(ls);
 
                     }
@@ -259,13 +265,20 @@ int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
         }
 
         CSiTRadar::menuState.lightningLastCalc = clock();
+        CSiTRadar::m_pRadScr->RefreshMapContent();
     }
+    return 1;
+}
+
+int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
+
+    SolidBrush lightningBrush(Color(255, 222, 77));
+    Pen lightningPen(Color(255, 222, 77));
 
     if (CSiTRadar::menuState.lightningOn) {
         for (auto& strike : lightningBoltLoc) {
 
-            SolidBrush lightningBrush(Color(255, 222, 77));
-            Pen lightningPen(Color(255, 222, 77));
+
 
             // draw lightning strikes
             GraphicsContainer gCont;
@@ -306,12 +319,14 @@ int wxRadar::renderLightning(Graphics* g, CRadarScreen* rad) {
                     // draw line only
                 }
                 g->EndContainer(gCont);
-            }
-            DeleteObject(&lightningBrush);
-            DeleteObject(&lightningPen);
+            }   
 
         }
     }
+
+    DeleteObject(&lightningBrush);
+    DeleteObject(&lightningPen);
+
     return 1;
 
 }
@@ -402,6 +417,8 @@ int wxRadar::renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip) {
         }                       
         
     }
+    DeleteObject(&lightPrecipHatch);
+    DeleteObject(&heavyPrecipHatch);
     return 0;   
 }
 
