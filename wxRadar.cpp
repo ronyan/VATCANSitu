@@ -200,7 +200,7 @@ void wxRadar::parseVatsimMetar(int i) {
     CAsyncResponse response;
 
     if (metarCurlHandle) {
-        curl_easy_setopt(metarCurlHandle, CURLOPT_URL, "https://metar.vatsim.net/metar.php?id=cy");
+        curl_easy_setopt(metarCurlHandle, CURLOPT_URL, "https://metar.vatsim.net/metar.php?id=c");
         curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(metarCurlHandle, CURLOPT_WRITEDATA, &metarString);
         curl_easy_setopt(metarCurlHandle, CURLOPT_TIMEOUT_MS, 2500L);
