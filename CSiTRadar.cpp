@@ -1033,84 +1033,86 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 
 				// Flight plan loop. Goes through flight plans, and if not correlated will display
-				for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
-					flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
-
-					if (flightPlan.GetCorrelatedRadarTarget().IsValid() || menuState.showExtrapFP == FALSE) { continue; }
-
-					// if the flightplan does not have a correlated radar target
-					if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
-
-						// Store the points for history dots, only store new if position updated
-						if (mAcData[flightPlan.GetCallsign()].prevPosition.empty()) {
-
-							mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
-
-						}
-
-						else {
-							if ((flightPlan.GetFPTrackPosition().GetPosition().m_Latitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Latitude) &&
-								(flightPlan.GetFPTrackPosition().GetPosition().m_Longitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Longitude)) {
-
-								if (static_cast<int>(mAcData[flightPlan.GetCallsign()].prevPosition.size()) < menuState.numHistoryDots) {
-
-									mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
-
-								}
-								else {
-
-									mAcData[flightPlan.GetCallsign()].prevPosition.pop_front();
-									mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+				if (menuState.showExtrapFP == TRUE) {
+					for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
+						flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
+	
+						if (flightPlan.GetCorrelatedRadarTarget().IsValid()) { continue; }
+	
+						// if the flightplan does not have a correlated radar target
+						if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
+	
+							// Store the points for history dots, only store new if position updated
+							if (mAcData[flightPlan.GetCallsign()].prevPosition.empty()) {
+	
+								mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+	
+							}
+	
+							else {
+								if ((flightPlan.GetFPTrackPosition().GetPosition().m_Latitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Latitude) &&
+									(flightPlan.GetFPTrackPosition().GetPosition().m_Longitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Longitude)) {
+	
+									if (static_cast<int>(mAcData[flightPlan.GetCallsign()].prevPosition.size()) < menuState.numHistoryDots) {
+	
+										mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+	
+									}
+									else {
+	
+										mAcData[flightPlan.GetCallsign()].prevPosition.pop_front();
+										mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
+									}
 								}
 							}
+	
+							CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
+							CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
+							CACTag::DrawHistoryDots(&dc, &flightPlan);
+	
+							POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
+	
+							// draw the orange airplane symbol (credits andrewogden1678)
+							GraphicsContainer gCont;
+							gCont = g.BeginContainer();
+	
+							// Airplane icon 
+	
+							Point points[19] = {
+								Point(0,-6),
+								Point(-1,-5),
+								Point(-1,-2),
+								Point(-8,3),
+								Point(-8,4),
+								Point(-1,2),
+								Point(-1,6),
+								Point(-4,8),
+								Point(-4,9),
+								Point(0,8),
+								Point(4,9),
+								Point(4,8),
+								Point(1,6),
+								Point(1,2),
+								Point(8,4),
+								Point(8,3),
+								Point(1,-2),
+								Point(1,-5),
+								Point(0,-6)
+							};
+	
+							g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
+							g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
+	
+							SolidBrush orangeBrush(Color(255, 242, 120, 57));
+	
+							g.FillPolygon(&orangeBrush, points, 19);
+							g.EndContainer(gCont);
+	
+							DeleteObject(&orangeBrush);
+	
 						}
-
-						CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
-						CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
-						CACTag::DrawHistoryDots(&dc, &flightPlan);
-
-						POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
-
-						// draw the orange airplane symbol (credits andrewogden1678)
-						GraphicsContainer gCont;
-						gCont = g.BeginContainer();
-
-						// Airplane icon 
-
-						Point points[19] = {
-							Point(0,-6),
-							Point(-1,-5),
-							Point(-1,-2),
-							Point(-8,3),
-							Point(-8,4),
-							Point(-1,2),
-							Point(-1,6),
-							Point(-4,8),
-							Point(-4,9),
-							Point(0,8),
-							Point(4,9),
-							Point(4,8),
-							Point(1,6),
-							Point(1,2),
-							Point(8,4),
-							Point(8,3),
-							Point(1,-2),
-							Point(1,-5),
-							Point(0,-6)
-						};
-
-						g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
-						g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
-
-						SolidBrush orangeBrush(Color(255, 242, 120, 57));
-
-						g.FillPolygon(&orangeBrush, points, 19);
-						g.EndContainer(gCont);
-
-						DeleteObject(&orangeBrush);
-
+	
 					}
-
 				}
 
 			}
