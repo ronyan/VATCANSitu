@@ -3122,6 +3122,24 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 		}
 	}
 	*/
+	// Initialization of squawk code menustate
+
+	for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
+		flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
+		auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&flightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), flightPlan.GetCallsign()); });
+		if (itr == menuState.squawkCodes.end()) {
+			SSquawkCodeManagement sq;
+			sq.fpcs = flightPlan.GetCallsign();
+			sq.squawk = flightPlan.GetControllerAssignedData().GetSquawk();
+			sq.numCorrelatedRT = 0;
+			menuState.squawkCodes.push_back(sq);
+		}
+		else {
+			menuState.squawkCodes.at(distance(menuState.squawkCodes.begin(), itr)).squawk = flightPlan.GetControllerAssignedData().GetSquawk();
+		}
+
+	}
+	//
 } 
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
@@ -3209,8 +3227,24 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 	int DataType) {
 
-	/*
+	// update the menustate.squawkcodes only if the planes data gets changed
+
 	if (DataType == CTR_DATA_TYPE_SQUAWK) {
+
+		auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
+		if (itr == menuState.squawkCodes.end()) {
+			SSquawkCodeManagement sq;
+			sq.fpcs = FlightPlan.GetCallsign();
+			sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+			sq.numCorrelatedRT = 0;
+			menuState.squawkCodes.push_back(sq);
+		}
+		else {
+			menuState.squawkCodes.at(distance(menuState.squawkCodes.begin(), itr)).squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+		}
+
+	}
+		/*
 		// if not tracked, or tracked by me, then do a dupe squawk check
 		if (!strcmp(FlightPlan.GetTrackingControllerId(), "") ||
 			FlightPlan.GetTrackingControllerIsMe()) {
@@ -3447,7 +3481,7 @@ void CSiTRadar::OnAsrContentToBeSaved() {
 
 void CSiTRadar::OnControllerPositionUpdate(CController Controller)
 {
-	std::once_flag flag1;
+	/*std::once_flag flag1;
 
 	std::call_once(flag1, [&]() {
 
@@ -3467,7 +3501,7 @@ void CSiTRadar::OnControllerPositionUpdate(CController Controller)
 
 		}
 		});
-
+	*/
 
 	for (CController ctrl = CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectFirst(); ctrl.IsValid(); ctrl = CSiTRadar::m_pRadScr->GetPlugIn()->ControllerSelectNext(ctrl))
 	{
