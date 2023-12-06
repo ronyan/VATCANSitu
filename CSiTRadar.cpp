@@ -434,58 +434,39 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
 					string callSign = radarTarget.GetCallsign();
-
+					auto& position = radarTarget.GetPosition();
+					int radarFlags = position.GetRadarFlags();
+					const char* squawk = position.GetSquawk();
 
 					if (menuState.filterBypassAll) {
 						mAcData[radarTarget.GetCallsign()].tagType = 1;
 					}
 
 					// Correlation check
-					if (radarTarget.GetPosition().GetRadarFlags() > 1) {
-						auto sqitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&radarTarget](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), radarTarget.GetPosition().GetSquawk()); });
 
-						if (radarTarget.GetCorrelatedFlightPlan().IsValid()) {
+					if (radarFlags > 1) {
+						auto sqitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&radarTarget](const SSquawkCodeManagement& m) {
+							return !strcmp(m.squawk.c_str(), radarTarget.GetPosition().GetSquawk());
+						});
 
-							if (sqitr == menuState.squawkCodes.end()) {
-
-								radarTarget.Uncorrelate();
-
-							}
-
-						}
-						else {
-							if (sqitr != menuState.squawkCodes.end()) {
-
-								int sqkc = atoi(radarTarget.GetPosition().GetSquawk());
-
-								if (sqkc == 1000 || sqkc == 1200 || sqkc == 1400 || sqkc == 2000) {}
-								else {
-
-									if (sqitr->numCorrelatedRT == 0) {
-
-										radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
-										sqitr->numCorrelatedRT++;
-										mAcData[callSign].multipleDiscrete = false;
-									}
-
-									else {
-
-										// Multiple discrete offender handling, squawk should be forced on and it should flash, and it should not correlate
-										radarTarget.Uncorrelate();
-										mAcData[callSign].multipleDiscrete = true;
-
-										//to-do add message to message list:
-
-
-									}
+						if (radarTarget.GetCorrelatedFlightPlan().IsValid() && sqitr == menuState.squawkCodes.end()) {
+							radarTarget.Uncorrelate();
+						} else if (sqitr != menuState.squawkCodes.end()) {
+							int sqkc = atoi(radarTarget.GetPosition().GetSquawk());
+							if (sqkc != 1000 && sqkc != 1200 && sqkc != 1400 && sqkc != 2000) {
+								if (sqitr->numCorrelatedRT == 0) {
+									radarTarget.CorrelateWithFlightPlan(GetPlugIn()->FlightPlanSelect(sqitr->fpcs.c_str()));
+									sqitr->numCorrelatedRT++;
+									mAcData[radarTarget.GetCallsign()].multipleDiscrete = false;
+								} else {
+									radarTarget.Uncorrelate();
+									mAcData[radarTarget.GetCallsign()].multipleDiscrete = true;
+									// To-do: Add message to the message list
 								}
 							}
 						}
-					}
-					if (radarTarget.GetPosition().GetRadarFlags() < 2) {
-						if (radarTarget.GetPosition().GetRadarFlags() == 0 || !mAcData[radarTarget.GetCallsign()].manualCorr) {
-							radarTarget.Uncorrelate();
-						}
+					} else if (radarFlags < 2 && (radarFlags == 0 || !mAcData[radarTarget.GetCallsign()].manualCorr)) {
+						radarTarget.Uncorrelate();
 					}
 
 					// altitude filtering 
@@ -723,8 +704,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-
-
 					if ((!isCorrelated && !isADSB) || (radarTarget.GetPosition().GetRadarFlags() != 0 && isADSB && !isCorrelated)) {
 						mAcData[callSign].tagType = 3; // sets this if RT is uncorr
 					}
@@ -734,41 +713,42 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					COLORREF ppsColor;
 
 					// logic for the color of the PPS
-					if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
-					else if (radarTarget.GetPosition().GetRadarFlags() == 1 ) { ppsColor = C_PPS_MAGENTA; }
-					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
-					else if (isVFR && isCorrelated) { ppsColor = C_PPS_ORANGE; }
-					else { ppsColor = C_PPS_YELLOW; }
 
-					if (radarTarget.GetPosition().GetTransponderI() == TRUE && halfSecTick) { ppsColor = C_WHITE; }
+					// Determine PPS color
+					if (radarFlags == 0) {
+						ppsColor = C_PPS_YELLOW;
+					} else if (radarFlags == 1) {
+						ppsColor = C_PPS_MAGENTA;
+					} else if (!strcmp(squawk, "7600") || !strcmp(squawk, "7700")) {
+						ppsColor = C_PPS_RED;
+					} else if (isVFR && isCorrelated) {
+						ppsColor = C_PPS_ORANGE;
+					} else if (position.GetTransponderI() == TRUE && halfSecTick) {
+						ppsColor = C_WHITE;
+					} else {
+						ppsColor = C_PPS_YELLOW;
+					}
 
-					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
+					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarFlags, ppsColor, squawk, p);
 					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
-					if (radarTarget.GetPosition().GetRadarFlags() != 0 && radarTarget.GetPosition().GetRadarFlags() !=4) {
-						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-						if (radarTarget.GetGS() > 10) {
-							CACTag::DrawHistoryDots(&dc, &radarTarget);
-						}
+					// Draw tags and history dots based on radarFlags and conditions
+					switch (radarFlags) {
+						case 0:
+						case 4:
+							if (isADSB) {
+								CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+								if (radarTarget.GetGS() > 10) {
+									CACTag::DrawHistoryDots(&dc, &radarTarget);
+								}
+							}
+							break;
+						default:
+							CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
+							if (radarTarget.GetGS() > 10) {
+								CACTag::DrawHistoryDots(&dc, &radarTarget);
+							}
 					}
-					else if (radarTarget.GetPosition().GetRadarFlags() == 4 && isADSB) {
-						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
-						if (radarTarget.GetGS() > 10) {
-							CACTag::DrawHistoryDots(&dc, &radarTarget);
-						}
-					}
-					
-					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
-					/*
-					if (radarTarget.GetPosition().GetRadarFlags() == 0
-						&& isADSB) {
-						if (mAcData[callSign].tagType != 0 && mAcData[callSign].tagType != 1) { mAcData[callSign].tagType = 1; }
-
-						CACTag::DrawRTACTag(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), &rtagOffset);
-						CACTag::DrawRTConnector(&dc, this, &radarTarget, &GetPlugIn()->FlightPlanSelect(callSign.c_str()), C_PPS_YELLOW, &rtagOffset);
-						CACTag::DrawHistoryDots(&dc, &radarTarget);
-					}
-					*/
 
 					// Tag Level Logic
 					if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
