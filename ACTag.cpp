@@ -171,6 +171,9 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	{
 		wtSymbol = "$";
 	}
+	if (string(rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftFPType()) == "B757") {
+		wtSymbol = "/";
+	}
 	cs = cs + wtSymbol;
 
 	char commTypeChar = tolower(fp->GetControllerAssignedData().GetCommunicationType());
@@ -433,22 +436,12 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
 		rline1.left = rline1.right;
-		rline1.right = rline1.left; // +8;
 
 		if (CSiTRadar::menuState.SFIMode &&
 			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0)
 		{
 			dc->SetTextColor(C_PPS_YELLOW);
 		}
-
-		// Show Communication Type if not Voice
-		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
-		if (commType.size() > 0)
-		{
-			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
-			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
-		}
-		rline1.left = rline1.right;
 
 		if (sfi.size() > 1 && sfi.find(" ", 2) != sfi.npos && sfi.find(" ", 2) < 3 && sfi.at(0) == ' ')
 		{
@@ -460,8 +453,23 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(sfi.substr(1, 1).c_str(), &rline1, DT_LEFT);
 		}
+		else if (sfi.size() == 0)
+		{
+			// just draw a blank space character if no SFI; this leavs a clickspot
+			dc->DrawText(" ", &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(" ", &rline1, DT_LEFT);
+		}
 
 		rad->AddScreenObject(CTR_DATA_TYPE_SCRATCH_PAD_STRING, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+		rline1.left = rline1.right;
+
+		// Show Communication Type if not Voice
+		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
+		if (commType.size() > 0)
+		{
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
+		}
 
 		// add some padding for the SFI + long callsigns
 		if (sfi.size() == 0)
