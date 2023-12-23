@@ -158,7 +158,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 
 	// Line 1 Items
 	string cs = fp->GetCallsign();
-	string wtSymbol = "";
+	string wtSymbol = " ";
 	if (rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftWtc() == 'H')
 	{
 		wtSymbol = "+";
@@ -171,7 +171,8 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	{
 		wtSymbol = "$";
 	}
-	if (string(rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftFPType()) == "B757") {
+	if (string(rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftFPType()) == "B752" ||
+		string(rad->GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetAircraftFPType()) == "B753") {
 		wtSymbol = "/";
 	}
 	cs = cs + wtSymbol;
