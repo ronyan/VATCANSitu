@@ -79,3 +79,5 @@ PROVIDER_URL:http://www.vatnz.net/airspace/sector_files/euroscope/VATNZ_SectorFi
 PROVIDER_NAME:Polish vACC Sector Provider
 PROVIDER_URL:http://pl-vacc.org.pl/files/soft_atc/ES_sectorfiles/sectors.txt
 
+PROVIDER_NAME:VATSIM Korea Sector File Provider
+PROVIDER_URL:https://www.vatkor.net/VATKOR_Sector_Provider.txt
