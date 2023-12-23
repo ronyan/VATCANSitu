@@ -140,6 +140,52 @@ public:
 					dc->LineTo(p.x, p.y + 4);
 				}
 			}
+			else {
+				// If not ADSB by equipment, treat like a RADFLAG 2 or 3
+				if (isCorrelated && !isVFR && !isRVSM) {		// Code for radFlag equals 3 = SSR+PSR
+					dc->MoveTo(p.x - 4, p.y - 2);
+					dc->LineTo(p.x - 4, p.y + 2);
+					dc->LineTo(p.x, p.y + 5);
+					dc->LineTo(p.x + 4, p.y + 2);
+					dc->LineTo(p.x + 4, p.y - 2);
+					dc->LineTo(p.x, p.y - 5);
+					dc->LineTo(p.x - 4, p.y - 2);
+				}
+				if (isCorrelated && !isVFR && isRVSM) {
+					dc->MoveTo(p.x, p.y - 5);
+					dc->LineTo(p.x + 5, p.y);
+					dc->LineTo(p.x, p.y + 5);
+					dc->LineTo(p.x - 5, p.y);
+					dc->LineTo(p.x, p.y - 5);
+
+					dc->MoveTo(p.x, p.y - 5);
+					dc->LineTo(p.x, p.y + 5);
+
+				}
+				if (isCorrelated && isVFR) {
+					dc->SelectStockObject(NULL_BRUSH);
+
+					// draw the shape
+					dc->Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
+
+					dc->MoveTo(p.x - 3, p.y - 2);
+					dc->LineTo(p.x + 1, p.y + 4);
+					dc->LineTo(p.x + 4, p.y - 2);
+				}
+
+				if (!isCorrelated) {
+
+					dc->MoveTo(p.x - 4, p.y - 4);
+					dc->LineTo(p.x + 5, p.y + 5);
+					dc->MoveTo(p.x, p.y - 5);
+					dc->LineTo(p.x, p.y + 6);
+					dc->MoveTo(p.x + 4, p.y - 4);
+					dc->LineTo(p.x - 5, p.y + 5);
+					dc->MoveTo(p.x - 5, p.y);
+					dc->LineTo(p.x + 6, p.y);
+
+				}
+			}
 
 			break;
 		}
