@@ -433,7 +433,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		dc->DrawText(cs.c_str(), &rline1, DT_LEFT);
 		rad->AddScreenObject(TAG_ITEM_TYPE_CALLSIGN, fp->GetCallsign(), rline1, TRUE, fp->GetCallsign());
 		rline1.left = rline1.right;
-		rline1.right = rline1.left + 8;
+		rline1.right = rline1.left; // +8;
 
 		if (CSiTRadar::menuState.SFIMode &&
 			strcmp(fp->GetCallsign(), CSiTRadar::m_pRadScr->GetPlugIn()->FlightPlanSelectASEL().GetCallsign()) == 0)
@@ -1479,6 +1479,9 @@ void CACTag::DrawHistoryDots(CDC *dc, CRadarTarget *rt)
 	if (!strcmp(rt->GetCorrelatedFlightPlan().GetFlightPlanData().GetPlanType(), "V"))
 	{
 		ppsColor = C_PPS_ORANGE;
+	}
+	if (rt->GetPosition().GetRadarFlags() == 1) {
+		ppsColor = C_PPS_MAGENTA;
 	}
 
 	targetPen = CreatePen(PS_SOLID, 1, ppsColor);

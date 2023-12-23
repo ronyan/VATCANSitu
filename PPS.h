@@ -31,8 +31,102 @@ public:
 		dc->SelectObject(targetPen);
 		dc->SelectStockObject(NULL_BRUSH);
 
-		if (radFlag >= 4 && !isVFR) {
-			// Draw ADSB PPS symbology
+		switch (radFlag) {
+		case 0:
+			// Code for radFlag equals 0
+			break;
+
+		case 1:
+			if (isCorrelated) {
+				dc->SelectStockObject(NULL_BRUSH);
+
+				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
+				dc->Polygon(vertices, 3);
+			}
+			else {
+				dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
+				dc->LineTo(p.x, p.y);
+				dc->LineTo(p.x - 4, p.y - 4);
+				dc->MoveTo(p.x, p.y);
+				dc->LineTo(p.x + 4, p.y - 4);
+			}
+			break;
+
+		case 2:												// Code for radFlag equals 2 = SSR ONLY
+		case 3: {
+
+			if (!strcmp(squawk.c_str(), "7600") || !strcmp(squawk.c_str(), "7700")) {
+				HBRUSH targetBrush = CreateSolidBrush(ppsColor);
+				dc->SelectObject(targetBrush);
+
+				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Red triangle
+				dc->Polygon(vertices, 3);
+				DeleteObject(targetBrush);
+
+				break;
+			}
+
+			if (!strcmp(squawk.c_str(), "1200") && !isCorrelated && radFlag != 1) { // Eventually change to block squawk codes
+
+				dc->SelectStockObject(NULL_BRUSH);
+
+				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
+				dc->Polygon(vertices, 3);
+
+				break;
+			}
+
+			if (isCorrelated && !isVFR && !isRVSM) {		// Code for radFlag equals 3 = SSR+PSR
+				dc->MoveTo(p.x - 4, p.y - 2);
+				dc->LineTo(p.x - 4, p.y + 2);
+				dc->LineTo(p.x, p.y + 5);
+				dc->LineTo(p.x + 4, p.y + 2);
+				dc->LineTo(p.x + 4, p.y - 2);
+				dc->LineTo(p.x, p.y - 5);
+				dc->LineTo(p.x - 4, p.y - 2);
+			}
+			if (isCorrelated && !isVFR && isRVSM) {
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x + 5, p.y);
+				dc->LineTo(p.x, p.y + 5);
+				dc->LineTo(p.x - 5, p.y);
+				dc->LineTo(p.x, p.y - 5);
+
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x, p.y + 5);
+
+			}
+			if (isCorrelated && isVFR) {
+				dc->SelectStockObject(NULL_BRUSH);
+
+				// draw the shape
+				dc->Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
+
+				dc->MoveTo(p.x - 3, p.y - 2);
+				dc->LineTo(p.x + 1, p.y + 4);
+				dc->LineTo(p.x + 4, p.y - 2);
+			}
+			if (!isCorrelated) {
+
+				dc->MoveTo(p.x - 4, p.y - 4);
+				dc->LineTo(p.x + 5, p.y + 5);
+				dc->MoveTo(p.x, p.y - 5);
+				dc->LineTo(p.x, p.y + 6);
+				dc->MoveTo(p.x + 4, p.y - 4);
+				dc->LineTo(p.x - 5, p.y + 5);
+				dc->MoveTo(p.x - 5, p.y);
+				dc->LineTo(p.x + 6, p.y);
+
+			}
+			break;
+		}
+
+		case 4:
+		case 5:
+		case 6:
+		case 7: {
+			// Code for radFlag equals 4 = MODE C = ADSB
+
 			if (isADSB) {
 				dc->MoveTo(p.x - 4, p.y - 4);
 				dc->LineTo(p.x + 4, p.y - 4);
@@ -46,102 +140,9 @@ public:
 					dc->LineTo(p.x, p.y + 4);
 				}
 			}
+
+			break;
 		}
-
-		else {
-			
-			if (radFlag == 0) { }
-			// Special Codes
-			else if (!strcmp(squawk.c_str(), "7600") || !strcmp(squawk.c_str(), "7700")) {
-				HBRUSH targetBrush = CreateSolidBrush(ppsColor);
-				dc->SelectObject(targetBrush);
-
-				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Red triangle
-				dc->Polygon(vertices, 3);
-				DeleteObject(targetBrush);
-			}
-
-
-			else if (!strcmp(squawk.c_str(), "1200") && !isCorrelated && radFlag != 1) { // Eventually change to block squawk codes
-				HPEN targetPen1 = CreatePen(PS_SOLID, 1, ppsColor);
-				dc->SelectStockObject(NULL_BRUSH);
-				dc->SelectObject(targetPen1);
-
-				POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
-				dc->Polygon(vertices, 3);
-				DeleteObject(targetPen1);
-			}
-
-			else if (radFlag == 1) {
-
-				if (isCorrelated) {
-					HPEN targetPen1 = CreatePen(PS_SOLID, 1, ppsColor);
-					dc->SelectStockObject(NULL_BRUSH);
-					dc->SelectObject(targetPen1);
-
-					POINT vertices[] = { { p.x - 4, p.y + 4 } , { p.x, p.y - 4 } , { p.x + 4,p.y + 4 } }; // Yellow Triangle
-					dc->Polygon(vertices, 3);
-					DeleteObject(targetPen1);
-				}
-				else {
-					dc->MoveTo(p.x, p.y + 4);	// Magenta Y 
-					dc->LineTo(p.x, p.y);
-					dc->LineTo(p.x - 4, p.y - 4);
-					dc->MoveTo(p.x, p.y);
-					dc->LineTo(p.x + 4, p.y - 4);
-				}
-
-			}
-			// correlated no ADSB
-			else if (radFlag == 2 || radFlag == 3) {
-				if (isCorrelated && !isVFR && !isRVSM) {
-					dc->MoveTo(p.x - 4, p.y - 2);
-					dc->LineTo(p.x - 4, p.y + 2);
-					dc->LineTo(p.x, p.y + 5);
-					dc->LineTo(p.x + 4, p.y + 2);
-					dc->LineTo(p.x + 4, p.y - 2);
-					dc->LineTo(p.x, p.y - 5);
-					dc->LineTo(p.x - 4, p.y - 2);
-				}
-				if (isCorrelated && !isVFR && isRVSM) {
-					dc->MoveTo(p.x, p.y - 5);
-					dc->LineTo(p.x + 5, p.y);
-					dc->LineTo(p.x, p.y + 5);
-					dc->LineTo(p.x - 5, p.y);
-					dc->LineTo(p.x, p.y - 5);
-
-					dc->MoveTo(p.x, p.y - 5);
-					dc->LineTo(p.x, p.y + 5);
-
-				}
-				if (isCorrelated && isVFR) {
-					dc->SelectStockObject(NULL_BRUSH);
-
-					// draw the shape
-					dc->Ellipse(p.x - 4, p.y - 4, p.x + 6, p.y + 6);
-
-					dc->SelectObject(targetPen);
-					dc->MoveTo(p.x - 3, p.y - 2);
-					dc->LineTo(p.x + 1, p.y + 4);
-					dc->LineTo(p.x + 4, p.y - 2);
-				}
-				if (!isCorrelated) {
-					HPEN targetPen1 = CreatePen(PS_SOLID, 1, ppsColor);
-					dc->SelectObject(targetPen1);
-
-					dc->MoveTo(p.x - 4, p.y - 4);
-					dc->LineTo(p.x + 5, p.y + 5);
-					dc->MoveTo(p.x, p.y - 5);
-					dc->LineTo(p.x, p.y +6 );
-					dc->MoveTo(p.x + 4, p.y - 4);
-					dc->LineTo(p.x - 5, p.y + 5);
-					dc->MoveTo(p.x - 5, p.y);
-					dc->LineTo(p.x + 6, p.y);
-
-					DeleteObject(targetPen1);
-				}
-
-			}
 		}
 
 		DeleteObject(targetPen);
