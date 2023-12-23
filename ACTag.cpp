@@ -465,12 +465,12 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		rline1.left = rline1.right;
 
 		// Show Communication Type if not Voice
-		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 		if (commType.size() > 0)
 		{
 			dc->DrawText(commType.c_str(), &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(commType.c_str(), &rline1, DT_LEFT);
 		}
+		rad->AddScreenObject(TAG_ITEM_TYPE_COMMUNICATION_TYPE, rt->GetCallsign(), rline1, TRUE, rt->GetCallsign());
 
 		// add some padding for the SFI + long callsigns
 		if (sfi.size() == 0)
