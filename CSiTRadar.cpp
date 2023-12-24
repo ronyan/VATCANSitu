@@ -1219,7 +1219,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (menuState.MB3menuType == 1) {
 
 						CPopUpMenu ftMenu(menuState.MB3clickedPt);
-						ftMenu.m_listElements.emplace_back(SPopUpElement("Delete Freetext", "delft", 0, 0, 130));
+						ftMenu.m_listElements.emplace_back(SPopUpElement("Delete Free Text", "delft", 0, 0, 130));
 						ftMenu.m_listElements.emplace_back(SPopUpElement("Free Text", "ftext", 1, 0, 130));
 
 						ftMenu.drawPopUpMenu(&dc);
@@ -2009,6 +2009,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.MB3primRect = { 0,0,0,0 };
 			menuState.MB3hoverRect = { 0,0,0,0 };
 			menuState.MB3SecondaryMenuOn = false;
+			menuState.freetextselectedID = atoi(sObjectId);
 		}
 	}
 
@@ -2434,6 +2435,18 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			CAppWindows freetxt({ Pt.x, Pt.y }, WINDOW_FREE_TEXT, GetRadarArea());
 			menuState.radarScrWindows[freetxt.m_windowId_] = freetxt;
 
+		}
+
+		if (!strcmp(sObjectId, "delft")) {
+			menuState.MB3menu = false;
+			menuState.bgM3Click = false;
+			int i = menuState.freetextselectedID;
+			auto it = std::find_if(menuState.freetext.begin(), menuState.freetext.end(), [i](const SFreeText& s) {
+				return s.m_id == i;
+				});
+			if (it != menuState.freetext.end()) {
+				menuState.freetext.erase(it);
+			}
 		}
 
 		if (!strcmp(sObjectId, "clrfreetext")) {

@@ -145,6 +145,7 @@ struct buttonStates {
     bool MB3SecondaryMenuOn{ true };
     bool MB3hoverOn{ false };
     int MB3menuType{ 0 }; // 0 for AC, 1 for freetext, more if needed
+    int freetextselectedID{};
     string MB3SecondaryMenuType{};
     string SFIPrefString{};
     string SFIPrefStringASRSetting{};
