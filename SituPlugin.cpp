@@ -136,6 +136,21 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 CSiTRadar::m_pRadScr->RequestRefresh();
                 return -1;
             }
+            if (wParam == VK_OEM_PERIOD) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('.');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_OEM_PLUS) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('+');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_OEM_MINUS) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('-');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
             if (wParam == VK_OEM_2) {
                 CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('/');
                 CSiTRadar::m_pRadScr->RequestRefresh();
