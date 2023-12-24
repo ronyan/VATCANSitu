@@ -1120,6 +1120,31 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 			if (phase == REFRESH_PHASE_AFTER_LISTS) {
 
+				// Free Text
+				CFont font;
+				LOGFONT lgfont;
+
+				memset(&lgfont, 0, sizeof(LOGFONT));
+				lgfont.lfWeight = 400;
+				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
+				lgfont.lfHeight = 14;
+				font.CreateFontIndirect(&lgfont);
+				dc.SelectObject(font);
+				dc.SetTextColor(C_PPS_YELLOW);
+
+
+				for (auto& t : menuState.freetext) {
+					RECT r;
+					r.left = ConvertCoordFromPositionToPixel(t.m_pos).x;
+					r.top = ConvertCoordFromPositionToPixel(t.m_pos).y;
+					dc.DrawText(t.m_freetext_string.c_str(), &r, DT_LEFT | DT_CALCRECT);
+					dc.DrawText(t.m_freetext_string.c_str(), &r, DT_LEFT);
+				}
+
+				DeleteObject(font);
+
+				//
+
 				for (auto window : menuState.radarScrWindows) {
 					SWindowElements r = window.second.DrawWindow(&dc);
 					AddScreenObject(WINDOW_TITLE_BAR, to_string(window.second.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.second.m_windowId_).c_str());
@@ -1192,10 +1217,12 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				if (menuState.bgM3Click) {
 					CPopUpMenu bgMenu(menuState.MB3clickedPt);
 
-					bgMenu.m_listElements.emplace_back(SPopUpElement("Free Text", "freetext", 2, 0, 180));
-					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Clear", "llc", 0, 0, 180));
-					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Readout", "llr", 0, 0, 180));
-					bgMenu.m_listElements.emplace_back(SPopUpElement("Display","display",1,0, 180));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Relocate", "relocate", 2, 0, 130));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Free Text Clear All", "clrfreetext", 0, 0, 130));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Free Text", "freetext", 2, 0, 130));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Clear", "llc", 0, 0, 130));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Readout", "llr", 0, 0, 130));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Display","display",1,0, 130));
 
 					bgMenu.drawPopUpMenu(&dc);
 					for (auto& element : bgMenu.m_listElements) {
@@ -2066,6 +2093,33 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
+	if (ObjectType == WINDOW_FREE_TEXT) {
+
+		auto window = GetAppWindow(stoi(id));
+
+		if (!strcmp(func.c_str(), "Submit")) {
+			string c;
+			// if the textbox is selected, else go with the choice in menu
+			if (menuState.focusedItem.m_focus_on) {
+				c = menuState.focusedItem.m_focused_tf->m_text;
+			}
+			CPosition pos;
+			pos = ConvertCoordFromPixelToPosition(menuState.MB3clickedPt);
+			SFreeText t;
+			t.m_pos = pos;
+			t.m_freetext_string = c;
+			menuState.freetext.push_back(t);
+
+			menuState.radarScrWindows.erase(stoi(id));
+			RefreshMapContent();
+		}
+
+		if (!strcmp(func.c_str(), "Cancel")) {
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+	}
+
 	if (ObjectType == WINDOW_CTRL_REMARKS) {
 
 		auto window = GetAppWindow(stoi(id));
@@ -2344,6 +2398,23 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				menuState.radarScrWindows[ctrl.m_windowId_] = ctrl;
 			}
 		}
+
+		if (!strcmp(sObjectId, "freetext")) {
+			menuState.MB3menu = false;
+			menuState.bgM3Click = false;
+
+			CAppWindows freetxt({ Pt.x, Pt.y }, WINDOW_FREE_TEXT, GetRadarArea());
+			menuState.radarScrWindows[freetxt.m_windowId_] = freetxt;
+
+		}
+
+		if (!strcmp(sObjectId, "clrfreetext")) {
+			menuState.MB3menu = false;
+			menuState.bgM3Click = false;
+
+			menuState.freetext.clear();
+		}
+
 		if (!strcmp(sObjectId, "RecallPointOut")) {
 			menuState.MB3menu = false;
 			mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].pointOutFromMe = false;

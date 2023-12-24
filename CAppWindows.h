@@ -311,6 +311,7 @@ public:
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
+	CAppWindows(POINT origin, int winType, RECT radarea);
 	SListBox GetListBox(int id) {
 		return *find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](const SListBox& obj) { return obj.m_ListBoxID == id; });
 	}

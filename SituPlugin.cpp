@@ -520,7 +520,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         if (CSiTRadar::menuState.handoffMode 
             || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn) 
             || CSiTRadar::menuState.SFIMode
-            || CSiTRadar::menuState.bgM3Click) {
+            || (CSiTRadar::menuState.bgM3Click && !CSiTRadar::menuState.MB3hoverOn)) {
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
 

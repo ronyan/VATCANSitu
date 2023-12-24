@@ -74,6 +74,16 @@ struct SFocusItem {
     STextField* m_focused_tf;
 };
 
+struct SFreeText {
+    int m_id;
+    CPosition m_pos;
+    string m_freetext_string;
+
+    SFreeText() {
+        m_id++;
+    }
+};
+
 struct buttonStates {
     bool haloTool;
     bool ptlTool;
@@ -101,7 +111,7 @@ struct buttonStates {
 
     set<string> activeArpt;
     map<string, bool> nearbyCJS;
-
+    vector<SFreeText> freetext;
 
     bool SFIMode{};
     SFocusItem focusedItem;

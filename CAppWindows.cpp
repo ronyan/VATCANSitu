@@ -11,6 +11,53 @@ CAppWindows::CAppWindows()
 	
 }
 
+CAppWindows::CAppWindows(POINT origin, int winType, RECT radarea) {
+	m_origin = origin;
+	m_winType = winType;
+	m_windowId_ = windowIDs_;
+
+	if (winType == WINDOW_FREE_TEXT) {
+		windowTitle = "Free Text";
+		m_width = 300;
+		m_height = 100;
+		SListBox lb;
+
+		SWindowButton submit, cancel;
+
+		submit.location = { 90, 60 };
+		submit.m_height = 25;
+		submit.m_width = 60;
+		submit.text = "Submit";
+		submit.windowID = m_windowId_;
+
+		cancel.location = { 155, 60 };
+		cancel.m_height = 25;
+		cancel.m_width = 60;
+		cancel.text = "Cancel";
+		cancel.windowID = m_windowId_;
+
+		m_buttons_.push_back(submit);
+		m_buttons_.push_back(cancel);
+
+		STextField freetext;
+		freetext.m_location_ = { 16, 30 };
+		freetext.m_height = 20;
+		freetext.m_width = 268;
+		freetext.m_parentWindowID = m_windowId_;
+		m_textfields_.push_back(freetext);
+	}
+
+	m_origin.x = origin.x - m_width / 2;
+	m_origin.y = origin.y - m_height / 2;
+
+	if (origin.x < radarea.left) { m_origin.x = radarea.left; }
+	if ((origin.x + m_width) > radarea.right) { m_origin.x = radarea.right - m_width; }
+	if (origin.y < radarea.top + 60) { m_origin.y = radarea.top + 60; }
+	if ((origin.y + m_height) > (radarea.bottom)) { m_origin.y = radarea.bottom - m_height; }
+
+	windowIDs_++;
+}
+
 CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements) {
 	m_origin = origin;
 	m_winType = winType;
