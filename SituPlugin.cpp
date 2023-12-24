@@ -569,7 +569,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
         case WM_MBUTTONDBLCLK: {
         }
-        case WM_RBUTTONDOWN: {
+        case WM_RBUTTONUP: {
             POINT Pt{};
             Pt.x = mouseStruct->pt.x;
             Pt.y = mouseStruct->pt.y;

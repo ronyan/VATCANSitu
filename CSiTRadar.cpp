@@ -1180,17 +1180,18 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 
 				if (menuState.MB3menu) {
-					CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
-					acPopup.populateMenu();
-					acPopup.m_origin.y += (acPopup.m_listElements.size() * 20);
-					if (acPopup.m_origin.y > radarea.bottom) { acPopup.m_origin.y = radarea.bottom; }
-					if ((acPopup.m_origin.x + 120) > radarea.right) { acPopup.m_origin.x = radarea.right - 120; }
-					acPopup.drawPopUpMenu(&dc);
-					for (auto& element : acPopup.m_listElements) {
-						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
-					}
-					acPopup.highlightSelection(&dc, menuState.MB3hoverRect);
-						
+					if (menuState.MB3menuType == 0) {
+						CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
+						acPopup.populateMenu();
+						acPopup.m_origin.y += (acPopup.m_listElements.size() * 20);
+						if (acPopup.m_origin.y > radarea.bottom) { acPopup.m_origin.y = radarea.bottom; }
+						if ((acPopup.m_origin.x + 120) > radarea.right) { acPopup.m_origin.x = radarea.right - 120; }
+						acPopup.drawPopUpMenu(&dc);
+						for (auto& element : acPopup.m_listElements) {
+							AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
+						}
+						acPopup.highlightSelection(&dc, menuState.MB3hoverRect);
+
 						if (menuState.MB3SecondaryMenuOn) {
 							acPopup.highlightSelection(&dc, menuState.MB3primRect); // Highlight the first level menu option
 							CPopUpMenu secondaryMenu({ acPopup.totalRect.right, menuState.MB3primRect.bottom }, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
@@ -1198,7 +1199,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 							// Move back onto screen if necessary
 
-							secondaryMenu.m_origin.y += ((int)secondaryMenu.m_listElements.size()*20) / 2;
+							secondaryMenu.m_origin.y += ((int)secondaryMenu.m_listElements.size() * 20) / 2;
 							if ((secondaryMenu.m_origin.y - ((int)secondaryMenu.m_listElements.size() * 20)) < (radarea.top + 60)) { secondaryMenu.m_origin.y = radarea.top + 65 + (secondaryMenu.m_listElements.size() * 20); }
 							if (secondaryMenu.m_origin.y > GetChatArea().top) { secondaryMenu.m_origin.y = GetChatArea().top + 5; }
 							// draw on other side of primary menu if it would be off the right side of the screen
@@ -1214,7 +1215,20 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								secondaryMenu.highlightSelection(&dc, menuState.MB3hoverRect);
 							}
 						}
+					}
+					if (menuState.MB3menuType == 1) {
 
+						CPopUpMenu ftMenu(menuState.MB3clickedPt);
+						ftMenu.m_listElements.emplace_back(SPopUpElement("Delete Freetext", "delft", 0, 0, 130));
+						ftMenu.m_listElements.emplace_back(SPopUpElement("Free Text", "ftext", 1, 0, 130));
+
+						ftMenu.drawPopUpMenu(&dc);
+						for (auto& element : ftMenu.m_listElements) {
+							AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
+						}
+						ftMenu.highlightSelection(&dc, menuState.MB3hoverRect);
+
+					}
 				}
 
 				if (menuState.bgM3Click) {
@@ -1978,6 +1992,19 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		if (Button == BUTTON_RIGHT) {
 			menuState.ResetSFIOptions();
 			menuState.MB3menu = true;
+			menuState.MB3menuType = 0;
+			menuState.MB3clickedPt = Pt;
+			menuState.MB3primRect = { 0,0,0,0 };
+			menuState.MB3hoverRect = { 0,0,0,0 };
+			menuState.MB3SecondaryMenuOn = false;
+		}
+	}
+
+	if (ObjectType == FREE_TEXT) {
+
+		if (Button == BUTTON_RIGHT) {
+			menuState.MB3menu = true;
+			menuState.MB3menuType = 1;
 			menuState.MB3clickedPt = Pt;
 			menuState.MB3primRect = { 0,0,0,0 };
 			menuState.MB3hoverRect = { 0,0,0,0 };
