@@ -1240,6 +1240,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Clear", "llc", 0, 0, 130));
 					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Readout", "llr", 0, 0, 130));
 					bgMenu.m_listElements.emplace_back(SPopUpElement("Display","display",1,0, 130));
+					bgMenu.m_origin.y += (bgMenu.m_listElements.size() * 20);
+					if (bgMenu.m_origin.y > radarea.bottom) { bgMenu.m_origin.y = radarea.bottom; }
+					if ((bgMenu.m_origin.x + 120) > radarea.right) { bgMenu.m_origin.x = radarea.right - 120; }
 
 					bgMenu.drawPopUpMenu(&dc);
 					for (auto& element : bgMenu.m_listElements) {
@@ -2431,8 +2434,11 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "freetext")) {
 			menuState.MB3menu = false;
 			menuState.bgM3Click = false;
+			ClearFocusedTextFields();
 
 			CAppWindows freetxt({ Pt.x, Pt.y }, WINDOW_FREE_TEXT, GetRadarArea());
+			freetxt.m_textfields_.front().m_focused = true; // bring focus to text field for keyboard, only one text field in free text dialogue
+
 			menuState.radarScrWindows[freetxt.m_windowId_] = freetxt;
 
 		}
@@ -3004,6 +3010,16 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 	POINT p{ 0,0 };
 
 	if (menuState.mouseMMB) {
+
+		if (ObjectType == FREE_TEXT) {
+
+			int i = atoi(sObjectId);
+			auto it = std::find_if(menuState.freetext.begin(), menuState.freetext.end(), [i](const SFreeText& s) {
+				return s.m_id == i;
+				});
+			it->m_pos = ConvertCoordFromPixelToPosition({ Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) });
+
+		}
 
 		if (ObjectType == TAG_ITEM_FP_CS) {
 

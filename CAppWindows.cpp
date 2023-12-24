@@ -166,7 +166,6 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 	windowIDs_++;
 }
 
-
 CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea) {
 	m_origin = origin;
 	m_winType = winType;
