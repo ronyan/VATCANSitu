@@ -517,13 +517,17 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             }
         }
 
-        if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn) || CSiTRadar::menuState.SFIMode) {
+        if (CSiTRadar::menuState.handoffMode 
+            || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn) 
+            || CSiTRadar::menuState.SFIMode
+            || CSiTRadar::menuState.bgM3Click) {
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
 
                 CSiTRadar::menuState.handoffMode = false;
                 CSiTRadar::menuState.SFIMode = false;
                 CSiTRadar::menuState.MB3menu = false;
+                CSiTRadar::menuState.bgM3Click = false;
                 CSiTRadar::m_pRadScr->RequestRefresh();
 
                 if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
@@ -549,6 +553,15 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             return -1;
         }
         case WM_MBUTTONDBLCLK: {
+        }
+        case WM_RBUTTONDOWN: {
+            POINT Pt{};
+            Pt.x = mouseStruct->pt.x;
+            Pt.y = mouseStruct->pt.y;
+            CSiTRadar::menuState.bgM3Click = true;
+            CSiTRadar::menuState.MB3clickedPt = Pt;
+            CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
+            return CallNextHookEx(NULL, nCode, wParam, lParam);
         }
         default: {
             return CallNextHookEx(NULL, nCode, wParam, lParam);

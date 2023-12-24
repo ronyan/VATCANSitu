@@ -402,6 +402,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		// IFR asrs should display the CAATS QAB
 		if (strcmp(DisplayType.c_str(), "IFR") == 0) {
 
+
 			if (phase == REFRESH_PHASE_AFTER_TAGS) {
 
 				// Draw the mouse halo before menu, so it goes behind it
@@ -1188,6 +1189,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				}
 
+				if (menuState.bgM3Click) {
+					CPopUpMenu bgMenu(menuState.MB3clickedPt);
+
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Free Text", "freetext", 2, 0, 180));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Clear", "llc", 0, 0, 180));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Readout", "llr", 0, 0, 180));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Display","display",1,0, 180));
+
+					bgMenu.drawPopUpMenu(&dc);
+					for (auto& element : bgMenu.m_listElements) {
+						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
+					}
+					bgMenu.highlightSelection(&dc, menuState.MB3hoverRect);
+					
+				}
+
 				// Draw the CSiT Tools Menu; starts at rad area top left then moves right
 				// this point moves to the origin of each subsequent area
 				POINT menutopleft = CPoint(radarea.left, radarea.top);
@@ -1890,6 +1907,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	RECT Area,
 	int Button)
 {
+
+	menuState.bgM3Click = false;
+
 	string s, id, func;
 	// find window ID, then function from the string
 	s = sObjectId;
@@ -1897,6 +1917,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 	if (pos != s.npos) {
 		id = s.substr(0, pos);
 		func = s.substr(pos + 1);
+	}
+
+	if (ObjectType == SCREEN_BACKGROUND) {
+
 	}
 
 	if (ObjectType == WINDOW_SCROLL_ARROW_UP) {

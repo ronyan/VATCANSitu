@@ -128,6 +128,7 @@ struct buttonStates {
     clock_t lastMetarRefresh = 0;
     clock_t lastAtisRefresh = 0;
 
+    bool bgM3Click{ false };
     bool mouseMMB{ false };
     bool MB3menu{ false };
     POINT MB3clickedPt{ 0,0 };
