@@ -75,13 +75,9 @@ struct SFocusItem {
 };
 
 struct SFreeText {
-    int m_id;
+    int m_id{0};
     CPosition m_pos;
     string m_freetext_string;
-
-    SFreeText() {
-        m_id++;
-    }
 };
 
 struct buttonStates {
@@ -108,6 +104,8 @@ struct buttonStates {
     bool wxHigh{ FALSE };
     bool wxOn{ FALSE };
     bool mvaDisp{ false };
+
+    int numFreeText{ 0 };
 
     set<string> activeArpt;
     map<string, bool> nearbyCJS;

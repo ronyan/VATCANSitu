@@ -1139,6 +1139,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					r.top = ConvertCoordFromPositionToPixel(t.m_pos).y;
 					dc.DrawText(t.m_freetext_string.c_str(), &r, DT_LEFT | DT_CALCRECT);
 					dc.DrawText(t.m_freetext_string.c_str(), &r, DT_LEFT);
+					string txt;
+					txt = "Free Text" + to_string(t.m_id);
+					AddScreenObject(FREE_TEXT, to_string(t.m_id).c_str(), r, true, txt.c_str());
 				}
 
 				DeleteObject(font);
@@ -1946,10 +1949,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		func = s.substr(pos + 1);
 	}
 
-	if (ObjectType == SCREEN_BACKGROUND) {
-
-	}
-
 	if (ObjectType == WINDOW_SCROLL_ARROW_UP) {
 		auto window = GetAppWindow(stoi(id));
 		auto lb = window->GetListBox(atoi(func.c_str()));
@@ -2106,6 +2105,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			CPosition pos;
 			pos = ConvertCoordFromPixelToPosition(menuState.MB3clickedPt);
 			SFreeText t;
+			t.m_id = CSiTRadar::menuState.numFreeText;
+			CSiTRadar::menuState.numFreeText++;
 			t.m_pos = pos;
 			t.m_freetext_string = c;
 			menuState.freetext.push_back(t);
