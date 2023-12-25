@@ -569,11 +569,24 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
         case WM_MBUTTONDBLCLK: {
         }
+        case WM_RBUTTONDOWN: {
+            POINT Pt{};
+            Pt.x = mouseStruct->pt.x;
+            Pt.y = mouseStruct->pt.y;
+            CSiTRadar::menuState.MB3clickedPt = Pt;
+            CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
+            return CallNextHookEx(NULL, nCode, wParam, lParam);
+        }
         case WM_RBUTTONUP: {
             POINT Pt{};
             Pt.x = mouseStruct->pt.x;
             Pt.y = mouseStruct->pt.y;
-            CSiTRadar::menuState.bgM3Click = true;
+            if (Pt.x == CSiTRadar::menuState.MB3clickedPt.x &&
+                Pt.y == CSiTRadar::menuState.MB3clickedPt.y) {
+
+                CSiTRadar::menuState.bgM3Click = true;
+
+            }
             CSiTRadar::menuState.MB3clickedPt = Pt;
             CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
             return CallNextHookEx(NULL, nCode, wParam, lParam);
@@ -590,7 +603,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.5.10.0",
+		"0.5.10.1",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
