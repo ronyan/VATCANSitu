@@ -139,6 +139,41 @@ public:
 					dc->MoveTo(p.x, p.y - 4);
 					dc->LineTo(p.x, p.y + 4);
 				}
+
+				// ADSB non-correlated
+
+				if (!isCorrelated) {
+
+					// ADSB non-correlated synmbol
+
+					dc->MoveTo(p.x - 4, p.y - 4);
+					dc->LineTo(p.x + 4, p.y - 4);
+					dc->LineTo(p.x + 4, p.y + 4);
+					dc->LineTo(p.x - 4, p.y + 4);
+					dc->LineTo(p.x - 4, p.y - 4);
+					dc->MoveTo(p.x - 6, p.y - 6);
+					dc->LineTo(p.x - 1, p.y - 1);
+					dc->MoveTo(p.x + 6, p.y - 6);
+					dc->LineTo(p.x + 1, p.y - 1);
+					dc->MoveTo(p.x - 6, p.y + 6);
+					dc->LineTo(p.x - 1, p.y + 1);
+					dc->MoveTo(p.x + 6, p.y + 6);
+					dc->LineTo(p.x + 1, p.y + 1);
+
+					dc->MoveTo(p.x, p.y - 6);
+					dc->LineTo(p.x, p.y - 1);
+
+					dc->MoveTo(p.x + 6, p.y);
+					dc->LineTo(p.x + 1, p.y);
+
+					dc->MoveTo(p.x - 6, p.y);
+					dc->LineTo(p.x - 1, p.y);
+
+					dc->MoveTo(p.x, p.y + 6);
+					dc->LineTo(p.x, p.y + 1);
+
+				}
+
 			}
 			else {
 				// If not ADSB by equipment, treat like a RADFLAG 2 or 3
