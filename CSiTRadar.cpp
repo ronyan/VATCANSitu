@@ -875,9 +875,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							dc.SetTextColor(cjsColor);
 
 							RECT rectCJS;
-							rectCJS.left = p.x - 6;
+							rectCJS.left = p.x - 8;
 							rectCJS.right = p.x + 75;
-							rectCJS.top = p.y - 18;
+							rectCJS.top = p.y - 20;
 							rectCJS.bottom = p.y;
 
 							string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
