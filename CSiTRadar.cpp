@@ -3102,6 +3102,11 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 	const char* sItemString,
 	POINT Pt,
 	RECT Area) {
+
+
+	// avoid M3 Menu popping up when interacting with list items
+	menuState.bgM3Click = false;
+
 	if (FunctionId == FUNCTION_ALT_FILT_LOW) {
 		try {
 			altFilterLow = stoi(sItemString);
