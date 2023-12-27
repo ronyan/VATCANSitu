@@ -361,14 +361,15 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	CFont bigACIDfont;
 	LOGFONT lgfont;
 	std::memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
+	lgfont.lfHeight = -12;
 	lgfont.lfWeight = 500;
 	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
 	font.CreateFontIndirect(&lgfont);
 	lgfont.lfWeight = 1200;
 	boldfont.CreateFontIndirect(&lgfont);
 	lgfont.lfWeight = 500;
-	lgfont.lfHeight = 16;
+	lgfont.lfHeight = -15;
+	//lgfont.lfQuality = CLEARTYPE_QUALITY;
 	bigACIDfont.CreateFontIndirect(&lgfont);
 	dc->SelectObject(font);
 
