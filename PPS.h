@@ -121,7 +121,55 @@ public:
 			break;
 		}
 
-		case 4:
+		case 4: {
+			
+			if(!isADSB) { break; } else {
+
+			if(isCorrelated) {
+			dc->MoveTo(p.x - 4, p.y - 4);
+			dc->LineTo(p.x + 4, p.y - 4);
+			dc->LineTo(p.x + 4, p.y + 4);
+			dc->LineTo(p.x - 4, p.y + 4);
+			dc->LineTo(p.x - 4, p.y - 4);
+
+			// RVSM ADSB symbol
+				if (isRVSM) {
+					dc->MoveTo(p.x, p.y - 4);
+					dc->LineTo(p.x, p.y + 4);
+				}
+			}
+
+			else {
+				// ADSB non-correlated synmbol
+	
+				dc->MoveTo(p.x - 4, p.y - 4);
+				dc->LineTo(p.x + 4, p.y - 4);
+				dc->LineTo(p.x + 4, p.y + 4);
+				dc->LineTo(p.x - 4, p.y + 4);
+				dc->LineTo(p.x - 4, p.y - 4);
+				dc->MoveTo(p.x - 6, p.y - 6);
+				dc->LineTo(p.x - 1, p.y - 1);
+				dc->MoveTo(p.x + 6, p.y - 6);
+				dc->LineTo(p.x + 1, p.y - 1);
+				dc->MoveTo(p.x - 6, p.y + 6);
+				dc->LineTo(p.x - 1, p.y + 1);
+				dc->MoveTo(p.x + 6, p.y + 6);
+				dc->LineTo(p.x + 1, p.y + 1);
+	
+				dc->MoveTo(p.x, p.y - 6);
+				dc->LineTo(p.x, p.y - 1);
+	
+				dc->MoveTo(p.x + 6, p.y);
+				dc->LineTo(p.x + 1, p.y);
+	
+				dc->MoveTo(p.x - 6, p.y);
+				dc->LineTo(p.x - 1, p.y);
+	
+				dc->MoveTo(p.x, p.y + 6);
+				dc->LineTo(p.x, p.y + 1);
+
+			}
+		}
 		case 5:
 		case 6:
 		case 7: {
