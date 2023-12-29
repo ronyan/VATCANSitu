@@ -54,6 +54,9 @@
     <ClCompile Include="CACList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cpdlc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VATCANSitu.def">
@@ -119,6 +122,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CACList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpdlc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

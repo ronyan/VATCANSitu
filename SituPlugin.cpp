@@ -4,9 +4,11 @@
 #include "constants.h"
 #include "ACTag.h"
 
+const int TAG_ITEM_CPDLC = 4999;
 const int TAG_ITEM_IFR_REL = 5000;
 const int TAG_FUNC_IFR_REL_REQ = 5001;
 const int TAG_FUNC_IFR_RELEASED = 5002;
+const int TAG_FUNCTION_OPEN_CPDLC_WINDOW = 5003;
 
 bool held = false;
 bool injected = false;
@@ -608,8 +610,10 @@ SituPlugin::SituPlugin()
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
     RegisterTagItemType("IFR Release", TAG_ITEM_IFR_REL);
+    RegisterTagItemType("CPDLC State", TAG_ITEM_CPDLC);
     RegisterTagItemFunction("Request IFR Release", TAG_FUNC_IFR_REL_REQ);
     RegisterTagItemFunction("Grant IFR Release", TAG_FUNC_IFR_RELEASED);
+    RegisterTagItemFunction("Open CPDLC Menu", TAG_FUNCTION_OPEN_CPDLC_WINDOW);
 
     DWORD appProc = GetCurrentThreadId();
     appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
@@ -636,6 +640,18 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
     COLORREF* pRGB,
     double* pFontSize) {
 
+    if (ItemCode == TAG_ITEM_CPDLC) {
+
+        *pColorCode = TAG_COLOR_RGB_DEFINED;
+        // If any CPDLC Messages 
+        if (!CSiTRadar::mAcData.at(FlightPlan.GetCallsign()).CPDLCMessages.empty()) {
+            COLORREF c = C_MENU_GREEN;
+            strcpy_s(sItemString, 16, "\u00A4");
+            *pRGB = c;
+        }
+    
+    }
+
     if (ItemCode == TAG_ITEM_IFR_REL) {
 
         strcpy_s(sItemString, 16, "\u00AC");
@@ -648,6 +664,7 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
             strcpy_s(sItemString, 16, "\u00A4");
             *pRGB = c;
         }
+
         if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREL", 4) == 0) {
             strcpy_s(sItemString, 16, "\u00A4");
             COLORREF c = RGB(9, 171, 0);
@@ -662,6 +679,30 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
     CFlightPlan fp;
     fp = FlightPlanSelectASEL();
     string spString = fp.GetControllerAssignedData().GetScratchPadString();
+
+    if (FunctionId == TAG_FUNCTION_OPEN_CPDLC_WINDOW) {
+
+        bool exists = false;
+        for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+            if (!strcmp(win.second.m_callsign.c_str(), sItemString)
+                && win.second.m_winType == WINDOW_CPDLC)
+            {
+                win.second.m_origin = { Pt.x, Pt.y };
+                exists = true;
+            }
+        }
+        // If not draw it
+        if (!exists) {
+
+            CAppWindows cpdlc({ Pt.x, Pt.y }, WINDOW_CPDLC, fp, CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(fp.GetCallsign()).CPDLCMessages);
+            cpdlc.m_callsign = fp.GetCallsign();
+            CSiTRadar::menuState.radarScrWindows[cpdlc.m_windowId_] = cpdlc;
+
+            CAppWindows cpdlceditor({ Pt.x, Pt.y+450 }, WINDOW_CPDLC_EDITOR, fp, CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(fp.GetCallsign()).CPDLCMessages);
+            cpdlceditor.m_callsign = fp.GetCallsign();
+            CSiTRadar::menuState.radarScrWindows[cpdlceditor.m_windowId_] = cpdlceditor;
+        }
+    }
 
     if (FunctionId == TAG_FUNC_IFR_REL_REQ) {
         if (strncmp(spString.c_str(), "RREQ", 4) == 0) {

@@ -112,6 +112,8 @@ const int FUNCTION_RMB_POPUP = 309;
 const int FUNCTION_TBS_HDG = 310;
 const int TBS_FOLLOWER_TOGGLE = 311;
 
+const int BUTTON_MENU_CPDLC = 312;
+
 // Radar Background
 const int SCREEN_BACKGROUND = 501;
 
@@ -144,3 +146,5 @@ const int WINDOW_DIRECT_TO = 6007;
 const int WINDOW_SCROLL_ARROW_UP = 6008;
 const int WINDOW_SCROLL_ARROW_DOWN = 6009;
 const int WINDOW_FREE_TEXT = 6010;
+const int WINDOW_CPDLC = 6011;
+const int WINDOW_CPDLC_EDITOR = 6012;

@@ -154,20 +154,20 @@ CSiTRadar::~CSiTRadar()
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
 
-			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
-			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
+j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
+j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-			j["prefSFI"] = menuState.SFIPrefStringDefault;
+j["prefSFI"] = menuState.SFIPrefStringDefault;
 
-			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
 
-			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
-			j["menuState"]["bigACID"] = menuState.bigACID;
-			j["menuState"]["wxAll"] = menuState.wxAll;
-			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
-			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
+j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+j["menuState"]["bigACID"] = menuState.bigACID;
+j["menuState"]["wxAll"] = menuState.wxAll;
+j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+j["menuState"]["extAltToggle"] = menuState.extAltToggle;
 
-			settings_file << j;
+settings_file << j;
 		}
 	}
 	catch (std::ifstream::failure e) {
@@ -198,11 +198,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menuState.focusedItem.m_focus_on = false;
 	}
 	else {
-	// see if any focused items are set
+		// see if any focused items are set
 		menuState.focusedItem.m_focus_on = false;
 		for (auto& win : menuState.radarScrWindows) {
 			for (auto& tf : win.second.m_textfields_) {
-				if(tf.m_focused) {
+				if (tf.m_focused) {
 					menuState.focusedItem.m_focus_on = true;
 					menuState.focusedItem.m_focused_tf = &tf;
 				}
@@ -220,7 +220,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	RECT radarea = GetRadarArea();
 
 	// Get threaded messages
-	for (auto &message : wxRadar::asyncMessages) {
+	for (auto& message : wxRadar::asyncMessages) {
 		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Warning", message.reponseMessage.c_str(), true, false, false, false, false);
 	}
 	wxRadar::asyncMessages.clear();
@@ -234,11 +234,46 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (phase == REFRESH_PHASE_BEFORE_TAGS) {
+
 		if (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
 
 			// autorefresh weather download every 10 minutes
 			fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			menuState.lastWxRefresh = clock();
+		}
+
+		if (((clock() - menuState.lastCPDLCPoll) / CLOCKS_PER_SEC) > 60 && (menuState.CPDLCOn)) {
+
+			// autorefresh every minute
+			std::string s;
+			s = CPDLCMessage::PollCPDLCMessages();
+			menuState.lastCPDLCPoll = clock();
+
+			// ParseCPDLC message chops messages off sequentially
+
+			while (s.length() > 4) {
+				CPDLCMessage m; 
+				m = CPDLCMessage::parseDLMessage(s);
+				// Attach CPDLC Messages to the aircraft
+				if (mAcData.find(m.sender) != mAcData.end()) {
+
+					mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
+
+					// if new messages refresh the listbox content for the CPDLC message
+					for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+						if (!strcmp(win.second.m_callsign.c_str(), m.sender.c_str())
+							&& win.second.m_winType == WINDOW_CPDLC)
+						{
+							for (auto& lbtoberefreshed : win.second.m_listboxes_) {
+								lbtoberefreshed.PopulateCPDLCListBox(mAcData.at(m.sender).CPDLCMessages);
+							}
+						}
+					}
+
+				}
+
+			}
+
 		}
 
 		if (((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
@@ -1315,6 +1350,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						but = TopMenu::DrawBut(&dc, but_bigACID);
 						ButtonToScreen(this, but, "Big ACID Toggle", BUTTON_MENU_SETUP);
 
+						auto cpdlcICAO = TopMenu::MakeField(dc, { 225, 38 }, 28, 15, CPDLCMessage::hoppieICAO.c_str());
+						AddScreenObject(BUTTON_MENU_CPDLC, "cpdlcICAO", cpdlcICAO, 0, "");
+
+						menuButton CPDLC_Logon = { {257, 36}, "Logon", 38, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.CPDLCOn };
+						but = TopMenu::DrawBut(&dc, CPDLC_Logon);
+						ButtonToScreen(this, but, "CPDLC Logon", BUTTON_MENU_SETUP);
+
 						menuButton but_close_setup = { {245, 170}, "Close", 50, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 						but = TopMenu::DrawBut(&dc, but_close_setup);
 						ButtonToScreen(this, but, "Close Setup", BUTTON_MENU_SETUP);
@@ -2188,6 +2230,30 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
+	if (ObjectType == WINDOW_CPDLC) {
+
+		auto window = GetAppWindow(stoi(id));
+
+		if (!strcmp(func.c_str(), "Close")) {
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+		if (!strcmp(func.c_str(), "Close Dialog")) {
+			int i=-1;
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					i = win.first;
+				}
+			}
+			if (i >= 0) {
+				menuState.radarScrWindows.erase(i);
+			}
+		}
+
+	}
+
 	if (ObjectType == WINDOW_POINT_OUT) {
 		auto window = GetAppWindow(stoi(id));
 		if (!strcmp(func.c_str(), "Cancel")) {
@@ -2587,6 +2653,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "Close Setup")) {
 			menuState.setup = false;
 		}
+		if (!strcmp(sObjectId, "CPDLC Logon")) {
+			menuState.CPDLCOn = !menuState.CPDLCOn;
+		}
+
 	}
 
 	if (ObjectType == BUTTON_MENU_CRDA) {

@@ -24,6 +24,7 @@
 #include "ACTag.h"
 #include "PPS.h"
 #include "CACList.h"
+#include "cpdlc.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -67,6 +68,8 @@ struct ACData {
     bool multipleDiscrete{ false };
     bool manualCorr{ false };
     int follower{ 1 }; // 0 is light, 1 is med, 2 heavy, 3 super
+
+    vector<CPDLCMessage> CPDLCMessages;
 };
 
 struct SFocusItem {
@@ -97,6 +100,7 @@ struct buttonStates {
     bool crda{ false };
     bool haloCursor{ false };
     bool bigACID{ true };
+    bool CPDLCOn{ false };
 
     int numHistoryDots{ 4 };
 
@@ -135,6 +139,7 @@ struct buttonStates {
     clock_t lastWxRefresh = 0;
     clock_t lastMetarRefresh = 0;
     clock_t lastAtisRefresh = 0;
+    clock_t lastCPDLCPoll = 0;
 
     bool bgM3Click{ false };
     bool mouseMMB{ false };

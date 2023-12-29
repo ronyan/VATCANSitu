@@ -1,11 +1,20 @@
 #pragma once
 #include "SituPlugin.h"
 #include "constants.h"
+#include "cpdlc.h"
 #include <vector>
 
 struct SWindowElements {
 	RECT titleBarRect;
 	vector<RECT> ListBoxRect;
+};
+
+struct SWindowText {
+	COLORREF color;
+	int size;
+	POINT location;
+	string text;
+	void RenderText(CDC* m_dc, POINT origin);
 };
 
 struct SListBoxScrollBar {
@@ -101,11 +110,31 @@ struct SListBoxElement {
 	int m_listElementHeight;
 	bool m_selected_{ false };
 	string m_ListBoxElementText;
+	CPDLCMessage m_cpdlc_message;
+	CPDLCMessage m_cpdlc_message_response;
 	RECT m_ListBoxRect;
+
+	SListBoxElement(int width, CPDLCMessage& message) {
+		m_width = width;
+		m_cpdlc_message = message;
+
+		m_elementID = m_elementIDcount;
+		m_elementIDcount++;
+	}
+
+	SListBoxElement(int width, CPDLCMessage& message, CPDLCMessage& messageresponse) {
+		m_width = width;
+		m_cpdlc_message = message;
+		m_cpdlc_message_response = messageresponse;
+
+		m_elementID = m_elementIDcount;
+		m_elementIDcount++;
+	}
 
 	SListBoxElement(int width, string text) {
 		m_width = width;
 		m_ListBoxElementText = text;
+
 		m_elementID = m_elementIDcount;
 		m_elementIDcount++;
 	}
@@ -175,6 +204,40 @@ struct SListBox {
 			listBox_.emplace_back(SListBoxElement(300, lbe));
 		}
 	}
+	void PopulateCPDLCListBox(vector<CPDLCMessage>& msgs) {
+		// link up CPDLC messages;
+		listBox_.clear(); // clear the LB upon refresh
+		int i=0; 
+		for (auto& msg : msgs ) {
+
+			if(i < m_max_elements){
+
+			// DM0-4 and UL0-5 are responses and do not get their own entry;
+				if (msg.rawMessageContent == "WILCO" ||
+					msg.rawMessageContent == "UNABLE" ||
+					msg.rawMessageContent == "NEGATIVE" ||
+					msg.rawMessageContent == "STANDBY" ||
+					msg.rawMessageContent == "ROGER" ||
+					msg.rawMessageContent == "STANDBY") {
+
+					// do nothing
+				}
+				else {
+					//if there is a response; call overload that pushes back a response function
+
+				
+					//if not just put the single message overload
+					SListBoxElement lbe(330, msg);
+					listBox_.push_back(lbe);
+					i++;
+				}
+			}
+
+		}
+
+		// push them back into a LB vector;
+	}
+
 	void PopulateDirectListBox(ACRoute* rte, CFlightPlan fp) {
 
 		m_nearestPtIdx = fp.GetExtractedRoute().GetPointsCalculatedIndex();
@@ -217,6 +280,7 @@ struct SListBox {
 		}
 	}
 	void RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
+	void RenderCPDLCListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
 	void ScrollUp() {
 		if (m_LB_firstElem_idx > 0) {
 			m_LB_firstElem_idx--;
@@ -243,6 +307,7 @@ struct SWindowButton {
 	string text;
 	RECT m_WindowButtonRect;
 	CDC* m_dc;
+	COLORREF m_textcolor{ RGB(230, 230, 230) };
 
 	SWindowButton() {}
 	
@@ -265,7 +330,7 @@ struct SWindowButton {
 		font.CreateFontIndirect(&lgfont);
 
 		m_dc->SelectObject(font);
-		m_dc->SetTextColor(RGB(230, 230, 230));
+		m_dc->SetTextColor(m_textcolor);
 
 		HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY1);
 		HBRUSH targetBrush = CreateSolidBrush(C_MENU_GREY3);
@@ -303,12 +368,16 @@ public:
 	POINT m_origin;
 	string windowTitle;
 	bool m_visible_;
+
+	// Each Window has a vector of listboxes, buttons, textfields and static text
 	vector<SListBox> m_listboxes_;
 	vector<SWindowButton> m_buttons_;
 	vector<STextField> m_textfields_;
+	vector<SWindowText> m_text_;
 
 	CAppWindows();
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
+	CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radarea, vector<CPDLCMessage>& cpdlcmsgs);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	CAppWindows(POINT origin, int winType, RECT radarea);

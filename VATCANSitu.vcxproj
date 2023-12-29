@@ -95,6 +95,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)\curl;$(ProjectDir)\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -197,6 +198,7 @@
     <ClCompile Include="CACList.cpp" />
     <ClCompile Include="CAppWindows.cpp" />
     <ClCompile Include="CAsyncResponse.cpp" />
+    <ClCompile Include="cpdlc.cpp" />
     <ClCompile Include="CPopUpMenu.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
@@ -221,6 +223,7 @@
     <ClInclude Include="CACList.h" />
     <ClInclude Include="CAppWindows.h" />
     <ClInclude Include="CAsyncResponse.h" />
+    <ClInclude Include="cpdlc.h" />
     <ClInclude Include="CPopUpMenu.h" />
     <ClInclude Include="CSiTRadar.h" />
     <ClInclude Include="framework.h" />
