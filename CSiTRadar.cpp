@@ -2319,15 +2319,60 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		for (auto &lb : window->m_listboxes_) {
 			for (auto &lelem : lb.listBox_) {
 				if (lelem.m_elementID == stoi(le)) {
-					lelem.m_selected_ = true;
-					le_text = lelem.m_ListBoxElementText;
-					lb.selectItem = le_text;
+
+					// allow unselect
+					if (lelem.m_selected_) {
+						lelem.m_selected_ = false;
+						le_text = "";
+						lb.selectItem = "";
+
+						for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+							if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+								&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+							{
+								if (win.second.m_textfields_.size() > 0)
+								{
+									CPDLCMessage blank;
+									win.second.m_textfields_.at(0).m_cpdlcmessage = blank;
+
+								}
+							}
+						}
+
+					}
+					else {
+
+						lelem.m_selected_ = true;
+						le_text = lelem.m_ListBoxElementText;
+						lb.selectItem = le_text;
+
+						// Push CPDLC Message to its child window 
+						if (window->m_winType == WINDOW_CPDLC) {
+
+							for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+								if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+									&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+								{
+									if (win.second.m_textfields_.size() > 0)
+									{
+
+										win.second.m_textfields_.at(0).m_cpdlcmessage = lelem.m_cpdlc_message;
+
+									}
+								}
+							}
+
+						}
+					}
+
 				}
 				else {
 					lelem.m_selected_ = false;
 				}
 			}
 		}
+
+
 
 		if (window->m_winType == WINDOW_DIRECT_TO) {
 			mAcData[window->m_callsign].directToLineOn = true;

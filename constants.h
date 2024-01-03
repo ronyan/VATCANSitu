@@ -148,3 +148,7 @@ const int WINDOW_SCROLL_ARROW_DOWN = 6009;
 const int WINDOW_FREE_TEXT = 6010;
 const int WINDOW_CPDLC = 6011;
 const int WINDOW_CPDLC_EDITOR = 6012;
+
+
+// Textfields
+const int TEXTFIELD_CPDLC_MESSAGE = 6050;

@@ -161,6 +161,8 @@ struct STextField {
 	string m_text;
 	RECT m_textRect;
 	POINT m_location_;
+	int m_textfield_type;
+	CPDLCMessage m_cpdlcmessage;
 
 	STextField() {
 		m_textFieldID = m_textFieldIDcount;

@@ -26,13 +26,13 @@ public:
 	bool sent{ false };
 
 	std::time_t timeParsed; // time that message was created
-	std::string hoppieMessageID; // from the api
+	std::string hoppieMessageID{""}; // from the api, empty string if doesn't exist
 	std::string messageType; // telex or CPDLC
 
 	std::string sender;
 	std::string receipient;
-	u_int messageID;
-	u_int responseToMessageID;
+	int messageID{ -1 };
+	int responseToMessageID{ -1 };
 	std::string responseRequired;
 	std::string rawMessageContent;
 

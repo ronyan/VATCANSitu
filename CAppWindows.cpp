@@ -50,7 +50,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		m_text_.push_back(s);
 
 		s.text = "Text";
-		s.location = { 58,34 };
+		s.location = { 78,34 };
 		m_text_.push_back(s);
 
 		s.text = "Uplink Messages";
@@ -58,10 +58,13 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		m_text_.push_back(s);
 
 		s.text = "Text";
-		s.location = { 12,117 };
+		s.location = { 14,117 };
 		m_text_.push_back(s);
 
+		// Print the selected list box in the parent CPDLC window
+		SListBoxElement lbe(0, ""); // dummy element
 		SListBox lb;
+		lb.listBox_.push_back(lbe);
 		lb.m_max_elements = 8;
 		lb.m_width = 495;
 		lb.m_origin.x = 0;
@@ -82,9 +85,8 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		stf.m_parentWindowID = m_windowId_;
 		stf.m_width = 488;
 		stf.m_height = 58;
-		stf.m_location_ = { 5,132 };
-		stf.m_text = "Testing";
-
+		stf.m_location_ = { 5,48 };
+		stf.m_textfield_type = TEXTFIELD_CPDLC_MESSAGE;
 		m_textfields_.push_back(stf);
 
 	}
@@ -480,22 +482,29 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 		listboxDeltaX = -12;
 	}
 	// Draw List Box if present
-	for (auto& lb : this->m_listboxes_) {
-		lb.m_dc = dc;
-		if (m_winType == WINDOW_CPDLC || m_winType == WINDOW_CPDLC_EDITOR) {
-			lb.RenderCPDLCListBox(1, 1, 8, { m_origin.x, titleRect.bottom + 2 +lb.m_origin.y });
-			if (lb.m_has_scroll_bar) {
-				lb.m_scrbar.m_max_elements = lb.m_max_elements;
-				lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
-				lb.m_scrbar.Draw(dc);
+
+	// 
+	if(m_winType == WINDOW_CPDLC_EDITOR) { // skip LB draw for CPDLC EDITOR 
+	}
+
+	else {
+		for (auto& lb : this->m_listboxes_) {
+			lb.m_dc = dc;
+			if (m_winType == WINDOW_CPDLC || m_winType == WINDOW_CPDLC_EDITOR) {
+				lb.RenderCPDLCListBox(1, 1, 8, { m_origin.x, titleRect.bottom + 2 + lb.m_origin.y });
+				if (lb.m_has_scroll_bar) {
+					lb.m_scrbar.m_max_elements = lb.m_max_elements;
+					lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
+					lb.m_scrbar.Draw(dc);
+				}
 			}
-		}
-		else {
-			lb.RenderListBox(1, 1, 1, { m_origin.x + listboxDeltaX, titleRect.bottom + 2 + listboxDeltaY });
-			if (lb.m_has_scroll_bar) {
-				lb.m_scrbar.m_max_elements = lb.m_max_elements;
-				lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
-				lb.m_scrbar.Draw(dc);
+			else {
+				lb.RenderListBox(1, 1, 1, { m_origin.x + listboxDeltaX, titleRect.bottom + 2 + listboxDeltaY });
+				if (lb.m_has_scroll_bar) {
+					lb.m_scrbar.m_max_elements = lb.m_max_elements;
+					lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
+					lb.m_scrbar.Draw(dc);
+				}
 			}
 		}
 	}
@@ -510,6 +519,14 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 
 	// Draw textfields if present
 	for (auto& textf : this->m_textfields_) {
+
+		// Dynamic Text
+		if (!m_listboxes_.empty()) {
+			if (!m_listboxes_.at(0).listBox_.empty())
+			{
+				textf.m_text = this->m_listboxes_.at(0).listBox_.at(0).m_cpdlc_message.rawMessageContent;
+			}
+		}
 		textf.RenderTextField(dc, m_origin);
 	}
 
@@ -561,9 +578,15 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 		RECT r = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
 		CopyRect(&element.m_ListBoxRect, &r);
 
-		m_dc->SetTextColor(RGB(230, 230, 230));
+		if (element.m_selected_) {
+			m_dc->SetTextColor(C_MENU_GREY1);
+			m_dc->SelectObject(tb2);
+		}
+		else {
+			m_dc->SetTextColor(RGB(230, 230, 230));
+		}
 
-		if (row % 2 == 0) {
+		if (row % 2 == 0 && !element.m_selected_) {
 			m_dc->SelectObject(targetPen);
 			m_dc->SelectObject(targetBrush);
 		}
@@ -578,6 +601,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 		}
 		if (element.m_cpdlc_message.rawMessageContent.length() > 28) {
 			cpdlcOutput += element.m_cpdlc_message.rawMessageContent.substr(0,28);
+			cpdlcOutput += "  >";
 		}
 		else {
 			cpdlcOutput += element.m_cpdlc_message.rawMessageContent;
@@ -670,6 +694,7 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	int sDC = m_dc->SaveDC();
 
 	CFont font;
+	CFont CAATSfont;
 	LOGFONT lgfont;
 
 	memset(&lgfont, 0, sizeof(LOGFONT));
@@ -677,6 +702,10 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
 	lgfont.lfHeight = 14;
 	font.CreateFontIndirect(&lgfont);
+	lgfont.lfWidth = 6;
+	lgfont.lfHeight = 14;
+	strcpy_s(lgfont.lfFaceName, _T("Euroscope"));
+	CAATSfont.CreateFontIndirect(&lgfont);
 
 	m_dc->SelectObject(font);
 	m_dc->SetTextColor(RGB(230, 230, 230));
@@ -688,24 +717,58 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	m_dc->SelectObject(targetPen);
 	m_dc->SelectObject(targetBrush);
 
-	RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
-	m_dc->Rectangle(&r);
-	if (m_focused) {
-		m_dc->Draw3dRect(&r, RGB(0,200,0), RGB(0, 200, 0));
+	if (m_textfield_type != TEXTFIELD_CPDLC_MESSAGE) {
+		RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
+		m_dc->Rectangle(&r);
+		if (m_focused) {
+			m_dc->Draw3dRect(&r, RGB(0, 200, 0), RGB(0, 200, 0));
 
+		}
+		else {
+			m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
+		}
+		r.left += 6;
+		m_dc->DrawText(m_text.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+		CopyRect(&m_textRect, &r);
 	}
 	else {
-		m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
-	}
-	r.left += 6;
-	m_dc->DrawText(m_text.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
-	CopyRect(&m_textRect, &r);
+		m_dc->SelectObject(CAATSfont);
+		RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
+		m_dc->Rectangle(&r);
+		CopyRect(&m_textRect, &r);
+
+		m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
+		r.left += 8;
+
+		if (m_cpdlcmessage.hoppieMessageID != "") { // will be "" if nothing was pushed to it
+			// message ID
+			if (m_cpdlcmessage.messageID != -1) {
+				m_dc->DrawText(to_string(m_cpdlcmessage.messageID).c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+				m_dc->DrawText(to_string(m_cpdlcmessage.messageID).c_str(), &r, DT_LEFT | DT_SINGLELINE);
+			}
+
+			r.left += 15;
+
+			// message time
+			m_dc->DrawText(ZuluTimeFormated(m_cpdlcmessage.timeParsed).c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+			m_dc->DrawText(ZuluTimeFormated(m_cpdlcmessage.timeParsed).c_str(), &r, DT_LEFT | DT_SINGLELINE);
+
+			// message content
+			r.left += 50;
+			r.right = origin.x + m_width + m_location_.x;
+			r.bottom = origin.y + m_location_.y + m_height;
+			m_dc->DrawText(m_cpdlcmessage.rawMessageContent.c_str(), &r, DT_LEFT | DT_WORDBREAK);
+		}
+	}
+
 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 	DeleteObject(tb2);
 	DeleteObject(font);
+	DeleteObject(CAATSfont);
 	m_dc->RestoreDC(sDC);
 }
 
