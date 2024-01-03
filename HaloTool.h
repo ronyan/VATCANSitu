@@ -81,6 +81,7 @@ public:
         DeleteObject(targetPen);
 
         dc->RestoreDC(sDC);
+  
     };
 
     static CPosition calcTBS(CPosition origin, double tbsLen, double gs, double bearing) {

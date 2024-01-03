@@ -78,6 +78,8 @@ const int BUTTON_MENU_DEST_EST = 232;
 const int BUTTON_MENU_DEST_VFR = 233;
 
 const int BUTTON_MENU_QL_CJS = 234;
+const int BUTTON_MENU_PTL_WB = 235;
+const int BUTTON_MENU_PTL_EB = 236;
 
 
 const int BUTTON_MENU_RMB_MENU = 240;

@@ -609,13 +609,29 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// Draw PTL
 					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
+
 						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+						
 					}
 					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
-							HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+
+							if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
+								(!CSiTRadar::menuState.ebPTL && !CSiTRadar::menuState.wbPTL) ||
+								(CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 180 && radarTarget.GetPosition().GetReportedHeading() < 360)
+
+								) {
+								HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+							}
+
 						}
+					}
+					else if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
+						(CSiTRadar::menuState.wbPTL && radarTarget.GetPosition().GetReportedHeading() > 180 && radarTarget.GetPosition().GetReportedHeading() < 360)
+
+						) {
+						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
 					}
 
 					// Draw TBS Marker
@@ -1901,9 +1917,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					// End PTL options
 
 					elementOrigin.x = 540;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", FALSE);
+					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", menuState.wbPTL);
+					AddScreenObject(BUTTON_MENU_PTL_WB, "WB PTL Toggle", r, 0, "");
 					elementOrigin.x = 577;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", FALSE);
+					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", menuState.ebPTL);
+					AddScreenObject(BUTTON_MENU_PTL_EB, "EB PTL Toggle", r, 0, "");
 
 					elementOrigin.x = 610;
 					TopMenu::MakeText(dc, elementOrigin, 150, 15, "Click on targets to toggle");
@@ -2797,6 +2815,15 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_PTL_OPTIONS) {
 		menuState.ptlLength = stoi(sObjectId);
 	}
+
+	if (ObjectType == BUTTON_MENU_PTL_WB) {
+		menuState.wbPTL = !menuState.wbPTL;
+	}
+
+	if (ObjectType == BUTTON_MENU_PTL_EB) {
+		menuState.ebPTL = !menuState.ebPTL;
+	}
+
 
 	if (ObjectType == BUTTON_MENU_PTL_TOOL) {
 		menuState.ptlTool = true;
