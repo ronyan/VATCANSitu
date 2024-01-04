@@ -13,6 +13,8 @@ buttonStates CSiTRadar::menuState = {};
 bool CSiTRadar::halfSecTick = FALSE;
 CRadarScreen* CSiTRadar::m_pRadScr;
 unordered_map<int, ACList> acLists;
+unordered_map<string, bool> CSiTRadar::acADSB;
+unordered_map<string, bool> CSiTRadar::acRVSM;
 
 CSiTRadar::CSiTRadar()
 {
@@ -3314,26 +3316,34 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.acFPRoute = mAcData[callSign].acFPRoute; // cache so it's not lost
 	bool isVFR = !strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V");
 
-	// Get information about the Aircraft/Flightplan
 	string icaoACData = FlightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
-	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
+	// Get information about the Aircraft/Flightplan
+	// check against map
+
+	bool isRVSM{ false };
+	try {
+		isRVSM = CSiTRadar::acRVSM.at(callSign);      // vector::at throws an out-of-range
+	}
+	catch (const std::out_of_range& oor) {
+
+	}
+
+	// first check for ICAO; then check FAA
 	if (FlightPlan.GetFlightPlanData().GetCapibilities() == 'L' ||
 		FlightPlan.GetFlightPlanData().GetCapibilities() == 'W' ||
 		FlightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
 		isRVSM = TRUE;
 	}
-	/* VATSIM No Longer implements ICAO codes for equipment
-	* 
-	* 
-	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-	bool isADSB = regex_search(icaoACData, icaoADSB);
 
-	*/
+	bool isADSB{ false };
+	try {
+		isADSB = CSiTRadar::acADSB.at(callSign);      // vector::at throws an out-of-range
+	}
+	catch (const std::out_of_range& oor) {
+		
+	}
 
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
-
-	bool isADSB = false;
 	
 	string CJS = FlightPlan.GetTrackingControllerId();
 	string origin = FlightPlan.GetFlightPlanData().GetOrigin();
@@ -3347,6 +3357,8 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	if (remarks.find("STS/ADSB") != remarks.npos) { acdata.isADSB = true; }
+
+	/*
 	if (!origin.empty() && !destin.empty()) {
 		if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') { acdata.isADSB = true; }
 	}
@@ -3357,6 +3369,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	{
 		acdata.isADSB = true;
 	}
+	*/
 
 	mAcData[callSign] = acdata;
 

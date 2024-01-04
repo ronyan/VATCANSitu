@@ -266,6 +266,8 @@ public:
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
     static map<string, bool> destAirportList;
+    static unordered_map<string, bool> acADSB;
+    static unordered_map<string, bool> acRVSM;
 
     static buttonStates menuState;
 

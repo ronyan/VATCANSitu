@@ -11,6 +11,7 @@ std::map<string, string> wxRadar::arptAtisLetter;
 std::vector<CAsyncResponse> wxRadar::asyncMessages;
 std::shared_mutex wxRadar::altimeterMutex;
 std::shared_mutex wxRadar::atisLetterMutex;
+json wxRadar::jsVatsimDataFeed;
 
 void wxRadar::loadPNG(std::vector<unsigned char>& buffer, const std::string& filename) //designed for loading files from hard disk in an std::vector
 {
@@ -296,11 +297,33 @@ void wxRadar::parseVatsimATIS(int i) {
 
 
     try {
-        json jsVatsimAtis = json::parse(jsAtis.c_str());
+        wxRadar::jsVatsimDataFeed = json::parse(jsAtis.c_str());
+
+        if (!wxRadar::jsVatsimDataFeed["pilots"].empty()) {
+            
+            CSiTRadar::acADSB.empty();
+            CSiTRadar::acRVSM.empty();
+
+            // make an internal copy of the data feed, but keep it clean for info needed callsign and capabilities
+            for (auto& pilot : wxRadar::jsVatsimDataFeed["pilots"]) {
+                if (!pilot["flight_plan"]["aircraft"].is_null()) {
+                    string icaoACData = pilot["flight_plan"]["aircraft"];
+                    regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
+                    bool isADSB = regex_search(icaoACData, icaoADSB);
+
+                    regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
+                    bool isRVSM = regex_search(icaoACData, icaoRVSM);
+
+                    CSiTRadar::acADSB.emplace(std::make_pair(pilot["callsign"], isADSB));
+                    CSiTRadar::acRVSM.emplace(std::make_pair(pilot["callsign"], isRVSM));
+                }
+            }
+        }
+
         std::unique_lock<shared_mutex> lock(atisLetterMutex);
 
-        if (!jsVatsimAtis["atis"].empty()) {
-            for (auto& atis : jsVatsimAtis["atis"]) {
+        if (!jsVatsimDataFeed["atis"].empty()) {
+            for (auto& atis : jsVatsimDataFeed["atis"]) {
                 if (!atis["atis_code"].is_null()) {
                     string airport = atis["callsign"];
                     arptAtisLetter[airport.substr(0, 4)] = atis["atis_code"];
