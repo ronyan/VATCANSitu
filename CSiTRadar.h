@@ -87,6 +87,8 @@ struct buttonStates {
     bool filterBypassAll{ FALSE };
     int ptlLength{ 3 };
     bool ptlAll{ FALSE };
+    bool ebPTL{ false };
+    bool wbPTL{ false };
     int haloRad;
     bool quickLook{ FALSE };
     bool quickLookDelta{ false };
