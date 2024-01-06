@@ -510,8 +510,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) // Filter the aircraft if this statement is true, i.e. I'm not tracking
 					{
-						if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
-							!strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+						if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) != 0 &&
+							strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+
+	
 
 								if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
 									&& !menuState.filterBypassAll
@@ -522,7 +524,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
 									&& !menuState.filterBypassAll
 									&& !isDest) {
-									continue;
+
+									if (radarTarget.GetPosition().GetRadarFlags() != 1) { // can't filter primary targets will make it just respect the high limit, to avoid ground clutter
+										continue;
+									}
+
 								}
 							
 						}
@@ -1561,7 +1567,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				
 					TopMenu::DrawBackground(dc, { 975, radarea.top }, 200, 95);
 
-					TopMenu::MakeText(dc, { 990, 33 }, 45, 15, "TBS FAC \:");
+					TopMenu::MakeText(dc, { 990, 33 }, 45, 15, "TBS FAC :");
 
 					auto crs = TopMenu::MakeField(dc, { 1040, 34 }, 32, 15, to_string(menuState.tbsHdg).c_str());
 					AddScreenObject(BUTTON_MENU_TBS_HDG, "tbscrs", crs, 0, "");
@@ -2007,8 +2013,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						double longitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Longitude, &lon);
 						double latitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Latitude, &lat);
 
-						latmin = abs(round(latitudedecmin * 60));
-						lonmin = abs(round(longitudedecmin * 60));
+						latmin = static_cast<float>(abs(round(latitudedecmin * 60)));
+						lonmin = static_cast<float>(abs(round(longitudedecmin * 60)));
 						string lonstring = to_string(static_cast<int>(abs(lon)));
 						if (lonstring.size() < 3) {
 							lonstring.insert(lonstring.begin(), 3 - lonstring.size(), '0');
@@ -2044,7 +2050,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						}
 						else {
 							rtestr = pposStr;
-							for (int i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
+							for (size_t i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
 								rtestr += mAcData[cs].acFPRoute.fix_names.at(i) + " ";
 							}
 						}
