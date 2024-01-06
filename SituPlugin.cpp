@@ -3,6 +3,7 @@
 #include "CSiTRadar.h"
 #include "constants.h"
 #include "ACTag.h"
+#include "CFontHelper.h"
 
 const int TAG_ITEM_IFR_REL = 5000;
 const int TAG_FUNC_IFR_REL_REQ = 5001;
@@ -133,6 +134,21 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 char l = MapVirtualKeyA(wParam, 2);
 
                 CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back(l);
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_OEM_PERIOD) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('.');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_OEM_PLUS) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('+');
+                CSiTRadar::m_pRadScr->RequestRefresh();
+                return -1;
+            }
+            if (wParam == VK_OEM_MINUS) {
+                CSiTRadar::menuState.focusedItem.m_focused_tf->m_text.push_back('-');
                 CSiTRadar::m_pRadScr->RequestRefresh();
                 return -1;
             }
@@ -517,13 +533,17 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             }
         }
 
-        if (CSiTRadar::menuState.handoffMode || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn) || CSiTRadar::menuState.SFIMode) {
+        if (CSiTRadar::menuState.handoffMode 
+            || (CSiTRadar::menuState.MB3menu && !CSiTRadar::menuState.MB3hoverOn) 
+            || CSiTRadar::menuState.SFIMode
+            || (CSiTRadar::menuState.bgM3Click && !CSiTRadar::menuState.MB3hoverOn)) {
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_MBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
 
                 CSiTRadar::menuState.handoffMode = false;
                 CSiTRadar::menuState.SFIMode = false;
                 CSiTRadar::menuState.MB3menu = false;
+                CSiTRadar::menuState.bgM3Click = false;
                 CSiTRadar::m_pRadScr->RequestRefresh();
 
                 if (!CSiTRadar::menuState.jurisdictionalAC.empty()) {
@@ -550,6 +570,22 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
         case WM_MBUTTONDBLCLK: {
         }
+        case WM_RBUTTONDOWN: {
+            CSiTRadar::menuState.MB3clickedPt = Pt;
+            CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
+            return CallNextHookEx(NULL, nCode, wParam, lParam);
+        }
+        case WM_RBUTTONUP: {
+            if (Pt.x == CSiTRadar::menuState.MB3clickedPt.x &&
+                Pt.y == CSiTRadar::menuState.MB3clickedPt.y) {
+
+                CSiTRadar::menuState.bgM3Click = true;
+
+            }
+            CSiTRadar::menuState.MB3clickedPt = Pt;
+            CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
+            return CallNextHookEx(NULL, nCode, wParam, lParam);
+        }
         default: {
             return CallNextHookEx(NULL, nCode, wParam, lParam);
         }
@@ -562,7 +598,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.5.9.1",
+		"0.5.11.0",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
@@ -573,10 +609,16 @@ SituPlugin::SituPlugin()
     DWORD appProc = GetCurrentThreadId();
     appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
     mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, NULL, appProc);
+
+    CFontHelper::CreateFonts();
+
 }
 
 SituPlugin::~SituPlugin()
 {
+
+    CFontHelper::DeleteFonts();
+
     UnhookWindowsHookEx(appHook);
     UnhookWindowsHookEx(mouseHook);
 }

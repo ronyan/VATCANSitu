@@ -11,6 +11,53 @@ CAppWindows::CAppWindows()
 	
 }
 
+CAppWindows::CAppWindows(POINT origin, int winType, RECT radarea) {
+	m_origin = origin;
+	m_winType = winType;
+	m_windowId_ = windowIDs_;
+
+	if (winType == WINDOW_FREE_TEXT) {
+		windowTitle = "Free Text";
+		m_width = 300;
+		m_height = 100;
+		SListBox lb;
+
+		SWindowButton submit, cancel;
+
+		submit.location = { 90, 60 };
+		submit.m_height = 25;
+		submit.m_width = 60;
+		submit.text = "Submit";
+		submit.windowID = m_windowId_;
+
+		cancel.location = { 155, 60 };
+		cancel.m_height = 25;
+		cancel.m_width = 60;
+		cancel.text = "Cancel";
+		cancel.windowID = m_windowId_;
+
+		m_buttons_.push_back(submit);
+		m_buttons_.push_back(cancel);
+
+		STextField freetext;
+		freetext.m_location_ = { 16, 30 };
+		freetext.m_height = 20;
+		freetext.m_width = 268;
+		freetext.m_parentWindowID = m_windowId_;
+		m_textfields_.push_back(freetext);
+	}
+
+	m_origin.x = origin.x - m_width / 2;
+	m_origin.y = origin.y - m_height / 2;
+
+	if (origin.x < radarea.left) { m_origin.x = radarea.left; }
+	if ((origin.x + m_width) > radarea.right) { m_origin.x = radarea.right - m_width; }
+	if (origin.y < radarea.top + 60) { m_origin.y = radarea.top + 60; }
+	if ((origin.y + m_height) > (radarea.bottom)) { m_origin.y = radarea.bottom - m_height; }
+
+	windowIDs_++;
+}
+
 CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements) {
 	m_origin = origin;
 	m_winType = winType;
@@ -119,7 +166,6 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea
 	windowIDs_++;
 }
 
-
 CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea) {
 	m_origin = origin;
 	m_winType = winType;
@@ -205,16 +251,8 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 	SWindowElements w;
 	
 	int sDC = dc->SaveDC();
-	CFont font;
-	LOGFONT lgfont;
 
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-	lgfont.lfHeight = 14;
-	font.CreateFontIndirect(&lgfont);
-
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Segoe14);
 	dc->SetTextColor(RGB(230, 230, 230));
 
 	//default is unpressed state
@@ -279,7 +317,6 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
-	DeleteObject(font);
 	dc->RestoreDC(sDC);
 
 	w.titleBarRect = titleRect;
@@ -289,16 +326,7 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin) {
 	int sDC = m_dc->SaveDC();
 
-	CFont font;
-	LOGFONT lgfont;
-
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-	lgfont.lfHeight = 14;
-	font.CreateFontIndirect(&lgfont);
-
-	m_dc->SelectObject(font);
+	m_dc->SelectObject(CFontHelper::Segoe14);
 	m_dc->SetTextColor(RGB(230, 230, 230));
 
 	HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY1);
@@ -337,23 +365,13 @@ void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 	DeleteObject(tb2);
-	DeleteObject(font);
 	m_dc->RestoreDC(sDC);
 }
 
 void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	int sDC = m_dc->SaveDC();
 
-	CFont font;
-	LOGFONT lgfont;
-
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-	lgfont.lfHeight = 14;
-	font.CreateFontIndirect(&lgfont);
-
-	m_dc->SelectObject(font);
+	m_dc->SelectObject(CFontHelper::Segoe14);
 	m_dc->SetTextColor(RGB(230, 230, 230));
 
 	HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY1);
@@ -380,6 +398,5 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 	DeleteObject(tb2);
-	DeleteObject(font);
 	m_dc->RestoreDC(sDC);
 }

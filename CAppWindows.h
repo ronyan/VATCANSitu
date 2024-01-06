@@ -2,6 +2,7 @@
 #include "SituPlugin.h"
 #include "constants.h"
 #include <vector>
+#include "CFontHelper.h"
 
 struct SWindowElements {
 	RECT titleBarRect;
@@ -255,16 +256,7 @@ struct SWindowButton {
 	void RenderButton(POINT p) {
 		int sDC = m_dc->SaveDC();
 
-		CFont font;
-		LOGFONT lgfont;
-
-		memset(&lgfont, 0, sizeof(LOGFONT));
-		lgfont.lfWeight = 500;
-		strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-		lgfont.lfHeight = 14;
-		font.CreateFontIndirect(&lgfont);
-
-		m_dc->SelectObject(font);
+		m_dc->SelectObject(CFontHelper::Segoe14);
 		m_dc->SetTextColor(RGB(230, 230, 230));
 
 		HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY1);
@@ -282,7 +274,6 @@ struct SWindowButton {
 		DeleteObject(targetPen);
 		DeleteObject(targetBrush);
 		DeleteObject(tb2);
-		DeleteObject(font);
 		m_dc->RestoreDC(sDC);
 
 		CopyRect(&m_WindowButtonRect, &button);
@@ -311,6 +302,7 @@ public:
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
+	CAppWindows(POINT origin, int winType, RECT radarea);
 	SListBox GetListBox(int id) {
 		return *find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](const SListBox& obj) { return obj.m_ListBoxID == id; });
 	}

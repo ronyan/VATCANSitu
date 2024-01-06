@@ -117,9 +117,7 @@ const int TBS_FOLLOWER_TOGGLE = 311;
 // Radar Background
 const int SCREEN_BACKGROUND = 501;
 
-const int ADD_FREE_TEXT = 1101;
-const int DELETE_FREE_TEXT = 1102;
-const int DELETE_ALL_FREE_TEXT = 1103;
+const int FREE_TEXT = 1101;
 
 // AC lists
 const int LIST_OFF_SCREEN = 8000;
@@ -147,3 +145,4 @@ const int HIGHLIGHT_POINT_OUT_ACCEPT = 6006;
 const int WINDOW_DIRECT_TO = 6007;
 const int WINDOW_SCROLL_ARROW_UP = 6008;
 const int WINDOW_SCROLL_ARROW_DOWN = 6009;
+const int WINDOW_FREE_TEXT = 6010;

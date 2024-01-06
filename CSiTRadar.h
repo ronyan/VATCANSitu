@@ -74,6 +74,12 @@ struct SFocusItem {
     STextField* m_focused_tf;
 };
 
+struct SFreeText {
+    int m_id{0};
+    CPosition m_pos;
+    string m_freetext_string;
+};
+
 struct buttonStates {
     bool haloTool;
     bool ptlTool;
@@ -101,9 +107,11 @@ struct buttonStates {
     bool wxOn{ FALSE };
     bool mvaDisp{ false };
 
+    int numFreeText{ 0 };
+
     set<string> activeArpt;
     map<string, bool> nearbyCJS;
-
+    vector<SFreeText> freetext;
 
     bool SFIMode{};
     SFocusItem focusedItem;
@@ -130,6 +138,7 @@ struct buttonStates {
     clock_t lastMetarRefresh = 0;
     clock_t lastAtisRefresh = 0;
 
+    bool bgM3Click{ false };
     bool mouseMMB{ false };
     bool MB3menu{ false };
     POINT MB3clickedPt{ 0,0 };
@@ -137,6 +146,8 @@ struct buttonStates {
     RECT MB3primRect{};
     bool MB3SecondaryMenuOn{ true };
     bool MB3hoverOn{ false };
+    int MB3menuType{ 0 }; // 0 for AC, 1 for freetext, more if needed
+    int freetextselectedID{};
     string MB3SecondaryMenuType{};
     string SFIPrefString{};
     string SFIPrefStringASRSetting{};
@@ -186,15 +197,9 @@ public:
     void Draw() 
     {
         int sDC = dc->SaveDC();
-        CFont font;
-        LOGFONT lgfont;
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfHeight = 14;
-        lgfont.lfWeight = 500;
-        strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-        font.CreateFontIndirect(&lgfont);
+
         dc->SetTextColor(C_WHITE);
-        dc->SelectObject(font);
+        dc->SelectObject(CFontHelper::Euroscope14);
         string header;
 
         // Draw the heading
@@ -212,10 +217,7 @@ public:
         bool collapsed{ false };
         bool showArrow = false;
 
-
-
         dc->RestoreDC(sDC);
-        DeleteObject(font);
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
     }
@@ -257,6 +259,8 @@ public:
     static unordered_map<string, int> tempTagData;
     static unordered_map<string, clock_t> hoAcceptedTime;
     static map<string, bool> destAirportList;
+    static unordered_map<string, bool> acADSB;
+    static unordered_map<string, bool> acRVSM;
 
     static buttonStates menuState;
 

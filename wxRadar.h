@@ -559,6 +559,7 @@ public:
 
     static std::shared_mutex altimeterMutex;
     static std::shared_mutex atisLetterMutex;
+    static json jsVatsimDataFeed;
 
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 

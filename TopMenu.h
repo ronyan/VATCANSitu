@@ -8,6 +8,7 @@
 #include "pch.h"
 #include "constants.h"
 #include "CSiTRadar.h"
+#include "CFontHelper.h"
 
 using namespace std;
 
@@ -61,16 +62,7 @@ public:
     static RECT DrawBut(CDC* dc, menuButton mbut) {
         int sDC = dc->SaveDC();
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc->SelectObject(font);
+        dc->SelectObject(CFontHelper::Segoe12);
         dc->SetTextColor(mbut.textColor);
 
         //default is unpressed state
@@ -107,7 +99,6 @@ public:
 
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
-        DeleteObject(font);
 
         dc->RestoreDC(sDC);
 
@@ -118,16 +109,7 @@ public:
     {        
         int sDC = dc->SaveDC();
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700; 
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc->SelectObject(font);
+        dc->SelectObject(CFontHelper::Segoe12);
         dc->SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state
@@ -164,7 +146,6 @@ public:
 
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
-        DeleteObject(font);
 
         dc->RestoreDC(sDC);
 
@@ -177,16 +158,7 @@ public:
         CDC dc;
         dc.Attach(hdc);
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc.SelectObject(font);
+        dc.SelectObject(CFontHelper::Segoe12);
         dc.SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state
@@ -223,7 +195,6 @@ public:
 
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
-        DeleteObject(font);
 
         dc.Detach();
 
@@ -255,16 +226,7 @@ public:
         CDC dc;
         dc.Attach(hdc);
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc.SelectObject(font);
+        dc.SelectObject(CFontHelper::Segoe12);
         dc.SetTextColor(RGB(230, 230, 230));
 
         // text rectangle
@@ -276,8 +238,6 @@ public:
 
         dc.DrawText(CString(btext), &rect1, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 
-        DeleteObject(font);
-
         dc.Detach();
 
         return rect1;
@@ -288,16 +248,7 @@ public:
         CDC dc;
         dc.Attach(hdc);
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc.SelectObject(font);
+        dc.SelectObject(CFontHelper::Segoe12);
         dc.SetTextColor(RGB(230, 230, 230));
 
         // text rectangle
@@ -309,8 +260,6 @@ public:
 
         dc.DrawText(CString(btext), &rect1, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
-        DeleteObject(font);
-
         dc.Detach();
 
         return rect1;
@@ -320,16 +269,7 @@ public:
         CDC dc;
         dc.Attach(hdc);
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc.SelectObject(font);
+        dc.SelectObject(CFontHelper::Segoe12);
         dc.SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state
@@ -361,7 +301,6 @@ public:
 
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
-        DeleteObject(font);
 
         dc.Detach();
 
@@ -373,16 +312,7 @@ public:
         CDC dc;
         dc.Attach(hdc);
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc.SelectObject(font);
+        dc.SelectObject(CFontHelper::Segoe14);
         dc.SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state
@@ -414,7 +344,6 @@ public:
 
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
-        DeleteObject(font);
 
         dc.Detach();
 
@@ -472,20 +401,8 @@ public:
     static RECT DrawWindow(CDC* dc, EuroScopePlugIn::CRadarScreen* radscr, POINT origin, int width, int height) {
         int sDC = dc->SaveDC();
 
-        CFont font;
-        LOGFONT lgfont;
-
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfWeight = 700;
-        strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-        lgfont.lfHeight = 12;
-        font.CreateFontIndirect(&lgfont);
-
-        dc->SelectObject(font);
+        dc->SelectObject(CFontHelper::Segoe12);
         dc->SetTextColor(RGB(230, 230, 230));
-
-
-
 
         dc->RestoreDC(sDC);
     }

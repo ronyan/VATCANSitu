@@ -40,6 +40,10 @@ public:
 	static RECT totalRect;
 	int m_width_;
 
+	CPopUpMenu(POINT p) {
+		m_origin = p;
+	}
+
 	CPopUpMenu(POINT p, CFlightPlan* fp, CRadarScreen* rad) {
 		m_origin = p;
 		m_fp = fp;
