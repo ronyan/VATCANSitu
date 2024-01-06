@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "cpdlc.h"
 #include <vector>
+#include "CFontHelper.h"
 
 struct SWindowElements {
 	RECT titleBarRect;
@@ -349,7 +350,6 @@ struct SWindowButton {
 		DeleteObject(targetPen);
 		DeleteObject(targetBrush);
 		DeleteObject(tb2);
-		DeleteObject(font);
 		m_dc->RestoreDC(sDC);
 
 		CopyRect(&m_WindowButtonRect, &button);

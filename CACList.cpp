@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CACList.h"
+#include "CFontHelper.h"
 
 unsigned long CACListItem::m_list_IDs_; 
 unsigned int CACListItemElement::m_list_item_element_IDs_;
@@ -11,15 +12,8 @@ CACList::CACList() {
 void CACList::DrawList()
 {
 	int sDC = m_dc->SaveDC();
-	CFont font;
-	LOGFONT lgfont;
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
 	m_dc->SetTextColor(C_WHITE);
-	m_dc->SelectObject(font);
+	m_dc->SelectObject(CFontHelper::Euroscope14);
 
 	string header = m_header;
 
@@ -71,7 +65,6 @@ void CACList::DrawList()
 		m_dc->Polygon(vertices, 3);
 	}
 
-	DeleteObject(font);
 	DeleteObject(targetBrush);
 	DeleteObject(targetPen);
 }

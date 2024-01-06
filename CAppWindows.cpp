@@ -430,16 +430,8 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 	SWindowElements w;
 	
 	int sDC = dc->SaveDC();
-	CFont font;
-	LOGFONT lgfont;
 
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-	lgfont.lfHeight = 14;
-	font.CreateFontIndirect(&lgfont);
-
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Segoe14);
 	dc->SetTextColor(RGB(230, 230, 230));
 
 	//default is unpressed state
@@ -536,7 +528,6 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
-	DeleteObject(font);
 	dc->RestoreDC(sDC);
 
 	w.titleBarRect = titleRect;
@@ -638,16 +629,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin) {
 	int sDC = m_dc->SaveDC();
 
-	CFont font;
-	LOGFONT lgfont;
-
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-	lgfont.lfHeight = 14;
-	font.CreateFontIndirect(&lgfont);
-
-	m_dc->SelectObject(font);
+	m_dc->SelectObject(CFontHelper::Segoe14);
 	m_dc->SetTextColor(RGB(230, 230, 230));
 
 	HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY1);
@@ -686,7 +668,6 @@ void SListBox::RenderListBox(int firstElem, int numElem, int maxElements, POINT 
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 	DeleteObject(tb2);
-	DeleteObject(font);
 	m_dc->RestoreDC(sDC);
 }
 

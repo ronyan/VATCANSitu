@@ -3,6 +3,7 @@
 #include "CSiTRadar.h"
 #include "constants.h"
 #include "ACTag.h"
+#include "CFontHelper.h"
 
 const int TAG_ITEM_CPDLC = 4999;
 const int TAG_ITEM_IFR_REL = 5000;
@@ -572,17 +573,11 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         case WM_MBUTTONDBLCLK: {
         }
         case WM_RBUTTONDOWN: {
-            POINT Pt{};
-            Pt.x = mouseStruct->pt.x;
-            Pt.y = mouseStruct->pt.y;
             CSiTRadar::menuState.MB3clickedPt = Pt;
             CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
             return CallNextHookEx(NULL, nCode, wParam, lParam);
         }
         case WM_RBUTTONUP: {
-            POINT Pt{};
-            Pt.x = mouseStruct->pt.x;
-            Pt.y = mouseStruct->pt.y;
             if (Pt.x == CSiTRadar::menuState.MB3clickedPt.x &&
                 Pt.y == CSiTRadar::menuState.MB3clickedPt.y) {
 
@@ -605,7 +600,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.5.10.1",
+		"0.5.11.0",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
@@ -618,10 +613,16 @@ SituPlugin::SituPlugin()
     DWORD appProc = GetCurrentThreadId();
     appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
     mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, NULL, appProc);
+
+    CFontHelper::CreateFonts();
+
 }
 
 SituPlugin::~SituPlugin()
 {
+
+    CFontHelper::DeleteFonts();
+
     UnhookWindowsHookEx(appHook);
     UnhookWindowsHookEx(mouseHook);
 }

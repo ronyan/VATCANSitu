@@ -13,6 +13,8 @@ buttonStates CSiTRadar::menuState = {};
 bool CSiTRadar::halfSecTick = FALSE;
 CRadarScreen* CSiTRadar::m_pRadScr;
 unordered_map<int, ACList> acLists;
+unordered_map<string, bool> CSiTRadar::acADSB;
+unordered_map<string, bool> CSiTRadar::acRVSM;
 
 CSiTRadar::CSiTRadar()
 {
@@ -327,8 +329,21 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 
+			auto squawkCodeIt = menuState.squawkCodes.begin();
+
+			while (squawkCodeIt != menuState.squawkCodes.end())
+			{
+				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), squawkCodeIt->fpcs) == menuState.recentCallsignsSeen.end())
+				{
+					squawkCodeIt = menuState.squawkCodes.erase(squawkCodeIt);
+				}
+				else {
+					++squawkCodeIt;
+				}
+			}
+
 			menuState.lastAcListMaint = clock();
-			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
+			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "menuState.squawkCodes:", to_string(menuState.squawkCodes.size()).c_str(), true, false, false, false, false);
 
 		}
 	}
@@ -400,17 +415,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
-						CFont font;
-						LOGFONT lgfont;
 						COLORREF cjsColor = C_PPS_YELLOW;
 
-						memset(&lgfont, 0, sizeof(LOGFONT));
-						lgfont.lfWeight = 500;
-						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 14;
-						font.CreateFontIndirect(&lgfont);
-
-						dc.SelectObject(font);
+						dc.SelectObject(CFontHelper::Euroscope14);
 						dc.SetTextColor(cjsColor);
 
 						RECT rectCJS;
@@ -421,7 +428,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
-						DeleteObject(font);
 					}
 
 					if (radarTarget.GetPosition().GetRadarFlags() != 0) {
@@ -539,8 +545,10 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					if (!radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) // Filter the aircraft if this statement is true, i.e. I'm not tracking
 					{
-						if (!strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) == 0 &&
-							!strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") != 0) {
+						if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) != 0 &&
+							strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
+
+	
 
 								if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
 									&& !menuState.filterBypassAll
@@ -551,7 +559,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
 									&& !menuState.filterBypassAll
 									&& !isDest) {
-									continue;
+
+									if (radarTarget.GetPosition().GetRadarFlags() != 1) { // can't filter primary targets will make it just respect the high limit, to avoid ground clutter
+										continue;
+									}
+
 								}
 							
 						}
@@ -577,15 +589,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						targetPen = CreatePen(PS_DASHDOT, 1, C_WHITE);
 						dc.SelectObject(targetPen);
 
-						CFont font;
-						LOGFONT lgfont;
-
-						memset(&lgfont, 0, sizeof(LOGFONT));
-						lgfont.lfWeight = 500;
-						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 14;
-						font.CreateFontIndirect(&lgfont);
-
 						dc.MoveTo(p);
 						dc.LineTo(ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition));
 
@@ -597,7 +600,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						dc.DrawText(mAcData[callSign].directToPendingFixName.c_str(), &dctFixNameRect, DT_CENTER);
 
 						DeleteObject(targetPen);
-						DeleteObject(font);
 
 					}
 
@@ -616,15 +618,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
-
-							if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
-								(!CSiTRadar::menuState.ebPTL && !CSiTRadar::menuState.wbPTL) ||
-								(CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 180 && radarTarget.GetPosition().GetReportedHeading() < 360)
-
-								) {
-								HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
-							}
-
+							HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+							
 						}
 					}
 					else if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
@@ -740,16 +735,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 										POINT followerP = HaloTool::drawTBS(&dc, radarTarget, this, p, tbsDist, pixnm, (double)((double)menuState.tbsHdg - 10));
 
 										// draw letter to allow toggling of follower
-										CFont font;
-										LOGFONT lgfont;
 
-										memset(&lgfont, 0, sizeof(LOGFONT));
-										lgfont.lfWeight = 300;
-										strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-										lgfont.lfHeight = 14;
-										font.CreateFontIndirect(&lgfont);
-
-										dc.SelectObject(font);
+										dc.SelectObject(CFontHelper::Euroscope14);
 										dc.SetTextColor(C_PPS_TBS_PINK);
 
 										RECT rectTBS;
@@ -767,8 +754,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 										dc.DrawText(tbsFollowerStr.c_str(), &rectTBS, DT_LEFT);
 										AddScreenObject(TBS_FOLLOWER_TOGGLE, callSign.c_str(), rectTBS, false, "Toggle TBS Follower");
 
-
-										DeleteObject(font);
 									}
 								}
 							}
@@ -913,16 +898,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated)) { // || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
-							CFont font;
-							LOGFONT lgfont;
 
-							memset(&lgfont, 0, sizeof(LOGFONT));
-							lgfont.lfWeight = 500;
-							strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-							lgfont.lfHeight = 14;
-							font.CreateFontIndirect(&lgfont);
-
-							dc.SelectObject(font);
+							dc.SelectObject(CFontHelper::Euroscope14);
 							dc.SetTextColor(cjsColor);
 
 							RECT rectCJS;
@@ -942,7 +919,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
 							dc.SetTextColor(cjsColor);
-							DeleteObject(font);
 						}
 					}
 
@@ -963,16 +939,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
 					dc.SelectObject(targetPen);
 					dc.SelectStockObject(NULL_BRUSH);
-					CFont font;
-					LOGFONT lgfont;
 
-					memset(&lgfont, 0, sizeof(LOGFONT));
-					lgfont.lfWeight = 500;
-					strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-					lgfont.lfHeight = 14;
-					font.CreateFontIndirect(&lgfont);
-
-					dc.SelectObject(font);
+					dc.SelectObject(CFontHelper::Euroscope14);
 					dc.SetTextColor(C_WHITE);
 
 
@@ -1077,8 +1045,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-
-					DeleteObject(font);
 					DeleteObject(targetPen);
 
 
@@ -1172,15 +1138,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (phase == REFRESH_PHASE_AFTER_LISTS) {
 
 				// Free Text
-				CFont font;
-				LOGFONT lgfont;
-
-				memset(&lgfont, 0, sizeof(LOGFONT));
-				lgfont.lfWeight = 400;
-				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-				lgfont.lfHeight = 14;
-				font.CreateFontIndirect(&lgfont);
-				dc.SelectObject(font);
+				dc.SelectObject(CFontHelper::Euroscope14);
 				dc.SetTextColor(C_PPS_YELLOW);
 
 
@@ -1194,8 +1152,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					txt = "Free Text" + to_string(t.m_id);
 					AddScreenObject(FREE_TEXT, to_string(t.m_id).c_str(), r, true, txt.c_str());
 				}
-
-				DeleteObject(font);
 
 				//
 
@@ -1653,7 +1609,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				
 					TopMenu::DrawBackground(dc, { 975, radarea.top }, 200, 95);
 
-					TopMenu::MakeText(dc, { 990, 33 }, 45, 15, "TBS FAC \:");
+					TopMenu::MakeText(dc, { 990, 33 }, 45, 15, "TBS FAC :");
 
 					auto crs = TopMenu::MakeField(dc, { 1040, 34 }, 32, 15, to_string(menuState.tbsHdg).c_str());
 					AddScreenObject(BUTTON_MENU_TBS_HDG, "tbscrs", crs, 0, "");
@@ -2099,8 +2055,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						double longitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Longitude, &lon);
 						double latitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Latitude, &lat);
 
-						latmin = abs(round(latitudedecmin * 60));
-						lonmin = abs(round(longitudedecmin * 60));
+						latmin = static_cast<float>(abs(round(latitudedecmin * 60)));
+						lonmin = static_cast<float>(abs(round(longitudedecmin * 60)));
 						string lonstring = to_string(static_cast<int>(abs(lon)));
 						if (lonstring.size() < 3) {
 							lonstring.insert(lonstring.begin(), 3 - lonstring.size(), '0');
@@ -2136,7 +2092,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						}
 						else {
 							rtestr = pposStr;
-							for (int i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
+							for (size_t i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
 								rtestr += mAcData[cs].acFPRoute.fix_names.at(i) + " ";
 							}
 						}
@@ -3456,26 +3412,34 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.acFPRoute = mAcData[callSign].acFPRoute; // cache so it's not lost
 	bool isVFR = !strcmp(FlightPlan.GetFlightPlanData().GetPlanType(), "V");
 
-	// Get information about the Aircraft/Flightplan
 	string icaoACData = FlightPlan.GetFlightPlanData().GetAircraftInfo(); // logic to 
-	regex icaoRVSM("(.*)\\/(.*)\\-(.*)[W](.*)\\/(.*)", regex::icase);
-	bool isRVSM = regex_search(icaoACData, icaoRVSM); // first check for ICAO; then check FAA
+	// Get information about the Aircraft/Flightplan
+	// check against map
+
+	bool isRVSM{ false };
+	try {
+		isRVSM = CSiTRadar::acRVSM.at(callSign);      // vector::at throws an out-of-range
+	}
+	catch (const std::out_of_range& oor) {
+
+	}
+
+	// first check for ICAO; then check FAA
 	if (FlightPlan.GetFlightPlanData().GetCapibilities() == 'L' ||
 		FlightPlan.GetFlightPlanData().GetCapibilities() == 'W' ||
 		FlightPlan.GetFlightPlanData().GetCapibilities() == 'Z') {
 		isRVSM = TRUE;
 	}
-	/* VATSIM No Longer implements ICAO codes for equipment
-	* 
-	* 
-	regex icaoADSB("(.*)\\/(.*)\\-(.*)\\/(.*)(E|L|B1|B2|U1|U2|V1|V2)(.*)");
-	bool isADSB = regex_search(icaoACData, icaoADSB);
 
-	*/
+	bool isADSB{ false };
+	try {
+		isADSB = CSiTRadar::acADSB.at(callSign);      // vector::at throws an out-of-range
+	}
+	catch (const std::out_of_range& oor) {
+		
+	}
 
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
-
-	bool isADSB = false;
 	
 	string CJS = FlightPlan.GetTrackingControllerId();
 	string origin = FlightPlan.GetFlightPlanData().GetOrigin();
@@ -3489,6 +3453,8 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	acdata.isRVSM = isRVSM;
 	if (remarks.find("STS/MEDEVAC") != remarks.npos) { acdata.isMedevac = true; }
 	if (remarks.find("STS/ADSB") != remarks.npos) { acdata.isADSB = true; }
+
+	/*
 	if (!origin.empty() && !destin.empty()) {
 		if (origin.at(0) == 'K' || destin.at(0) == 'K' || origin.at(0) == 'P' || destin.at(0) == 'P') { acdata.isADSB = true; }
 	}
@@ -3499,6 +3465,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	{
 		acdata.isADSB = true;
 	}
+	*/
 
 	mAcData[callSign] = acdata;
 
@@ -3568,15 +3535,9 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType)
 {	
 	int sDC = dc->SaveDC();
-	CFont font;
-	LOGFONT lgfont;
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
+
 	dc->SetTextColor(C_WHITE);
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Euroscope14);
 	string header;
 
 	// Draw the heading
@@ -3745,7 +3706,6 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 	}
 
 	dc->RestoreDC(sDC);
-	DeleteObject(font);
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 }
