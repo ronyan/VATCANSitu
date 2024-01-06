@@ -294,8 +294,21 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 			}
 
+			auto squawkCodeIt = menuState.squawkCodes.begin();
+
+			while (squawkCodeIt != menuState.squawkCodes.end())
+			{
+				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), squawkCodeIt->fpcs) == menuState.recentCallsignsSeen.end())
+				{
+					squawkCodeIt = menuState.squawkCodes.erase(squawkCodeIt);
+				}
+				else {
+					++squawkCodeIt;
+				}
+			}
+
 			menuState.lastAcListMaint = clock();
-			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "mAcData Size:", to_string(mAcData.size()).c_str(), true, false, false, false, false);
+			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "menuState.squawkCodes:", to_string(menuState.squawkCodes.size()).c_str(), true, false, false, false, false);
 
 		}
 	}
