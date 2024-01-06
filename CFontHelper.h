@@ -9,6 +9,7 @@ public:
 	static CFont EuroscopeBold;
 	static CFont Euroscope16;
 	static CFont Segoe12;
+	static CFont Segoe14;
 
 	static void CreateFonts(); 
 	static void DeleteFonts();

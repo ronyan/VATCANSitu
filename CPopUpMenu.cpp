@@ -129,16 +129,7 @@ void CPopUpMenu::populateSecondaryMenu(string type) {
 void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
     int sDC = m_dc->SaveDC();
 
-    CFont font;
-    LOGFONT lgfont;
-
-    memset(&lgfont, 0, sizeof(LOGFONT));
-    lgfont.lfWeight = 500;
-    strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
-    lgfont.lfHeight = 14;
-    font.CreateFontIndirect(&lgfont);
-
-    m_dc->SelectObject(font);
+    m_dc->SelectObject(CFontHelper::Segoe14);
     m_dc->SetTextColor(RGB(230, 230, 230));
 
     //default is unpressed state
@@ -197,7 +188,6 @@ void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
 
     DeleteObject(targetPen);
     DeleteObject(targetBrush);
-    DeleteObject(font);
 
     m_dc->RestoreDC(sDC);
 }

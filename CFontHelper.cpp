@@ -5,6 +5,7 @@ CFont CFontHelper::Euroscope14;
 CFont CFontHelper::EuroscopeBold;
 CFont CFontHelper::Euroscope16;
 CFont CFontHelper::Segoe12;
+CFont CFontHelper::Segoe14;
 
 void CFontHelper::CreateFonts()
 {
@@ -29,6 +30,11 @@ void CFontHelper::CreateFonts()
 	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
 	lgfont.lfHeight = 12;
 	CFontHelper::Segoe12.CreateFontIndirect(&lgfont);
+
+	lgfont.lfWeight = 500;
+	strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+	lgfont.lfHeight = 14;
+	CFontHelper::Segoe14.CreateFontIndirect(&lgfont);
 
 }
 

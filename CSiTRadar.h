@@ -197,15 +197,9 @@ public:
     void Draw() 
     {
         int sDC = dc->SaveDC();
-        CFont font;
-        LOGFONT lgfont;
-        memset(&lgfont, 0, sizeof(LOGFONT));
-        lgfont.lfHeight = 14;
-        lgfont.lfWeight = 500;
-        strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-        font.CreateFontIndirect(&lgfont);
+
         dc->SetTextColor(C_WHITE);
-        dc->SelectObject(font);
+        dc->SelectObject(CFontHelper::Euroscope14);
         string header;
 
         // Draw the heading
@@ -223,10 +217,7 @@ public:
         bool collapsed{ false };
         bool showArrow = false;
 
-
-
         dc->RestoreDC(sDC);
-        DeleteObject(font);
         DeleteObject(targetPen);
         DeleteObject(targetBrush);
     }
