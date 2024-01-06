@@ -583,15 +583,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
-
-							if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
-								(!CSiTRadar::menuState.ebPTL && !CSiTRadar::menuState.wbPTL) ||
-								(CSiTRadar::menuState.wbPTL && radarTarget.GetPosition().GetReportedHeading() > 180 && radarTarget.GetPosition().GetReportedHeading() < 360)
-
-								) {
-								HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
-							}
-
+							HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
+							
 						}
 					}
 					else if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
