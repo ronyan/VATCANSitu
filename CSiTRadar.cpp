@@ -586,7 +586,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 							if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
 								(!CSiTRadar::menuState.ebPTL && !CSiTRadar::menuState.wbPTL) ||
-								(CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 180 && radarTarget.GetPosition().GetReportedHeading() < 360)
+								(CSiTRadar::menuState.wbPTL && radarTarget.GetPosition().GetReportedHeading() > 180 && radarTarget.GetPosition().GetReportedHeading() < 360)
 
 								) {
 								HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
