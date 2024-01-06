@@ -570,17 +570,11 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         case WM_MBUTTONDBLCLK: {
         }
         case WM_RBUTTONDOWN: {
-            POINT Pt{};
-            Pt.x = mouseStruct->pt.x;
-            Pt.y = mouseStruct->pt.y;
             CSiTRadar::menuState.MB3clickedPt = Pt;
             CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
             return CallNextHookEx(NULL, nCode, wParam, lParam);
         }
         case WM_RBUTTONUP: {
-            POINT Pt{};
-            Pt.x = mouseStruct->pt.x;
-            Pt.y = mouseStruct->pt.y;
             if (Pt.x == CSiTRadar::menuState.MB3clickedPt.x &&
                 Pt.y == CSiTRadar::menuState.MB3clickedPt.y) {
 
