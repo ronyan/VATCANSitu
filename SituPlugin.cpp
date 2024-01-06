@@ -3,6 +3,7 @@
 #include "CSiTRadar.h"
 #include "constants.h"
 #include "ACTag.h"
+#include "CFontHelper.h"
 
 const int TAG_ITEM_IFR_REL = 5000;
 const int TAG_FUNC_IFR_REL_REQ = 5001;
@@ -608,10 +609,16 @@ SituPlugin::SituPlugin()
     DWORD appProc = GetCurrentThreadId();
     appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
     mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, NULL, appProc);
+
+    CFontHelper::CreateFonts();
+
 }
 
 SituPlugin::~SituPlugin()
 {
+
+    CFontHelper::DeleteFonts();
+
     UnhookWindowsHookEx(appHook);
     UnhookWindowsHookEx(mouseHook);
 }

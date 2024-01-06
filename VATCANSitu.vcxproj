@@ -197,6 +197,7 @@
     <ClCompile Include="CACList.cpp" />
     <ClCompile Include="CAppWindows.cpp" />
     <ClCompile Include="CAsyncResponse.cpp" />
+    <ClCompile Include="CFontHelper.cpp" />
     <ClCompile Include="CPopUpMenu.cpp" />
     <ClCompile Include="CSiTRadar.cpp" />
     <ClCompile Include="HaloTool.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="HaloTool.h" />
     <ClInclude Include="constants.h" />
+    <ClInclude Include="CFontHelper.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="lib\EuroScopePlugIn.h" />
     <ClInclude Include="pch.h" />

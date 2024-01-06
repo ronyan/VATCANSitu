@@ -367,17 +367,9 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated) || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 						string CJS = GetPlugIn()->FlightPlanSelect(callSign.c_str()).GetTrackingControllerId();
 
-						CFont font;
-						LOGFONT lgfont;
 						COLORREF cjsColor = C_PPS_YELLOW;
 
-						memset(&lgfont, 0, sizeof(LOGFONT));
-						lgfont.lfWeight = 500;
-						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 14;
-						font.CreateFontIndirect(&lgfont);
-
-						dc.SelectObject(font);
+						dc.SelectObject(CFontHelper::Euroscope14);
 						dc.SetTextColor(cjsColor);
 
 						RECT rectCJS;
@@ -388,7 +380,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
-						DeleteObject(font);
 					}
 
 					if (radarTarget.GetPosition().GetRadarFlags() != 0) {
@@ -544,15 +535,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						targetPen = CreatePen(PS_DASHDOT, 1, C_WHITE);
 						dc.SelectObject(targetPen);
 
-						CFont font;
-						LOGFONT lgfont;
-
-						memset(&lgfont, 0, sizeof(LOGFONT));
-						lgfont.lfWeight = 500;
-						strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-						lgfont.lfHeight = 14;
-						font.CreateFontIndirect(&lgfont);
-
 						dc.MoveTo(p);
 						dc.LineTo(ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition));
 
@@ -564,7 +546,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						dc.DrawText(mAcData[callSign].directToPendingFixName.c_str(), &dctFixNameRect, DT_CENTER);
 
 						DeleteObject(targetPen);
-						DeleteObject(font);
 
 					}
 
@@ -700,16 +681,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 										POINT followerP = HaloTool::drawTBS(&dc, radarTarget, this, p, tbsDist, pixnm, (double)((double)menuState.tbsHdg - 10));
 
 										// draw letter to allow toggling of follower
-										CFont font;
-										LOGFONT lgfont;
 
-										memset(&lgfont, 0, sizeof(LOGFONT));
-										lgfont.lfWeight = 300;
-										strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-										lgfont.lfHeight = 14;
-										font.CreateFontIndirect(&lgfont);
-
-										dc.SelectObject(font);
+										dc.SelectObject(CFontHelper::Euroscope14);
 										dc.SetTextColor(C_PPS_TBS_PINK);
 
 										RECT rectTBS;
@@ -727,8 +700,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 										dc.DrawText(tbsFollowerStr.c_str(), &rectTBS, DT_LEFT);
 										AddScreenObject(TBS_FOLLOWER_TOGGLE, callSign.c_str(), rectTBS, false, "Toggle TBS Follower");
 
-
-										DeleteObject(font);
 									}
 								}
 							}
@@ -873,16 +844,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if ((radarTarget.GetPosition().GetRadarFlags() >= 2 && isCorrelated)) { // || CSiTRadar::mAcData[radarTarget.GetCallsign()].isADSB) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
-							CFont font;
-							LOGFONT lgfont;
 
-							memset(&lgfont, 0, sizeof(LOGFONT));
-							lgfont.lfWeight = 500;
-							strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-							lgfont.lfHeight = 14;
-							font.CreateFontIndirect(&lgfont);
-
-							dc.SelectObject(font);
+							dc.SelectObject(CFontHelper::Euroscope14);
 							dc.SetTextColor(cjsColor);
 
 							RECT rectCJS;
@@ -902,7 +865,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							dc.DrawText(CJS.c_str(), &rectCJS, DT_LEFT);
 
 							dc.SetTextColor(cjsColor);
-							DeleteObject(font);
 						}
 					}
 
@@ -923,16 +885,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					targetPen = CreatePen(PS_SOLID, 1, C_WHITE);
 					dc.SelectObject(targetPen);
 					dc.SelectStockObject(NULL_BRUSH);
-					CFont font;
-					LOGFONT lgfont;
 
-					memset(&lgfont, 0, sizeof(LOGFONT));
-					lgfont.lfWeight = 500;
-					strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-					lgfont.lfHeight = 14;
-					font.CreateFontIndirect(&lgfont);
-
-					dc.SelectObject(font);
+					dc.SelectObject(CFontHelper::Euroscope14);
 					dc.SetTextColor(C_WHITE);
 
 
@@ -1037,8 +991,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						}
 					}
 
-
-					DeleteObject(font);
 					DeleteObject(targetPen);
 
 
@@ -1132,15 +1084,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			if (phase == REFRESH_PHASE_AFTER_LISTS) {
 
 				// Free Text
-				CFont font;
-				LOGFONT lgfont;
-
-				memset(&lgfont, 0, sizeof(LOGFONT));
-				lgfont.lfWeight = 400;
-				strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-				lgfont.lfHeight = 14;
-				font.CreateFontIndirect(&lgfont);
-				dc.SelectObject(font);
+				dc.SelectObject(CFontHelper::Euroscope14);
 				dc.SetTextColor(C_PPS_YELLOW);
 
 
@@ -1154,8 +1098,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					txt = "Free Text" + to_string(t.m_id);
 					AddScreenObject(FREE_TEXT, to_string(t.m_id).c_str(), r, true, txt.c_str());
 				}
-
-				DeleteObject(font);
 
 				//
 
@@ -3459,15 +3401,9 @@ void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType)
 {	
 	int sDC = dc->SaveDC();
-	CFont font;
-	LOGFONT lgfont;
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
+
 	dc->SetTextColor(C_WHITE);
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Euroscope14);
 	string header;
 
 	// Draw the heading
@@ -3636,7 +3572,6 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 	}
 
 	dc->RestoreDC(sDC);
-	DeleteObject(font);
 	DeleteObject(targetPen);
 	DeleteObject(targetBrush);
 }

@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "CSiTRadar.h"
 #include "SituPlugin.h"
+#include "CFontHelper.h"
 
 using namespace std;
 

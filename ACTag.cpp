@@ -31,14 +31,7 @@ void CACTag::DrawFPACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	// save context
 	int sDC = dc->SaveDC();
 
-	CFont font;
-	LOGFONT lgfont;
-	memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Euroscope14);
 
 	// Find position of aircraft
 	if (rt->IsValid())
@@ -104,9 +97,6 @@ void CACTag::DrawFPACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 
 	// restore context
 	dc->RestoreDC(sDC);
-
-	// cleanup
-	DeleteObject(font);
 }
 
 // Draws tag for Radar Targets
@@ -356,24 +346,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	// save context
 	int sDC = dc->SaveDC();
 
-	CFont font;
-	CFont boldfont;
-	CFont bigACIDfont;
-	LOGFONT lgfont;
-	std::memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	//lgfont.lfQuality = NONANTIALIASED_QUALITY;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
-	lgfont.lfWeight = 1200;
-	boldfont.CreateFontIndirect(&lgfont);
-	lgfont.lfWeight = 500;
-	//lgfont.lfQuality = NONANTIALIASED_QUALITY;
-	lgfont.lfHeight = 16;
-	//lgfont.lfQuality = CLEARTYPE_QUALITY;
-	bigACIDfont.CreateFontIndirect(&lgfont);
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Euroscope14);
 
 	RECT rline1; // bring scope out to allow connector to be drawn
 
@@ -398,7 +371,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		rline1.bottom = line2.y;
 
 		if (CSiTRadar::menuState.bigACID) {
-			dc->SelectObject(bigACIDfont);
+			dc->SelectObject(CFontHelper::EuroscopeBold);
 			rline1.top -= 2;
 		}
 
@@ -410,7 +383,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 				dc->SetTextColor(C_WHITE);
 			}
 
-			dc->SelectObject(boldfont);
+			dc->SelectObject(CFontHelper::EuroscopeBold);
 
 			dc->DrawText("+", &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText("+", &rline1, DT_LEFT);
@@ -421,7 +394,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 
 		dc->SetTextColor(C_PPS_YELLOW);
 		if (CSiTRadar::menuState.bigACID) {
-			dc->SelectObject(bigACIDfont);
+			dc->SelectObject(CFontHelper::Euroscope16);
 		}
 		if (blinking && CSiTRadar::halfSecTick)
 		{
@@ -485,7 +458,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 			CSiTRadar::mAcData[rt->GetCallsign()].tagWidth = rline1.right - tagCallsign.left + 6;
 		}
 
-		dc->SelectObject(font);
+		dc->SelectObject(CFontHelper::Euroscope14);
 
 		// Line 2
 		RECT rline2;
@@ -973,11 +946,6 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		uline1.left = uline1.right + 5;
 	}
 
-	// cleanup
-	DeleteObject(font);
-	DeleteObject(boldfont);
-	DeleteObject(bigACIDfont);
-
 	// restore context
 	dc->RestoreDC(sDC);
 }
@@ -1087,17 +1055,7 @@ void CACTag::DrawNARDSTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightP
 	// save context
 	int sDC = dc->SaveDC();
 
-	CFont font;
-	CFont boldfont;
-	LOGFONT lgfont;
-	std::memset(&lgfont, 0, sizeof(LOGFONT));
-	lgfont.lfHeight = 14;
-	lgfont.lfWeight = 500;
-	strcpy_s(lgfont.lfFaceName, _T("EuroScope"));
-	font.CreateFontIndirect(&lgfont);
-	lgfont.lfWeight = 1200;
-	boldfont.CreateFontIndirect(&lgfont);
-	dc->SelectObject(font);
+	dc->SelectObject(CFontHelper::Euroscope14);
 
 	// Draw Connector
 
@@ -1261,13 +1219,13 @@ void CACTag::DrawNARDSTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightP
 				dc->SetTextColor(C_WHITE);
 			}
 
-			dc->SelectObject(boldfont);
+			dc->SelectObject(CFontHelper::EuroscopeBold);
 
 			dc->DrawText("+", &rline1, DT_LEFT | DT_CALCRECT);
 			dc->DrawText("+", &rline1, DT_LEFT);
 			dc->SetTextColor(C_PPS_YELLOW);
 
-			dc->SelectObject(font);
+			dc->SelectObject(CFontHelper::Euroscope14);
 
 			rline1.left = rline1.right;
 			rline1.right = rline1.left;
@@ -1350,10 +1308,6 @@ void CACTag::DrawNARDSTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightP
 
 	// restore context
 	dc->RestoreDC(sDC);
-
-	// cleanup
-	DeleteObject(font);
-	DeleteObject(boldfont);
 }
 
 void CACTag::DrawFPConnector(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPlan *fp, COLORREF color, unordered_map<string, POINT> *tOffset)
