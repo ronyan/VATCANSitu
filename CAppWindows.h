@@ -213,30 +213,11 @@ struct SListBox {
 		int i=0; 
 		for (auto& msg : msgs ) {
 
-		// DM0-4 and UL0-5 are responses and do not get their own entry;
-			if (msg.rawMessageContent == "WILCO" ||
-				msg.rawMessageContent == "UNABLE" ||
-				msg.rawMessageContent == "NEGATIVE" ||
-				msg.rawMessageContent == "STANDBY" ||
-				msg.rawMessageContent == "ROGER" ||
-				msg.rawMessageContent == "STANDBY") {
-
-				// do nothing
-			}
-			else {
-				//if there is a response; call overload that pushes back a response function
-
-				
-				//if not just put the single message overload
-				SListBoxElement lbe(330, msg);
-				listBox_.push_back(lbe);
-				i++;
-			}
-
+			SListBoxElement lbe(330, msg);
+			listBox_.push_back(lbe);
+			i++;
 
 		}
-
-		// push them back into a LB vector;
 	}
 
 	void PopulateDirectListBox(ACRoute* rte, CFlightPlan fp) {

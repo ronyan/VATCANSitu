@@ -570,80 +570,144 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 
 	for (auto it = listBox_.rbegin(); it != listBox_.rend(); ++it) {
 
-		if (listBox_.size() > 8) {
-			it->m_width = 316;
+		if (it->m_cpdlc_message.rawMessageContent == "WILCO" ||
+			it->m_cpdlc_message.rawMessageContent == "UNABLE" ||
+			it->m_cpdlc_message.rawMessageContent == "NEGATIVE" ||
+			it->m_cpdlc_message.rawMessageContent == "STANDBY" ||
+			it->m_cpdlc_message.rawMessageContent == "ROGER" ||
+			it->m_cpdlc_message.rawMessageContent == "STANDBY" ||
+			it->m_cpdlc_message.rawMessageContent == "LOGON ACCEPTED") {
+
+			// Defer drawing these ones
+
 		}
 
-		if (row >= m_LB_firstElem_idx && row < m_LB_firstElem_idx + 8) {
-			m_dc->SelectObject(targetPen2);
-			m_dc->SelectObject(targetBrush2);
+		else {
 
-			this->m_width = it->m_width;
-			RECT r = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
-			CopyRect(&it->m_ListBoxRect, &r);
-
-			if (it->m_selected_) {
-				m_dc->SetTextColor(C_MENU_GREY1);
-				m_dc->SelectObject(tb2);
-			}
-			else {
-				m_dc->SetTextColor(RGB(230, 230, 230));
+			if (listBox_.size() > 8) {
+				it->m_width = 316;
 			}
 
-			if (stripe % 2 == 0 && !it->m_selected_) {
-				m_dc->SelectObject(targetPen);
-				m_dc->SelectObject(targetBrush);
-			}
-			// make the string
-			string cpdlcOutput;
-			cpdlcOutput = ZuluTimeFormated(it->m_cpdlc_message.timeParsed);
-			if (it->m_cpdlc_message.isdlMessage) {
-				cpdlcOutput += "  |D/L  ";
-			}
-			else {
-				cpdlcOutput += "  ^U/L  ";
-			}
-			if (it->m_cpdlc_message.rawMessageContent.length() > 25) {
-				cpdlcOutput += "FTXT: ";
-				cpdlcOutput += it->m_cpdlc_message.rawMessageContent.substr(0, 25);
-				cpdlcOutput += "  >";
-			}
-			else {
-				cpdlcOutput += it->m_cpdlc_message.rawMessageContent;
+			if (row >= m_LB_firstElem_idx && row < m_LB_firstElem_idx + 8) {
+				m_dc->SelectObject(targetPen2);
+				m_dc->SelectObject(targetBrush2);
+
+				this->m_width = it->m_width;
+				RECT r = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
+				CopyRect(&it->m_ListBoxRect, &r);
+
+				if (it->m_selected_) {
+					m_dc->SetTextColor(C_MENU_GREY1);
+					m_dc->SelectObject(tb2);
+				}
+				else {
+					m_dc->SetTextColor(RGB(230, 230, 230));
+				}
+
+				if (stripe % 2 == 0 && !it->m_selected_) {
+					m_dc->SelectObject(targetPen);
+					m_dc->SelectObject(targetBrush);
+				}
+				// make the string
+				string cpdlcOutput;
+				cpdlcOutput = ZuluTimeFormated(it->m_cpdlc_message.timeParsed);
+				if (it->m_cpdlc_message.isdlMessage) {
+					cpdlcOutput += "  |D/L  ";
+				}
+				else {
+					cpdlcOutput += "  ^U/L  ";
+				}
+				if (it->m_cpdlc_message.rawMessageContent.length() > 25) {
+					cpdlcOutput += "FTXT: ";
+					cpdlcOutput += it->m_cpdlc_message.rawMessageContent.substr(0, 25);
+					cpdlcOutput += "  >";
+				}
+				else {
+					cpdlcOutput += it->m_cpdlc_message.rawMessageContent;
+				}
+
+				// need logic for whether the UP/DL pair is complete, or still pending.
+
+				if (!it->m_cpdlc_message_response.rawMessageContent.empty()) {
+					// if there is a response, put this on the second line, with the appropriate data. 
+
+					row++;
+				}
+
+				m_dc->Rectangle(&r);
+				r.left += 6;
+				m_dc->DrawText(cpdlcOutput.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+				r.top += deltay;
+				deltay += 17;
+
+				// if there is a paired message, print it
+
+				int responseToFind = it->m_cpdlc_message.messageID;
+
+				auto it_response = std::find_if(listBox_.begin(), listBox_.end(), [responseToFind](const SListBoxElement& msg) {
+					return msg.m_cpdlc_message.responseToMessageID == responseToFind;
+					});
+
+				// Check if an element with the specified responseToMessageID value was found
+				if (it_response != listBox_.end() && it_response->m_cpdlc_message.messageType == "cpdlc") {
+					string s = it_response->m_cpdlc_message.rawMessageContent;
+
+
+					cpdlcOutput = ZuluTimeFormated(it_response->m_cpdlc_message.timeParsed);
+					if (it_response->m_cpdlc_message.isdlMessage) {
+						cpdlcOutput += "  |D/L  ";
+					}
+					else {
+						cpdlcOutput += "  ^U/L     ";
+					}
+					if (it_response->m_cpdlc_message.rawMessageContent.length() > 25) {
+						cpdlcOutput += "FTXT: ";
+						cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent.substr(0, 25);
+						cpdlcOutput += "  >";
+					}
+					else {
+						cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent;
+					}
+
+					RECT r2 = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
+					m_dc->Rectangle(&r2);
+					r2.left += 6;
+					m_dc->DrawText(cpdlcOutput.c_str(), &r2, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+					r.top += deltay;
+					deltay += 17;
+					row++;
+					// Iterator points to the first element with the specified responseToMessageID value
+					// Access the element using *it_response
+				}
+				else {
+					// No element with the specified responseToMessageID value found
+				}
+
+
+
 			}
 
-			// need logic for whether the UP/DL pair is complete, or still pending.
-
-			if (!it->m_cpdlc_message_response.rawMessageContent.empty()) {
-				// if there is a response, put this on the second line, with the appropriate data. 
-
-				row++;
-			}
-
-			m_dc->Rectangle(&r);
-			r.left += 6;
-			m_dc->DrawText(cpdlcOutput.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
-
-			r.top += deltay;
-			deltay += 17;
-			
+			stripe++;
+			row++;
 		}
-		row++;
-		stripe++;
+
+
+		if (row > 8) {
+			m_has_scroll_bar = true;
+			SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x, m_origin.y }, m_LB_firstElem_idx, (row - m_max_elements) + 1);
+			scrollBar.m_height = m_height;
+			scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)row;
+			scrollBar.m_total_elements = row;
+			m_scrbar = scrollBar;
+
+			this->m_last_element = row;
+		}
+
 	}
 
-	if (row > 8) {
-		m_has_scroll_bar = true;
-		SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x, m_origin.y }, m_LB_firstElem_idx, (row - m_max_elements) + 1);
-		scrollBar.m_height = m_height;
-		scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)row;
-		scrollBar.m_total_elements = row;
-		m_scrbar = scrollBar;
-
-		this->m_last_element = row;
-	}
-
-	RECT totalListBox{ winOrigin.x+4, winOrigin.y,  winOrigin.x + m_width, winOrigin.y + static_cast<int>(listBox_.size() * 17) };
+	RECT totalListBox{ winOrigin.x+4, winOrigin.y,  winOrigin.x + m_width, winOrigin.y + row * 17 };
 	if (row > 8) { totalListBox.bottom = winOrigin.y + 8 * 17; }
 	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
 	this->m_width = totalListBox.right - totalListBox.left;
