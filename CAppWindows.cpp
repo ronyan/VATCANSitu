@@ -33,7 +33,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 	if (winType == WINDOW_CPDLC_EDITOR) {
 		windowTitle = "CPDLC Message Editor - " + cs;
 		m_width = 500;
-		m_height = 225;
+		m_height = 250;
 
 		SWindowText s;
 
@@ -54,11 +54,11 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		m_text_.push_back(s);
 
 		s.text = "Uplink Messages";
-		s.location = { 5,105 };
+		s.location = { 5,120 };
 		m_text_.push_back(s);
 
 		s.text = "Text";
-		s.location = { 14,117 };
+		s.location = { 14,132 };
 		m_text_.push_back(s);
 
 		// Print the selected list box in the parent CPDLC window
@@ -73,7 +73,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 
 
 		SWindowButton b;
-		b.location = { 430, 193 };
+		b.location = { 430, 219 };
 		b.m_height = 25;
 		b.m_width = 60;
 		b.text = "Send";
@@ -84,9 +84,13 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		STextField stf;
 		stf.m_parentWindowID = m_windowId_;
 		stf.m_width = 488;
-		stf.m_height = 58;
+		stf.m_height = 72;
 		stf.m_location_ = { 5,48 };
 		stf.m_textfield_type = TEXTFIELD_CPDLC_MESSAGE;
+		m_textfields_.push_back(stf);
+
+		stf.m_location_ = { 5,145 };
+		stf.m_textfield_type = TEXTFIELD_CPDLC_PENDING_UPLINK;
 		m_textfields_.push_back(stf);
 
 	}
@@ -698,22 +702,7 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 	m_dc->SelectObject(targetPen);
 	m_dc->SelectObject(targetBrush);
 
-	if (m_textfield_type != TEXTFIELD_CPDLC_MESSAGE) {
-		RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
-		m_dc->Rectangle(&r);
-		if (m_focused) {
-			m_dc->Draw3dRect(&r, RGB(0, 200, 0), RGB(0, 200, 0));
-
-		}
-		else {
-			m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
-		}
-		r.left += 6;
-		m_dc->DrawText(m_text.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
-
-		CopyRect(&m_textRect, &r);
-	}
-	else {
+	if (m_textfield_type == TEXTFIELD_CPDLC_MESSAGE) {
 
 		m_dc->SelectObject(CAATSfont);
 		RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
@@ -742,6 +731,51 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 			r.bottom = origin.y + m_location_.y + m_height;
 			m_dc->DrawText(m_cpdlcmessage.rawMessageContent.c_str(), &r, DT_LEFT | DT_WORDBREAK);
 		}
+	}
+
+	else if (m_textfield_type == TEXTFIELD_CPDLC_PENDING_UPLINK) {
+
+		m_dc->SelectObject(CAATSfont);
+		RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
+		m_dc->Rectangle(&r);
+		CopyRect(&m_textRect, &r);
+
+		m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
+		r.left += 8;
+
+		// message content
+		r.right = origin.x + m_width + m_location_.x;
+		r.bottom = origin.y + m_location_.y + m_height;
+
+		string s;
+		s = m_cpdlcmessage.rawMessageContent.c_str();
+
+		// remove @ symbol for display in the UI
+		size_t found = s.find('@');
+		while (found != std::string::npos) {
+			s.erase(found, 1);
+			found = s.find('@', found); // Find the next "@" symbol
+		}
+
+		m_dc->DrawText(s.c_str(), &r, DT_LEFT | DT_WORDBREAK);
+
+	}
+
+	else {
+
+		RECT r = { origin.x + m_location_.x, origin.y + m_location_.y, origin.x + m_width + m_location_.x, origin.y + m_height + m_location_.y };
+		m_dc->Rectangle(&r);
+		if (m_focused) {
+			m_dc->Draw3dRect(&r, RGB(0, 200, 0), RGB(0, 200, 0));
+
+		}
+		else {
+			m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
+		}
+		r.left += 6;
+		m_dc->DrawText(m_text.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+		CopyRect(&m_textRect, &r);
 	}
 
 

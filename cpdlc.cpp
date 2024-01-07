@@ -236,16 +236,22 @@ void CPDLCMessage::SendCPDLCMessage() {
 
 }
 
-CPDLCMessage CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, EuroScopePlugIn::CController& controller, std::string atisLetter) {
+void CPDLCMessage::GenerateReply(CPDLCMessage originalMessage) {
 
-	CPDLCMessage pdc;
-	pdc.sender = this->hoppieICAO;
-	pdc.receipient = flightplan.GetCallsign();
+	this->responseToMessageID = originalMessage.messageID;
+	this->hoppieMessageID = originalMessage.hoppieMessageID;
+
+}
+
+void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, EuroScopePlugIn::CController& controller, std::string atisLetter) {
+
+	this->sender = this->hoppieICAO;
+	this->receipient = flightplan.GetCallsign();
 
 	char letter = 'A';
 	std::string identifierLetter;
-	pdc.messageID = pdc.id % 1000; // 3 digit number, just go with the original ID
-	letter += pdc.id % 25;
+	this->messageID = stoi(this->hoppieMessageID) % 1000; // 3 digit number, just go with the original ID
+	letter += stoi(this->hoppieMessageID) % 25;
 	identifierLetter = letter;
 
 	// CPDLC only available in CYTZ and CYYZ in CZYZ if someone requests from elsewhere send
@@ -271,70 +277,76 @@ CPDLCMessage CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpl
 
 	if (flightplan.GetFlightPlanData().GetOrigin() == "CYTZ") {
 
-		pdc.responseRequired = "WU";
-
-		pdc.rawMessageContent = "CLD "; // Generate the PDC string;
-		pdc.rawMessageContent += ZuluTimeStringGen();
-		pdc.rawMessageContent += " ";
-		pdc.rawMessageContent += YYMMDDString();
-		pdc.rawMessageContent += " ";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
-		pdc.rawMessageContent += " PDC ";
-		pdc.rawMessageContent += pdc.messageID;
-		pdc.rawMessageContent += " ";
-		pdc.rawMessageContent += flightplan.GetCallsign();
-		pdc.rawMessageContent += " CLRD TO @";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
-		pdc.rawMessageContent += "@ OFF @";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
-		pdc.rawMessageContent += "@ VIA @";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
-		pdc.rawMessageContent += "@ SQUAWK @";
-		pdc.rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
-		pdc.rawMessageContent += "@ ATIS @";
-		pdc.rawMessageContent += atisLetter;
-		pdc.rawMessageContent += "@ CONTACT @";
-		pdc.rawMessageContent += controller.GetCallsign();
-		pdc.rawMessageContent += "@ ON FREQ @";
-		pdc.rawMessageContent += FreqTruncate(controller.GetPrimaryFrequency());
-		pdc.rawMessageContent += "@";
-
-		pdc.messageType = "cpdlc";
+		this->responseRequired = "WU";
+	
+		this->rawMessageContent = "CLD "; // Generate the PDC string;
+		this->rawMessageContent += ZuluTimeStringGen();
+		this->rawMessageContent += " ";
+		this->rawMessageContent += YYMMDDString();
+		this->rawMessageContent += " ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
+		this->rawMessageContent += " PDC ";
+		this->rawMessageContent += this->messageID;
+		this->rawMessageContent += " ";
+		this->rawMessageContent += flightplan.GetCallsign();
+		this->rawMessageContent += " CLRD TO @";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
+		this->rawMessageContent += "@ OFF @";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
+		this->rawMessageContent += "@ VIA @";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
+		this->rawMessageContent += "@ SQUAWK @";
+		this->rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
+		this->rawMessageContent += "@ ATIS @";
+		this->rawMessageContent += atisLetter;
+		this->rawMessageContent += "@ CONTACT @";
+		this->rawMessageContent += controller.GetCallsign();
+		this->rawMessageContent += "@ ON FREQ @";
+		this->rawMessageContent += FreqTruncate(controller.GetPrimaryFrequency());
+		this->rawMessageContent += "@";
+	
+		this->messageType = "cpdlc";
 
 	}
 
 	// ARINC 623 
 	else {
 
-		pdc.rawMessageContent = "TIMESTAMP ";
-		pdc.rawMessageContent += ZuluTimeStringGen();
-		pdc.rawMessageContent = "@*PRE-DEPARTURE CLEARANCE* @FLT ";
-		pdc.rawMessageContent += flightplan.GetCallsign();
-		pdc.rawMessageContent += " ";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
-		pdc.rawMessageContent += "@";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetAircraftFPType();
-		pdc.rawMessageContent += " FILED ";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetFinalAltitude();
-		pdc.rawMessageContent += "@ XPRD";
-		pdc.rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
-		pdc.rawMessageContent += "@ USE SID ";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
-		pdc.rawMessageContent += "@ DEPARTURE RUNWAY ";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
-		pdc.rawMessageContent += "@ DESTINATION";
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
-		pdc.rawMessageContent += "@*** ADVISE ATC IF RUNUP REQUIRED ***";
-		pdc.rawMessageContent += "@CONTACT CLEARANCE WITH IDENTIFIER ";
-		pdc.rawMessageContent += pdc.messageID;
-		pdc.rawMessageContent += identifierLetter;
-		pdc.rawMessageContent += flightplan.GetFlightPlanData().GetRoute();
-		pdc.rawMessageContent += "@END";
-
-		pdc.messageType = "telex";
+		this->rawMessageContent = "TIMESTAMP ";
+		this->rawMessageContent += ZuluTimeStringGen();
+		this->rawMessageContent += " @*PRE-DEPARTURE CLEARANCE* @FLT ";
+		this->rawMessageContent += flightplan.GetCallsign();
+		this->rawMessageContent += " ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
+		this->rawMessageContent += " @";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetAircraftFPType();
+		this->rawMessageContent += " FILED";
+		if (flightplan.GetFlightPlanData().GetFinalAltitude() > 18000) {
+			this->rawMessageContent += " FL";
+			this->rawMessageContent += std::to_string(flightplan.GetFlightPlanData().GetFinalAltitude()/100);
+		}
+		else {
+			this->rawMessageContent += std::to_string(flightplan.GetFlightPlanData().GetFinalAltitude());
+		}
+		this->rawMessageContent += " @XPRD ";
+		this->rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
+		this->rawMessageContent += " @USE SID ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
+		this->rawMessageContent += "@DEPARTURE RUNWAY ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
+		this->rawMessageContent += " @DESTINATION ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
+		this->rawMessageContent += " @*** ADVISE ATC IF RUNUP REQUIRED *** ";
+		this->rawMessageContent += "@CONTACT CLEARANCE WITH IDENTIFIER ";
+		this->rawMessageContent += std::to_string(this->messageID);
+		this->rawMessageContent += identifierLetter;
+		this->rawMessageContent += " @";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetRoute();
+		this->rawMessageContent += " @END";
+		
+		this->messageType = "telex";
 
 	}
-	return pdc;
 
 }
 

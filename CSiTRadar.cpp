@@ -2226,6 +2226,44 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 		}
 
+		if (func == "PDC") {
+			// Can only generate as a response to a request
+
+
+			// Find the paired CPDLC Editor Window
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (win.second.m_callsign == window->m_callsign
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+
+				{
+					if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
+						// Do the thing
+						if (win.second.m_textfields_.size() > 0)
+						{
+
+
+							CPDLCMessage pdcuplink;
+							pdcuplink.GenerateReply(win.second.m_textfields_.at(0).m_cpdlcmessage);
+							pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A");
+
+							pdcuplink = pdcuplink;
+
+							win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+						}
+					}
+					else {
+
+						CPDLCMessage pdcuplink;
+						pdcuplink.rawMessageContent = "CANNOT GENERATE PDC MESSAGE RESPONSE TO SELECTED D/L MESSAGE TYPE";
+
+						win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+					}
+				}
+			}
+		}
+
 	}
 
 	if (ObjectType == WINDOW_POINT_OUT) {
@@ -2289,9 +2327,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			le = s.substr(pos + 1);
 		}
 		auto window = GetAppWindow(stoi(win));
-		
-		for (auto &lb : window->m_listboxes_) {
-			for (auto &lelem : lb.listBox_) {
+
+		for (auto& lb : window->m_listboxes_) {
+			for (auto& lelem : lb.listBox_) {
 				if (lelem.m_elementID == stoi(le)) {
 
 					// allow unselect
@@ -2365,7 +2403,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				}
 			}
 		}
-
 	}
 
 	if (ObjectType == WINDOW_TEXT_FIELD) {
