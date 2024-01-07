@@ -186,10 +186,10 @@ struct SListBox {
 	int m_width;
 	unsigned long m_ListBoxID;
 	int m_windowID_;
-	int m_nearestPtIdx;
+	int m_nearestPtIdx{ 0 };
 	int m_LB_firstElem_idx{ 0 };
 	int m_max_elements;
-	int m_last_element;
+	int m_last_element{ 0 };
 	int m_height;
 	bool m_has_scroll_bar{ false };
 	string selectItem{};
@@ -213,28 +213,26 @@ struct SListBox {
 		int i=0; 
 		for (auto& msg : msgs ) {
 
-			if(i < m_max_elements){
+		// DM0-4 and UL0-5 are responses and do not get their own entry;
+			if (msg.rawMessageContent == "WILCO" ||
+				msg.rawMessageContent == "UNABLE" ||
+				msg.rawMessageContent == "NEGATIVE" ||
+				msg.rawMessageContent == "STANDBY" ||
+				msg.rawMessageContent == "ROGER" ||
+				msg.rawMessageContent == "STANDBY") {
 
-			// DM0-4 and UL0-5 are responses and do not get their own entry;
-				if (msg.rawMessageContent == "WILCO" ||
-					msg.rawMessageContent == "UNABLE" ||
-					msg.rawMessageContent == "NEGATIVE" ||
-					msg.rawMessageContent == "STANDBY" ||
-					msg.rawMessageContent == "ROGER" ||
-					msg.rawMessageContent == "STANDBY") {
-
-					// do nothing
-				}
-				else {
-					//if there is a response; call overload that pushes back a response function
+				// do nothing
+			}
+			else {
+				//if there is a response; call overload that pushes back a response function
 
 				
-					//if not just put the single message overload
-					SListBoxElement lbe(330, msg);
-					listBox_.push_back(lbe);
-					i++;
-				}
+				//if not just put the single message overload
+				SListBoxElement lbe(330, msg);
+				listBox_.push_back(lbe);
+				i++;
 			}
+
 
 		}
 
@@ -290,6 +288,7 @@ struct SListBox {
 		}
 	}
 	void ScrollDown() {
+
 		if (m_nearestPtIdx + m_LB_firstElem_idx + m_max_elements < m_last_element)
 		{
 			m_LB_firstElem_idx++;
@@ -383,8 +382,17 @@ public:
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	CAppWindows(POINT origin, int winType, RECT radarea);
-	SListBox GetListBox(int id) {
-		return *find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](const SListBox& obj) { return obj.m_ListBoxID == id; });
+	SListBox& GetListBox(int id) {
+		auto it = find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](SListBox& obj) { return obj.m_ListBoxID == id; });
+
+		if (it != m_listboxes_.end()) {
+			return *it;
+		}
+		else {
+			// Handle the case when the ListBox with the specified id is not found.
+			// You can throw an exception, return a default object, or handle it based on your requirements.
+			throw std::out_of_range("ListBox with specified ID not found");
+		}
 	}
 	SWindowElements DrawWindow(CDC* dc);
 

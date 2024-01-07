@@ -97,7 +97,6 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 
 	if (winType == WINDOW_CPDLC) {
 
-
 		windowTitle = "CPDLC - " + cs;
 		m_width = 420;
 		m_height = 253;
@@ -173,9 +172,12 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 
 		SListBox lb;
 		lb.m_max_elements = 8;
+		lb.m_height = lb.m_max_elements * 17;
 		lb.m_width = 328;
 		lb.m_origin.x = 0;
 		lb.m_origin.y = 0;
+		lb.m_windowID_ = m_windowId_;
+		lb.m_max_elements = 8;
 		lb.PopulateCPDLCListBox(cpdlcmsgs);
 		m_listboxes_.emplace_back(lb);
 
@@ -490,7 +492,7 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 				lb.RenderCPDLCListBox(1, 1, 8, { m_origin.x, titleRect.bottom + 2 + lb.m_origin.y });
 				if (lb.m_has_scroll_bar) {
 					lb.m_scrbar.m_max_elements = lb.m_max_elements;
-					lb.m_scrbar.m_origin = { m_origin.x + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
+					lb.m_scrbar.m_origin = { m_origin.x - 2 + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
 					lb.m_scrbar.Draw(dc);
 				}
 			}
@@ -564,60 +566,85 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 
 	int deltay = 0;
 	int row = 0;
+	int stripe = 0;
+
+	//std::reverse(listBox_.begin(), listBox_.end());
 	for (auto& element : listBox_) {
 
-		m_dc->SelectObject(targetPen2);
-		m_dc->SelectObject(targetBrush2);
-
-		this->m_width = element.m_width;
-		RECT r = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
-		CopyRect(&element.m_ListBoxRect, &r);
-
-		if (element.m_selected_) {
-			m_dc->SetTextColor(C_MENU_GREY1);
-			m_dc->SelectObject(tb2);
-		}
-		else {
-			m_dc->SetTextColor(RGB(230, 230, 230));
+		if (listBox_.size() > 8) {
+			element.m_width = 315;
 		}
 
-		if (row % 2 == 0 && !element.m_selected_) {
-			m_dc->SelectObject(targetPen);
-			m_dc->SelectObject(targetBrush);
-		}
-		// make the string
-		string cpdlcOutput;
-		cpdlcOutput = ZuluTimeFormated(element.m_cpdlc_message.timeParsed);
-		if (element.m_cpdlc_message.isdlMessage) {
-			cpdlcOutput += "  |D/L  ";
-		}
-		else {
-			cpdlcOutput += "  ^U/L  ";
-		}
-		if (element.m_cpdlc_message.rawMessageContent.length() > 28) {
-			cpdlcOutput += element.m_cpdlc_message.rawMessageContent.substr(0,28);
-			cpdlcOutput += "  >";
-		}
-		else {
-			cpdlcOutput += element.m_cpdlc_message.rawMessageContent;
-		}
+		if (row >= m_LB_firstElem_idx && row < m_LB_firstElem_idx + 8) {
+			m_dc->SelectObject(targetPen2);
+			m_dc->SelectObject(targetBrush2);
 
-		// need logic for whether the UP/DL pair is complete, or still pending.
+			this->m_width = element.m_width;
+			RECT r = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
+			CopyRect(&element.m_ListBoxRect, &r);
 
-		if (!element.m_cpdlc_message_response.rawMessageContent.empty()) {
-			// if there is a response, put this on the second line, with the appropriate data. 
+			if (element.m_selected_) {
+				m_dc->SetTextColor(C_MENU_GREY1);
+				m_dc->SelectObject(tb2);
+			}
+			else {
+				m_dc->SetTextColor(RGB(230, 230, 230));
+			}
 
+			if (stripe % 2 == 0 && !element.m_selected_) {
+				m_dc->SelectObject(targetPen);
+				m_dc->SelectObject(targetBrush);
+			}
+			// make the string
+			string cpdlcOutput;
+			cpdlcOutput = ZuluTimeFormated(element.m_cpdlc_message.timeParsed);
+			if (element.m_cpdlc_message.isdlMessage) {
+				cpdlcOutput += "  |D/L  ";
+			}
+			else {
+				cpdlcOutput += "  ^U/L  ";
+			}
+			if (element.m_cpdlc_message.rawMessageContent.length() > 28) {
+				cpdlcOutput += element.m_cpdlc_message.rawMessageContent.substr(0, 28);
+				cpdlcOutput += "  >";
+			}
+			else {
+				cpdlcOutput += element.m_cpdlc_message.rawMessageContent;
+			}
+
+			// need logic for whether the UP/DL pair is complete, or still pending.
+
+			if (!element.m_cpdlc_message_response.rawMessageContent.empty()) {
+				// if there is a response, put this on the second line, with the appropriate data. 
+
+				row++;
+			}
+
+			m_dc->Rectangle(&r);
+			r.left += 6;
+			m_dc->DrawText(cpdlcOutput.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+			r.top += deltay;
+			deltay += 17;
+			
 		}
-		
-		m_dc->Rectangle(&r);
-		r.left += 6;
-		m_dc->DrawText(cpdlcOutput.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER );
-
-		r.top += deltay;
-		deltay += 17;
 		row++;
+		stripe++;
 	}
+
+	if (row > 8) {
+		m_has_scroll_bar = true;
+		SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x, m_origin.y }, m_LB_firstElem_idx, (row - m_max_elements) + 1);
+		scrollBar.m_height = m_height;
+		scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)row;
+		scrollBar.m_total_elements = row;
+		m_scrbar = scrollBar;
+
+		this->m_last_element = row;
+	}
+
 	RECT totalListBox{ winOrigin.x+4, winOrigin.y,  winOrigin.x + m_width, winOrigin.y + static_cast<int>(listBox_.size() * 17) };
+	if (row > 8) { totalListBox.bottom = winOrigin.y + 8 * 17; }
 	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
 	this->m_width = totalListBox.right - totalListBox.left;
 

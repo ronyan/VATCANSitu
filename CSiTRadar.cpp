@@ -1155,7 +1155,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				//
 
-				for (auto window : menuState.radarScrWindows) {
+				for (auto& window : menuState.radarScrWindows) {
 					SWindowElements r = window.second.DrawWindow(&dc);
 					AddScreenObject(WINDOW_TITLE_BAR, to_string(window.second.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.second.m_windowId_).c_str());
 					
@@ -1977,24 +1977,34 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == WINDOW_SCROLL_ARROW_UP) {
 		auto window = GetAppWindow(stoi(id));
-		auto lb = window->GetListBox(atoi(func.c_str()));
+		auto& lb = window->GetListBox(atoi(func.c_str()));
+
 		lb.ScrollUp();
-		lb.listBox_.clear();
-		lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-		window->m_listboxes_.clear();
-		window->m_listboxes_.push_back(lb);
+
+		if (window->m_winType != WINDOW_CPDLC)
+		{
+
+			lb.listBox_.clear();
+			lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			window->m_listboxes_.clear();
+			window->m_listboxes_.push_back(lb);
+		}
 		RequestRefresh();
 	}
 
 	if (ObjectType == WINDOW_SCROLL_ARROW_DOWN) {
 		auto window = GetAppWindow(stoi(id));
-		auto lb = window->GetListBox(atoi(func.c_str()));
+		auto& lb = window->GetListBox(atoi(func.c_str()));
 
 		lb.ScrollDown();
-		lb.listBox_.clear();
-		lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-		window->m_listboxes_.clear();
-		window->m_listboxes_.push_back(lb);
+
+		if (window->m_winType != WINDOW_CPDLC)
+		{
+			lb.listBox_.clear();
+			lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			window->m_listboxes_.clear();
+			window->m_listboxes_.push_back(lb);
+		}
 		RequestRefresh();
 	}
 

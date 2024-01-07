@@ -332,7 +332,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
 		this->rawMessageContent += " @USE SID ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
-		this->rawMessageContent += "@DEPARTURE RUNWAY ";
+		this->rawMessageContent += " @DEPARTURE RUNWAY ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
 		this->rawMessageContent += " @DESTINATION ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
