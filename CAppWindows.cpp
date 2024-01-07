@@ -492,7 +492,7 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 				lb.RenderCPDLCListBox(1, 1, 8, { m_origin.x, titleRect.bottom + 2 + lb.m_origin.y });
 				if (lb.m_has_scroll_bar) {
 					lb.m_scrbar.m_max_elements = lb.m_max_elements;
-					lb.m_scrbar.m_origin = { m_origin.x - 2 + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
+					lb.m_scrbar.m_origin = { m_origin.x - 3 + lb.m_width + 9, titleRect.bottom + 2 + listboxDeltaY };
 					lb.m_scrbar.Draw(dc);
 				}
 			}
@@ -572,7 +572,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 	for (auto& element : listBox_) {
 
 		if (listBox_.size() > 8) {
-			element.m_width = 315;
+			element.m_width = 316;
 		}
 
 		if (row >= m_LB_firstElem_idx && row < m_LB_firstElem_idx + 8) {
