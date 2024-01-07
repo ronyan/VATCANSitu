@@ -575,7 +575,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 			it->m_cpdlc_message.rawMessageContent == "NEGATIVE" ||
 			it->m_cpdlc_message.rawMessageContent == "STANDBY" ||
 			it->m_cpdlc_message.rawMessageContent == "ROGER" ||
-			it->m_cpdlc_message.rawMessageContent == "STANDBY" ||
+			it->m_cpdlc_message.rawMessageContent == "AFFIRM" ||
 			it->m_cpdlc_message.rawMessageContent == "LOGON ACCEPTED") {
 
 			// Defer drawing these ones

@@ -2841,6 +2841,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		menuState.destArptOn[ObjectType - BUTTON_MENU_DEST_1] = !menuState.destArptOn[ObjectType - BUTTON_MENU_DEST_1];
 	}
 
+	if (ObjectType == BUTTON_MENU_CPDLC) {
+		if (!strcmp(sObjectId, "cpdlcICAO")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_CPDLC_ICAO, CPDLCMessage::hoppieICAO.c_str());
+		}
+	}
+
 	if (ObjectType == BUTTON_MENU_DEST_ICAO) {
 		if (!strcmp(sObjectId, "dest1")) {
 			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_1, menuState.destICAO[0].c_str());
@@ -3341,6 +3347,12 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 			altFilterHigh = stoi(sItemString);
 		}
 		catch (...) {}
+	}
+
+	if (FunctionId == FUNCTION_CPDLC_ICAO) {
+		string ICAO = sItemString;
+		std::transform(ICAO.begin(), ICAO.end(), ICAO.begin(), ::toupper);
+		CPDLCMessage::hoppieICAO = ICAO.substr(0, 4).c_str();
 	}
 
 	if (FunctionId >= FUNCTION_DEST_ICAO_1 && FunctionId <= FUNCTION_DEST_ICAO_5) {
