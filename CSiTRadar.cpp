@@ -1986,8 +1986,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 			lb.listBox_.clear();
 			lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-			window->m_listboxes_.clear();
-			window->m_listboxes_.push_back(lb);
+			//window->m_listboxes_.clear();
+			//window->m_listboxes_.push_back(lb);
 		}
 		RequestRefresh();
 	}
@@ -2002,8 +2002,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		{
 			lb.listBox_.clear();
 			lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-			window->m_listboxes_.clear();
-			window->m_listboxes_.push_back(lb);
 		}
 		RequestRefresh();
 	}
