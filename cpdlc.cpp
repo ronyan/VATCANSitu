@@ -7,8 +7,8 @@ static std::size_t write_data(void* buffer, std::size_t size, std::size_t nmemb,
 };
 
 u_int CPDLCMessage::ids = 0;
-const std::string CPDLCMessage::hoppieCode = "";
-const std::string CPDLCMessage::hoppieICAO = "EDDH";
+std::string CPDLCMessage::hoppieCode = "";
+std::string CPDLCMessage::hoppieICAO = "CYYZ";
 
 std::string CPDLCMessage::YYMMDDString() {
 	// Get the current time in UTC (Zulu time) using std::chrono

@@ -16,8 +16,8 @@ private:
 
 
 public:
-	const static std::string hoppieCode;  // Hoppie Logon Code
-	const static std::string hoppieICAO;
+	static std::string hoppieCode;  // Hoppie Logon Code
+	static std::string hoppieICAO;
 	static u_int CPDLCMessage::ids;
 	int id;
 

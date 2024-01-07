@@ -52,6 +52,8 @@ CSiTRadar::CSiTRadar()
 
 			wxRadar::wxLatCtr = j["wxlat"];
 			wxRadar::wxLongCtr = j["wxlong"];
+			
+			CPDLCMessage::hoppieCode = j["hoppieCode"];
 
 			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
 			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
@@ -82,6 +84,8 @@ CSiTRadar::CSiTRadar()
 			json j;
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
+
+			j["hoppieCode"] = CPDLCMessage::hoppieCode;
 
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
@@ -152,6 +156,8 @@ CSiTRadar::~CSiTRadar()
 			json j;
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
+
+			j["hoppieCode"] = CPDLCMessage::hoppieCode;
 
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;

@@ -650,7 +650,10 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 					});
 
 				// Check if an element with the specified responseToMessageID value was found
-				if (it_response != listBox_.end() && it_response->m_cpdlc_message.messageType == "cpdlc") {
+				if (it_response != listBox_.end() 
+					&& it_response->m_cpdlc_message.messageType == "cpdlc" 
+					&& row < 7) { // cut off the response at the bottom in case the 8th row has a response;
+
 					string s = it_response->m_cpdlc_message.rawMessageContent;
 
 
@@ -692,7 +695,6 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 			stripe++;
 			row++;
 		}
-
 
 		if (row > 8) {
 			m_has_scroll_bar = true;
