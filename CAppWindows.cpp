@@ -568,22 +568,21 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 	int row = 0;
 	int stripe = 0;
 
-	//std::reverse(listBox_.begin(), listBox_.end());
-	for (auto& element : listBox_) {
+	for (auto it = listBox_.rbegin(); it != listBox_.rend(); ++it) {
 
 		if (listBox_.size() > 8) {
-			element.m_width = 316;
+			it->m_width = 316;
 		}
 
 		if (row >= m_LB_firstElem_idx && row < m_LB_firstElem_idx + 8) {
 			m_dc->SelectObject(targetPen2);
 			m_dc->SelectObject(targetBrush2);
 
-			this->m_width = element.m_width;
+			this->m_width = it->m_width;
 			RECT r = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
-			CopyRect(&element.m_ListBoxRect, &r);
+			CopyRect(&it->m_ListBoxRect, &r);
 
-			if (element.m_selected_) {
+			if (it->m_selected_) {
 				m_dc->SetTextColor(C_MENU_GREY1);
 				m_dc->SelectObject(tb2);
 			}
@@ -591,30 +590,31 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 				m_dc->SetTextColor(RGB(230, 230, 230));
 			}
 
-			if (stripe % 2 == 0 && !element.m_selected_) {
+			if (stripe % 2 == 0 && !it->m_selected_) {
 				m_dc->SelectObject(targetPen);
 				m_dc->SelectObject(targetBrush);
 			}
 			// make the string
 			string cpdlcOutput;
-			cpdlcOutput = ZuluTimeFormated(element.m_cpdlc_message.timeParsed);
-			if (element.m_cpdlc_message.isdlMessage) {
+			cpdlcOutput = ZuluTimeFormated(it->m_cpdlc_message.timeParsed);
+			if (it->m_cpdlc_message.isdlMessage) {
 				cpdlcOutput += "  |D/L  ";
 			}
 			else {
 				cpdlcOutput += "  ^U/L  ";
 			}
-			if (element.m_cpdlc_message.rawMessageContent.length() > 28) {
-				cpdlcOutput += element.m_cpdlc_message.rawMessageContent.substr(0, 28);
+			if (it->m_cpdlc_message.rawMessageContent.length() > 25) {
+				cpdlcOutput += "FTXT: ";
+				cpdlcOutput += it->m_cpdlc_message.rawMessageContent.substr(0, 25);
 				cpdlcOutput += "  >";
 			}
 			else {
-				cpdlcOutput += element.m_cpdlc_message.rawMessageContent;
+				cpdlcOutput += it->m_cpdlc_message.rawMessageContent;
 			}
 
 			// need logic for whether the UP/DL pair is complete, or still pending.
 
-			if (!element.m_cpdlc_message_response.rawMessageContent.empty()) {
+			if (!it->m_cpdlc_message_response.rawMessageContent.empty()) {
 				// if there is a response, put this on the second line, with the appropriate data. 
 
 				row++;

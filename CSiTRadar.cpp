@@ -156,20 +156,20 @@ CSiTRadar::~CSiTRadar()
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
 
-j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
-j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
+			j["offScreenList"]["x"] = acLists[LIST_OFF_SCREEN].p.x;
+			j["offScreenList"]["y"] = acLists[LIST_OFF_SCREEN].p.y;
 
-j["prefSFI"] = menuState.SFIPrefStringDefault;
+			j["prefSFI"] = menuState.SFIPrefStringDefault;
 
-j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
+			j["ctrlRemarks"] = menuState.ctrlRemarkDefaults;
 
-j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
-j["menuState"]["bigACID"] = menuState.bigACID;
-j["menuState"]["wxAll"] = menuState.wxAll;
-j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
-j["menuState"]["extAltToggle"] = menuState.extAltToggle;
+			j["menuState"]["numHistoryDots"] = menuState.numHistoryDots;
+			j["menuState"]["bigACID"] = menuState.bigACID;
+			j["menuState"]["wxAll"] = menuState.wxAll;
+			j["menuState"]["filterBypassAll"] = menuState.filterBypassAll;
+			j["menuState"]["extAltToggle"] = menuState.extAltToggle;
 
-settings_file << j;
+			settings_file << j;
 		}
 	}
 	catch (std::ifstream::failure e) {
@@ -2212,15 +2212,60 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
+	if (ObjectType == WINDOW_CPDLC_EDITOR) {
+
+		auto window = GetAppWindow(stoi(id));
+
+		if (!strcmp(func.c_str(), "Send")) {
+
+			try {
+
+				window->m_textfields_.at(1).m_cpdlcmessage.SendCPDLCMessage();
+				mAcData[window->m_callsign].CPDLCMessages.push_back(window->m_textfields_.at(1).m_cpdlcmessage);
+
+				// certain automated messages:
+				if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "LOGON ACCEPTED") {
+					// make a copy
+					CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
+					automaticResponse.messageType = "telex";
+					automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH TORONTO CENTER";
+					automaticResponse.SendCPDLCMessage();
+					mAcData[window->m_callsign].CPDLCMessages.push_back(automaticResponse);
+
+				}
+
+				// refresh the listbox
+				for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+					if (win.second.m_callsign == window->m_callsign
+						&& win.second.m_winType == WINDOW_CPDLC)
+					{
+						for (auto& lbtoberefreshed : win.second.m_listboxes_) {
+
+							lbtoberefreshed.PopulateCPDLCListBox(mAcData[window->m_callsign].CPDLCMessages);
+						}
+					}
+				}
+
+			}
+			catch (const std::out_of_range& oor) {
+				// Handle the out_of_range exception
+				std::cerr << "Out of range exception: " << oor.what() << std::endl;
+			}
+
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+	}
+
 	if (ObjectType == WINDOW_CPDLC) {
 
 		auto window = GetAppWindow(stoi(id));
 
-		if (!strcmp(func.c_str(), "Close")) {
+		if (func == "Close") {
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
-		if (!strcmp(func.c_str(), "Close Dialog")) {
+		if (func == "Close Dialog") {
 			int i=-1;
 			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
 				if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
@@ -2232,6 +2277,41 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			if (i >= 0) {
 				menuState.radarScrWindows.erase(i);
 			}
+		}
+
+		if (func == "Affirm") {
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (win.second.m_callsign == window->m_callsign
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+
+				{
+					if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
+						// Do the thing
+						if (win.second.m_textfields_.size() > 0)
+						{
+
+							CPDLCMessage pdcuplink;
+							pdcuplink.GenerateReply(win.second.m_textfields_.at(0).m_cpdlcmessage);
+							pdcuplink.messageType = "cpdlc";
+							pdcuplink.rawMessageContent = "AFFIRM"; // UM4
+							if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
+								pdcuplink.rawMessageContent = "LOGON ACCEPTED";
+							}
+							pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+							win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+						}
+					}
+					else {
+
+						CPDLCMessage pdcuplink;
+						pdcuplink.rawMessageContent = "ERR: RESPONSE TYPE NOT ALLOWED";
+						win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+					}
+				}
+			}
+
 		}
 
 		if (func == "PDC") {
@@ -2252,9 +2332,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 							CPDLCMessage pdcuplink;
 							pdcuplink.GenerateReply(win.second.m_textfields_.at(0).m_cpdlcmessage);
-							pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A");
-
-							pdcuplink = pdcuplink;
+							pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A"); // FIX ATIS LETTER to be dynamic
 
 							win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
@@ -2263,7 +2341,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					else {
 
 						CPDLCMessage pdcuplink;
-						pdcuplink.rawMessageContent = "CANNOT GENERATE PDC MESSAGE RESPONSE TO SELECTED D/L MESSAGE TYPE";
+						pdcuplink.rawMessageContent = "ERR: CANNOT GENERATE PDC MSG RESPONSE TO SELECTED D/L MESSAGE TYPE";
 
 						win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 

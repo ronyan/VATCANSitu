@@ -187,7 +187,8 @@ std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC m
 void CPDLCMessage::SendCPDLCMessage() {
 
 	std::string url;
-	url = "http://www.hoppie.nl/acars/system/connect.html";
+	//url = "http://www.hoppie.nl/acars/system/connect.html";
+	url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
 	std::string postfields = "?logon=";
 	postfields += this->hoppieCode;
@@ -196,7 +197,16 @@ void CPDLCMessage::SendCPDLCMessage() {
 	postfields += "?to=";
 	postfields += this->receipient;
 
-	this->rawMessageContent.replace(rawMessageContent.begin(), rawMessageContent.end(), ' ', '%20');
+	std::string curlFriendlyRawMsg;
+
+	for (char character : this->rawMessageContent) {
+		if (character == ' ') {
+			curlFriendlyRawMsg += "%20";
+		}
+		else {
+			curlFriendlyRawMsg += character;
+		}
+	}
 
 	if (this->messageType == "cpdlc") {
 		postfields += "?type=cpdlc";
@@ -213,7 +223,7 @@ void CPDLCMessage::SendCPDLCMessage() {
 	if (this->messageType == "telex") {
 		postfields += "?type=telex";
 		postfields += "?packet=";
-		postfields += this->rawMessageContent;
+		postfields += curlFriendlyRawMsg;
 	}
 
 	std::string postResponse;
@@ -233,6 +243,8 @@ void CPDLCMessage::SendCPDLCMessage() {
 	else {
 		if (postResponse.substr(0, 2) == "ok") { this->sent = true; }
 	}
+	auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	this->timeParsed = currentTime;
 
 }
 
@@ -240,6 +252,7 @@ void CPDLCMessage::GenerateReply(CPDLCMessage originalMessage) {
 
 	this->responseToMessageID = originalMessage.messageID;
 	this->hoppieMessageID = originalMessage.hoppieMessageID;
+	this->isdlMessage = !this->isdlMessage; // replies are the opposite type
 
 }
 
@@ -250,7 +263,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 	char letter = 'A';
 	std::string identifierLetter;
-	this->messageID = stoi(this->hoppieMessageID) % 1000; // 3 digit number, just go with the original ID
+	int pdcNumbers = stoi(this->hoppieMessageID) % 1000; // 3 digit number, generate with hoppie ID
 	letter += stoi(this->hoppieMessageID) % 25;
 	identifierLetter = letter;
 
@@ -286,7 +299,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->rawMessageContent += " ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
 		this->rawMessageContent += " PDC ";
-		this->rawMessageContent += this->messageID;
+		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += " ";
 		this->rawMessageContent += flightplan.GetCallsign();
 		this->rawMessageContent += " CLRD TO @";
@@ -338,7 +351,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
 		this->rawMessageContent += " @*** ADVISE ATC IF RUNUP REQUIRED *** ";
 		this->rawMessageContent += "@CONTACT CLEARANCE WITH IDENTIFIER ";
-		this->rawMessageContent += std::to_string(this->messageID);
+		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += identifierLetter;
 		this->rawMessageContent += " @";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetRoute();
