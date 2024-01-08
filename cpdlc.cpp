@@ -210,7 +210,7 @@ void CPDLCMessage::SendCPDLCMessage() {
 
 	if (this->messageType == "cpdlc") {
 		postfields += "?type=cpdlc";
-		postfields += "&type=CPDLC&packet=/data2/";
+		postfields += "&packet=/data2/";
 		postfields += std::to_string(this->messageID);
 		postfields += "/";
 		postfields += std::to_string(this->responseToMessageID);
@@ -250,6 +250,7 @@ void CPDLCMessage::SendCPDLCMessage() {
 
 void CPDLCMessage::GenerateReply(CPDLCMessage originalMessage) {
 
+	this->receipient = originalMessage.sender;
 	this->responseToMessageID = originalMessage.messageID;
 	this->hoppieMessageID = originalMessage.hoppieMessageID;
 	this->isdlMessage = !this->isdlMessage; // replies are the opposite type
@@ -287,6 +288,25 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 		*/
 
+	// truncate the route if too long
+	std::string rteStr = flightplan.GetFlightPlanData().GetRoute();
+	int nCharacters = 20;
+
+	if (rteStr.length() > nCharacters) {
+
+		int index = nCharacters;
+		while (index < rteStr.length()) {
+			if (rteStr[index] == ' ') {
+				// Extract substring before the space
+				std::string substringBeforeSpace = rteStr.substr(0, index);
+			}
+			index++;
+		}
+
+		rteStr += "// FILED ROUTE";
+	}
+	
+
 
 	if (flightplan.GetFlightPlanData().GetOrigin() == "CYTZ") {
 
@@ -322,7 +342,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 	}
 
-	// ARINC 623 
+	// ARINC 622 
 	else {
 
 		this->rawMessageContent = "TIMESTAMP ";
@@ -354,7 +374,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += identifierLetter;
 		this->rawMessageContent += " @";
-		this->rawMessageContent += flightplan.GetFlightPlanData().GetRoute();
+		this->rawMessageContent += rteStr;
 		this->rawMessageContent += " @END";
 		
 		this->messageType = "telex";

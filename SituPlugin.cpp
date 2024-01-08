@@ -699,9 +699,6 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
             cpdlc.m_callsign = fp.GetCallsign();
             CSiTRadar::menuState.radarScrWindows[cpdlc.m_windowId_] = cpdlc;
 
-            CAppWindows cpdlceditor({ Pt.x, Pt.y+450 }, WINDOW_CPDLC_EDITOR, fp, CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(fp.GetCallsign()).CPDLCMessages);
-            cpdlceditor.m_callsign = fp.GetCallsign();
-            CSiTRadar::menuState.radarScrWindows[cpdlceditor.m_windowId_] = cpdlceditor;
         }
     }
 

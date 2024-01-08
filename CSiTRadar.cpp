@@ -2233,6 +2233,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "LOGON ACCEPTED") {
 					// make a copy
 					CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
+					automaticResponse.messageID = -1;
 					automaticResponse.messageType = "telex";
 					automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH TORONTO CENTER";
 					automaticResponse.SendCPDLCMessage();
@@ -2302,6 +2303,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 							pdcuplink.rawMessageContent = "AFFIRM"; // UM4
 							if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
 								pdcuplink.rawMessageContent = "LOGON ACCEPTED";
+								pdcuplink.responseRequired = "NE";
 							}
 							pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 							win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
@@ -2423,6 +2425,23 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		for (auto& lb : window->m_listboxes_) {
 			for (auto& lelem : lb.listBox_) {
 				if (lelem.m_elementID == stoi(le)) {
+
+					// open the cpdlceditor
+					bool exists = false;
+					for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+						if (win.second.m_callsign == window->m_callsign
+							&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+						{
+							exists = true;
+						}
+					}
+					// If not draw it
+					if (!exists) {
+						CAppWindows cpdlceditor({ Pt.x, Pt.y + 450 }, WINDOW_CPDLC_EDITOR, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(window->m_callsign).CPDLCMessages);
+						cpdlceditor.m_callsign = window->m_callsign;
+						CSiTRadar::menuState.radarScrWindows[cpdlceditor.m_windowId_] = cpdlceditor;
+					}
+
 
 					// allow unselect
 					if (lelem.m_selected_) {

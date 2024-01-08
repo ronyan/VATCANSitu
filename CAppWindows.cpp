@@ -584,7 +584,34 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 
 		else {
 
-			if (listBox_.size() > 8) {
+			// if there is a paired message, print it
+
+			int responseToFind = it->m_cpdlc_message.messageID;
+
+			auto it_response = std::find_if(listBox_.begin(), listBox_.end(), [responseToFind](const SListBoxElement& msg) {
+				return msg.m_cpdlc_message.responseToMessageID == responseToFind;
+				});
+
+			bool isDialogueOpen = false;
+
+			if (it_response == listBox_.end() 
+				&& it->m_cpdlc_message.responseRequired == "Y"
+				&& it->m_cpdlc_message.isdlMessage) {
+
+				isDialogueOpen = true;
+
+			}
+
+			if (it_response == listBox_.end()
+				&& (it->m_cpdlc_message.responseRequired == "WU" || it->m_cpdlc_message.responseRequired == "R" || it->m_cpdlc_message.responseRequired == "AN")
+				&& !it->m_cpdlc_message.isdlMessage) {
+
+				isDialogueOpen = true;
+
+			}
+
+
+			if (this->m_last_element > 8) {
 				it->m_width = 316;
 			}
 
@@ -601,7 +628,18 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 					m_dc->SelectObject(tb2);
 				}
 				else {
-					m_dc->SetTextColor(RGB(230, 230, 230));
+					if (isDialogueOpen && it->m_cpdlc_message.isdlMessage) {
+						// open DL messages are blue;
+						m_dc->SetTextColor(RGB(14, 215, 215));
+					} 
+					else if (isDialogueOpen && !it->m_cpdlc_message.isdlMessage) {
+						// Open UL messages are Green
+						m_dc->SetTextColor(RGB(0, 200, 0));
+
+					}
+					else {
+						m_dc->SetTextColor(RGB(230, 230, 230));
+					}
 				}
 
 				if (stripe % 2 == 0 && !it->m_selected_) {
@@ -640,14 +678,6 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 
 				r.top += deltay;
 				deltay += 17;
-
-				// if there is a paired message, print it
-
-				int responseToFind = it->m_cpdlc_message.messageID;
-
-				auto it_response = std::find_if(listBox_.begin(), listBox_.end(), [responseToFind](const SListBoxElement& msg) {
-					return msg.m_cpdlc_message.responseToMessageID == responseToFind;
-					});
 
 				// Check if an element with the specified responseToMessageID value was found
 				if (it_response != listBox_.end() 
