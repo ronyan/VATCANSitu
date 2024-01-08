@@ -166,8 +166,8 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 
 std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC messages; Should be called every 50-70s to get new messages
 	std::string url;
-	//url = "http://www.hoppie.nl/acars/system/connect.html?logon=" + CPDLCMessage::hoppieCode + "&from=" + CPDLCMessage::hoppieICAO + "&to=SERVER&type=peek";
-	url = "https://ronyan.github.io/hoppie-html-test-cases/";
+	url = "http://www.hoppie.nl/acars/system/connect.html?logon=" + CPDLCMessage::hoppieCode + "&from=" + CPDLCMessage::hoppieICAO + "&to=SERVER&type=poll";
+	//url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
 	std::string rawHoppiePollString;
 
@@ -187,8 +187,8 @@ std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC m
 void CPDLCMessage::SendCPDLCMessage() {
 
 	std::string url;
-	//url = "http://www.hoppie.nl/acars/system/connect.html";
-	url = "https://ronyan.github.io/hoppie-html-test-cases/";
+	url = "http://www.hoppie.nl/acars/system/connect.html";
+	//url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
 	std::string postfields = "?logon=";
 	postfields += this->hoppieCode;

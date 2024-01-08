@@ -2277,6 +2277,20 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 		if (func == "Close") {
 			menuState.radarScrWindows.erase(stoi(id));
+
+			// also close the dialogue
+
+			int i = -1;
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					i = win.first;
+				}
+			}
+			if (i >= 0) {
+				menuState.radarScrWindows.erase(i);
+			}
 		}
 
 		if (func == "Close Dialog") {
