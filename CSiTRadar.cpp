@@ -257,29 +257,36 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			s = CPDLCMessage::PollCPDLCMessages();
 			menuState.lastCPDLCPoll = clock();
 
+			if (s.substr(0, 3) != "ok ") {
+				menuState.CPDLCOn = false; // if string not okay, turn it off
+				GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Hoppie CPDLC", "Hoppie Disconnected", true, false, false, false, false);
+			}
 			// ParseCPDLC message chops messages off sequentially
+			
+			if (s.substr(0, 3) == "ok ") {
 
-			while (s.length() > 4) {
-				CPDLCMessage m; 
-				m = CPDLCMessage::parseDLMessage(s);
-				// Attach CPDLC Messages to the aircraft
-				if (mAcData.find(m.sender) != mAcData.end()) {
+				while (s.length() > 4) {
+					CPDLCMessage m;
+					m = CPDLCMessage::parseDLMessage(s);
+					// Attach CPDLC Messages to the aircraft
+					if (mAcData.find(m.sender) != mAcData.end()) {
 
-					mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
+						mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
 
-					// if new messages refresh the listbox content for the CPDLC message
-					for (auto& win : CSiTRadar::menuState.radarScrWindows) {
-						if (!strcmp(win.second.m_callsign.c_str(), m.sender.c_str())
-							&& win.second.m_winType == WINDOW_CPDLC)
-						{
-							for (auto& lbtoberefreshed : win.second.m_listboxes_) {
-								lbtoberefreshed.PopulateCPDLCListBox(mAcData.at(m.sender).CPDLCMessages);
+						// if new messages refresh the listbox content for the CPDLC message
+						for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+							if (!strcmp(win.second.m_callsign.c_str(), m.sender.c_str())
+								&& win.second.m_winType == WINDOW_CPDLC)
+							{
+								for (auto& lbtoberefreshed : win.second.m_listboxes_) {
+									lbtoberefreshed.PopulateCPDLCListBox(mAcData.at(m.sender).CPDLCMessages);
+								}
 							}
 						}
+
 					}
 
 				}
-
 			}
 
 		}
