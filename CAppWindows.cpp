@@ -46,11 +46,11 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		m_text_.push_back(s);
 
 		s.text = "Time";
-		s.location = { 28,34 };
+		s.location = { 34,34 };
 		m_text_.push_back(s);
 
 		s.text = "Text";
-		s.location = { 78,34 };
+		s.location = { 84,34 };
 		m_text_.push_back(s);
 
 		s.text = "Uplink Messages";
@@ -115,6 +115,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 				b.windowID = m_windowId_;
 				b.m_textcolor = RGB(0, 200, 0);
 
+				if (j == 0 && i == 0) { b.text = "Standby"; }
 				if (j == 2 && i == 4) { b.text = "PDC"; }
 
 				m_buttons_.push_back(b);
@@ -822,16 +823,17 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 		CopyRect(&m_textRect, &r);
 
 		m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
-		r.left += 8;
+		r.left += 5;
 
 		if (m_cpdlcmessage.rawMessageContent != "") { // will be "" if nothing was pushed to it
 			// message ID
+			string dispMsgID = to_string(m_cpdlcmessage.messageID % 64); // Max MIN is 64 IRL but hoppie allows higher, keep the internal value but mod to display rollover
 			if (m_cpdlcmessage.messageID != -1) {
-				m_dc->DrawText(to_string(m_cpdlcmessage.messageID).c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
-				m_dc->DrawText(to_string(m_cpdlcmessage.messageID).c_str(), &r, DT_LEFT | DT_SINGLELINE);
+				m_dc->DrawText(dispMsgID.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+				m_dc->DrawText(dispMsgID.c_str(), &r, DT_LEFT | DT_SINGLELINE);
 			}
 
-			r.left += 15;
+			r.left += 22;
 
 			// message time
 			m_dc->DrawText(ZuluTimeFormated(m_cpdlcmessage.timeParsed).c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);

@@ -283,6 +283,14 @@ public:
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
     static CAppWindows* GetAppWindow(int winID);
+    auto findCPDLCEditorWindow(const string& callsign) -> decltype(CSiTRadar::menuState.radarScrWindows.begin()) {
+        for (auto it = CSiTRadar::menuState.radarScrWindows.begin(); it != CSiTRadar::menuState.radarScrWindows.end(); ++it) {
+            if (it->second.m_callsign == callsign && it->second.m_winType == WINDOW_CPDLC_EDITOR) {
+                return it; // Return iterator to the found element
+            }
+        }
+        return CSiTRadar::menuState.radarScrWindows.end(); // Return end iterator if not found
+    }
 
     static void RegisterButton(RECT rect) {
 

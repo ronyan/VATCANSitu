@@ -2278,10 +2278,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
-#pragma region cpdlc_window_functions
+#pragma region cpdlc_window_functions_pairled
 
 		if (func == "Close Dialog") {
-			int i=-1;
+			int i = -1;
 			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
 				if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
 					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
@@ -2294,75 +2294,91 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 		}
 
-		if (func == "Affirm") {
-			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
-				if (win.second.m_callsign == window->m_callsign
-					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+		auto it = findCPDLCEditorWindow(window->m_callsign);
+		if (it != CSiTRadar::menuState.radarScrWindows.end()) {
 
-				{
-					if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
-						// Do the thing
-						if (win.second.m_textfields_.size() > 0)
-						{
+			if (func == "Standby" || func == "Roger" || func == "Negative") {
 
-							CPDLCMessage pdcuplink;
-							pdcuplink.GenerateReply(win.second.m_textfields_.at(0).m_cpdlcmessage);
-							pdcuplink.messageType = "cpdlc";
-							pdcuplink.rawMessageContent = "AFFIRM"; // UM4
-							if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
-								pdcuplink.rawMessageContent = "LOGON ACCEPTED";
-								pdcuplink.responseRequired = "NE";
-							}
-							pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
-							win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-						}
-					}
-					else {
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "" &&
+					it->second.m_textfields_.at(0).m_cpdlcmessage.responseRequired == "Y") {
+					// Do the thing
+					if (it->second.m_textfields_.size() > 0)
+					{
 
 						CPDLCMessage pdcuplink;
-						pdcuplink.rawMessageContent = "ERR: RESPONSE TYPE NOT ALLOWED";
-						win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+						pdcuplink.messageType = "cpdlc";
+						if (func == "Standby") { pdcuplink.rawMessageContent = "STANDBY"; }
+						if (func == "Roger") { pdcuplink.rawMessageContent = "ROGER"; } 
+						if (func == "Negative") { pdcuplink.rawMessageContent = "NEGATIVE"; } 
+						pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
 					}
+				}
+				else {
+
+					CPDLCMessage pdcuplink;
+					pdcuplink.rawMessageContent = "ERR: RESPONSE NOT REQUIRED FOR SELECTED D/L MSG";
+					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
 				}
 			}
 
-		}
+			if (func == "Affirm") {
 
-		if (func == "PDC") {
-			// Can only generate as a response to a request
-
-
-			// Find the paired CPDLC Editor Window
-			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
-				if (win.second.m_callsign == window->m_callsign
-					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
-
-				{
-					if (win.second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
-						// Do the thing
-						if (win.second.m_textfields_.size() > 0)
-						{
-
-
-							CPDLCMessage pdcuplink;
-							pdcuplink.GenerateReply(win.second.m_textfields_.at(0).m_cpdlcmessage);
-							pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A"); // FIX ATIS LETTER to be dynamic
-
-							win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-						}
-					}
-					else {
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
+					// Do the thing
+					if (it->second.m_textfields_.size() > 0)
+					{
 
 						CPDLCMessage pdcuplink;
-						pdcuplink.rawMessageContent = "ERR: CANNOT GENERATE PDC MSG RESPONSE TO SELECTED D/L MESSAGE TYPE";
-
-						win.second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+						pdcuplink.messageType = "cpdlc";
+						pdcuplink.rawMessageContent = "AFFIRM"; // UM4
+						if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
+							pdcuplink.rawMessageContent = "LOGON ACCEPTED";
+							pdcuplink.responseRequired = "NE";
+						}
+						pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
 					}
 				}
+				else {
+
+					CPDLCMessage pdcuplink;
+					pdcuplink.rawMessageContent = "ERR: RESPONSE TYPE NOT ALLOWED";
+					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+				}
+
+			}
+
+			if (func == "PDC") {
+
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
+					// Do the thing
+					if (it->second.m_textfields_.size() > 0)
+					{
+
+						CPDLCMessage pdcuplink;
+						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+						pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A"); // FIX ATIS LETTER to be dynamic
+
+						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+					}
+				}
+				else {
+
+					CPDLCMessage pdcuplink;
+					pdcuplink.rawMessageContent = "ERR: CANNOT GENERATE PDC MSG RESPONSE TO SELECTED D/L MESSAGE TYPE";
+
+					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+				}
+
 			}
 		}
 	}
