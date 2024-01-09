@@ -370,9 +370,34 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		rline1.left = line1.x;
 		rline1.bottom = line2.y;
 
-		if (CSiTRadar::menuState.bigACID) {
+		if (CSiTRadar::menuState.bigACID) 
+		{
 			dc->SelectObject(CFontHelper::EuroscopeBold);
 			rline1.top -= 2;
+		}
+
+		if (!CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.empty())
+		{
+			// Draw the ADSB status indicator
+			RECT adsbsquare{};
+			adsbsquare.left = rline1.left;
+			adsbsquare.top = line1.y +2;
+			adsbsquare.bottom = line2.y;
+			adsbsquare.right = adsbsquare.left + 8;
+			
+			HPEN targetPen = CreatePen(PS_SOLID, 1, RGB(0, 200, 0));
+			dc->SelectObject(targetPen);
+			HBRUSH targetBrush = CreateSolidBrush(RGB(0,200,0));
+
+			dc->SelectObject(targetBrush);
+			dc->Rectangle(&adsbsquare);
+
+			DeleteObject(targetBrush);
+			DeleteObject(targetPen);
+
+			rad->AddScreenObject(TAG_CPDLC, rt->GetCallsign(), adsbsquare, true, "CPDLC");
+
+			rline1.left = adsbsquare.right + 3;
 		}
 
 		if (CSiTRadar::mAcData[rt->GetCallsign()].isMedevac)

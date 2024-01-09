@@ -41,6 +41,13 @@ const int AIRCRAFT_CJS = 400;
 const int TAG_ITEM_FP_CS = 401;
 const int TAG_ITEM_FP_FINAL_ALTITUDE = 402;
 const int TAG_ALT = 403;
+const int TAG_CPDLC = 404;
+
+const int TAG_ITEM_CPDLC = 4999;
+const int TAG_ITEM_IFR_REL = 5000;
+const int TAG_FUNC_IFR_REL_REQ = 5001;
+const int TAG_FUNC_IFR_RELEASED = 5002;
+const int TAG_FUNCTION_OPEN_CPDLC_WINDOW = 5003;
 
 const int BUTTON_MENU = 201;
 const int BUTTON_MENU_HALO_OPTIONS = 202;

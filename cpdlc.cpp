@@ -286,25 +286,6 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 	letter += (static_cast<u_int>(this->timeParsed) + seedInt) % 25;
 	identifierLetter = letter;
 
-	// CPDLC only available in CYTZ and CYYZ in CZYZ if someone requests from elsewhere send
-	// ARINC 620/622 simulate a telex message
-	/* -// ATC PA01 YYZOWAC 22JUN/1003 C-FITW/733/AC7281
-
-		TIMESTAMP 22JUN21 10:03
-		*PRE-DEPARTURE CLEARANCE*
-		FLT ACA7281 CYYZ
-		H/B77W/W FILED FL360
-		XPRD 2264
-		USE SID AVSEP6
-		DEPARTURE RUNWAY 33R
-		DESTINATION CYVR
-		*** ADVISE ATC IF RUNUP REQUIRED ***
-		CONTACT CLEARANCE WITH IDENTIFIER 360M
-		AVSEP6 MUSIT SSM YQT GERTY
-		PEMPA AXILI BOOTH CANUC5
-		END
-
-		*/
 
 	// truncate the route if too long
 	std::string rteStr = flightplan.GetFlightPlanData().GetRoute();
@@ -326,8 +307,6 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		rteStr = substringBeforeSpace + "// FILED ROUTE";
 	}
 	
-
-
 	if (flightplan.GetFlightPlanData().GetOrigin() == "CYTZ") {
 
 		this->responseRequired = "WU";
@@ -363,6 +342,27 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 	}
 
 	// ARINC 622 
+
+	// CPDLC only available in CYTZ and CYYZ in CZYZ if someone requests from elsewhere send
+	// ARINC 620/622 simulate a telex message
+	/* -// ATC PA01 YYZOWAC 22JUN/1003 C-FITW/733/AC7281
+
+		TIMESTAMP 22JUN21 10:03
+		*PRE-DEPARTURE CLEARANCE*
+		FLT ACA7281 CYYZ
+		H/B77W/W FILED FL360
+		XPRD 2264
+		USE SID AVSEP6
+		DEPARTURE RUNWAY 33R
+		DESTINATION CYVR
+		*** ADVISE ATC IF RUNUP REQUIRED ***
+		CONTACT CLEARANCE WITH IDENTIFIER 360M
+		AVSEP6 MUSIT SSM YQT GERTY
+		PEMPA AXILI BOOTH CANUC5
+		END
+
+		*/
+
 	else {
 
 		this->rawMessageContent = "TIMESTAMP ";

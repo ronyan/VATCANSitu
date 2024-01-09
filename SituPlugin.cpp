@@ -5,12 +5,6 @@
 #include "ACTag.h"
 #include "CFontHelper.h"
 
-const int TAG_ITEM_CPDLC = 4999;
-const int TAG_ITEM_IFR_REL = 5000;
-const int TAG_FUNC_IFR_REL_REQ = 5001;
-const int TAG_FUNC_IFR_RELEASED = 5002;
-const int TAG_FUNCTION_OPEN_CPDLC_WINDOW = 5003;
-
 bool held = false;
 bool injected = false;
 bool kbF1 = false;
@@ -646,7 +640,7 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
         *pColorCode = TAG_COLOR_RGB_DEFINED;
         // If any CPDLC Messages 
         if (!CSiTRadar::mAcData.at(FlightPlan.GetCallsign()).CPDLCMessages.empty()) {
-            COLORREF c = C_MENU_GREEN;
+            COLORREF c = RGB(0,200,0);
             strcpy_s(sItemString, 16, "\u00A4");
             *pRGB = c;
         }

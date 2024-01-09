@@ -2021,6 +2021,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		RequestRefresh();
 	}
 
+	if (ObjectType == TAG_CPDLC) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		StartTagFunction(GetPlugIn()->FlightPlanSelectASEL().GetCallsign(), GetPlugIn()->GetPlugInName(), TAG_CPDLC, sObjectId, GetPlugIn()->GetPlugInName(), TAG_FUNCTION_OPEN_CPDLC_WINDOW, Pt, Area);
+	}
+
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
 
@@ -2301,6 +2306,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
+#pragma region cpdlc_window_functions
+
 		if (func == "Close Dialog") {
 			int i=-1;
 			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
@@ -2386,8 +2393,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				}
 			}
 		}
-
 	}
+
+#pragma endregion
 
 	if (ObjectType == WINDOW_POINT_OUT) {
 		auto window = GetAppWindow(stoi(id));
