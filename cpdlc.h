@@ -9,6 +9,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <regex>
 
 class CPDLCMessage {
 
@@ -20,6 +21,8 @@ public:
 	static std::string hoppieICAO;
 	static u_int CPDLCMessage::ids;
 	static bool firstPeek; //
+
+
 	int id;
 
 	bool isdlMessage; // if not DL message, then it is UL message
@@ -28,14 +31,14 @@ public:
 
 	std::time_t timeParsed; // time that message was created
 	std::string hoppieMessageID{""}; // from the api, empty string if doesn't exist
-	std::string messageType; // telex or CPDLC
+	std::string messageType{""}; // telex or CPDLC
 
-	std::string sender;
-	std::string receipient;
+	std::string sender{ "" };
+	std::string receipient{ "" };
 	int messageID{ -1 };
 	int responseToMessageID{ -1 };
-	std::string responseRequired;
-	std::string rawMessageContent;
+	std::string responseRequired{ "" };
+	std::string rawMessageContent{ "" };
 
 	u_int ARINCmessageType; // standardized ARINC message type for CPDLC
 
@@ -47,7 +50,8 @@ public:
 	void GenerateReply(CPDLCMessage originalMessage);
 	void SendCPDLCMessage();
 	static CPDLCMessage parseDLMessage(std::string& rawMessage);
-	void processMessage();
+	void processMessage(); 
+	bool isValidDLMessage(); // Per AIP , which messages are allowable, returns false if not standard telex
 
 
 	// Formating Helpers

@@ -255,8 +255,6 @@ void CPDLCMessage::SendCPDLCMessage() {
 	else {
 		if (postResponse.substr(0, 2) == "ok") { this->sent = true; }
 	}
-	auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	this->timeParsed = currentTime;
 
 }
 
@@ -282,7 +280,7 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 	char letter = 'A'; // filler letter for now
 	std::string identifierLetter;
-	u_int pdcNumbers = (static_cast<u_int>(this->timeParsed) + seedInt) % 1000; // 3 digit number, generate with hoppie ID
+	u_int pdcNumbers = (static_cast<u_int>(this->timeParsed) + seedInt) % 900 + 100; // 3 digit number, generate with hoppie ID
 	letter += (static_cast<u_int>(this->timeParsed) + seedInt) % 25;
 	identifierLetter = letter;
 
@@ -446,6 +444,22 @@ std::string CPDLCMessage::ZuluTimeStringGen() {
 	return zuluTimeString;
 }
 
+bool CPDLCMessage::isValidDLMessage() {
+
+	std::vector<std::regex> acceptableMessages = {
+
+
+
+	};
+
+	bool isMatch = false;
+	for (const auto& pattern : acceptableMessages) {
+		if (std::regex_match(this->rawMessageContent, pattern)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /* enum CpdlcMessageExpectedResponseType {
 	NotRequired = 'NE',

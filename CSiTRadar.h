@@ -35,7 +35,6 @@ struct SSquawkCodeManagement {
     int numCorrelatedRT{ 0 };
 };
 
-
 struct ACData {
     bool hasVFRFP;
     bool isADSB;
@@ -272,6 +271,8 @@ public:
     double wxRadLat;
     double wxRadLong;
     int wxRadZL;
+
+    void asyncCPDLCFetch();
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();

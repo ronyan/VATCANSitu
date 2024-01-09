@@ -61,17 +61,6 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		s.location = { 14,132 };
 		m_text_.push_back(s);
 
-		// Print the selected list box in the parent CPDLC window
-		SListBoxElement lbe(0, ""); // dummy element
-		SListBox lb;
-		lb.listBox_.push_back(lbe);
-		lb.m_max_elements = 8;
-		lb.m_width = 495;
-		lb.m_origin.x = 0;
-		lb.m_origin.y = 27;
-		m_listboxes_.push_back(lb);
-
-
 		SWindowButton b;
 		b.location = { 430, 219 };
 		b.m_height = 25;
