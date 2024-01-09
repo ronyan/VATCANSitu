@@ -9,6 +9,7 @@ static std::size_t write_data(void* buffer, std::size_t size, std::size_t nmemb,
 u_int CPDLCMessage::ids = 0;
 std::string CPDLCMessage::hoppieCode = "";
 std::string CPDLCMessage::hoppieICAO = "CYYZ";
+bool CPDLCMessage::firstPeek = true;
 
 std::string CPDLCMessage::YYMMDDString() {
 	// Get the current time in UTC (Zulu time) using std::chrono
@@ -96,13 +97,13 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 
 		// substring the hoppie messageID ** this only shows in PEEK **
 
-		/*
-		size_t space = result.find(' ');
-		if (space != std::string::npos) {
-			parsedMessage.hoppieMessageID = result.substr(0, space);
-			result = result.substr(space+1);
+		if (firstPeek) {
+			size_t space = result.find(' ');
+			if (space != std::string::npos) {
+				parsedMessage.hoppieMessageID = result.substr(0, space);
+				result = result.substr(space + 1);
+			}
 		}
-		*/
 
 		// get the callsign
 		size_t space = result.find(' ');
@@ -170,7 +171,14 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 
 std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC messages; Should be called every 50-70s to get new messages
 	std::string url;
-	url = "http://www.hoppie.nl/acars/system/connect.html?logon=" + CPDLCMessage::hoppieCode + "&from=" + CPDLCMessage::hoppieICAO + "&to=SERVER&type=poll";
+	url = "http://www.hoppie.nl/acars/system/connect.html?logon=" + CPDLCMessage::hoppieCode + "&from=" + CPDLCMessage::hoppieICAO + "&to=SERVER";
+
+	if (CPDLCMessage::firstPeek) {
+		url += "&type=peek";
+	} else { 
+		url += "&type=poll";
+	}
+
 	//url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
 	std::string rawHoppiePollString;
@@ -265,10 +273,17 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 	this->sender = this->hoppieICAO;
 	this->receipient = flightplan.GetCallsign();
 
+	// Generate some hash number to generate a PDC identifier
+	std::hash<std::string> hashFunction;
+	size_t seedValue = hashFunction(this->receipient);
+
+	// Convert the hash value to an integer (or use it directly)
+	unsigned int seedInt = static_cast<unsigned int>(seedValue);
+
 	char letter = 'A'; // filler letter for now
 	std::string identifierLetter;
-	u_int pdcNumbers = static_cast<u_int>(this->timeParsed) % 1000; // 3 digit number, generate with hoppie ID
-	letter += static_cast<u_int>(this->timeParsed) % 25;
+	u_int pdcNumbers = (static_cast<u_int>(this->timeParsed) + seedInt) % 1000; // 3 digit number, generate with hoppie ID
+	letter += (static_cast<u_int>(this->timeParsed) + seedInt) % 25;
 	identifierLetter = letter;
 
 	// CPDLC only available in CYTZ and CYYZ in CZYZ if someone requests from elsewhere send

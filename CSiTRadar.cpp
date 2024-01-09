@@ -287,6 +287,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					}
 
 				}
+
+				CPDLCMessage::firstPeek = false;
 			}
 
 		}
@@ -2229,44 +2231,50 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 		auto window = GetAppWindow(stoi(id));
 
-		if (!strcmp(func.c_str(), "Send")) {
+		if (func == "Send") {
 
-			try {
+			if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent != "" && window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent.substr(0,4) != "ERR:") {
 
-				window->m_textfields_.at(1).m_cpdlcmessage.SendCPDLCMessage();
-				mAcData[window->m_callsign].CPDLCMessages.push_back(window->m_textfields_.at(1).m_cpdlcmessage);
+				try {
 
-				// certain automated messages:
-				if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "LOGON ACCEPTED") {
-					// make a copy
-					CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
-					automaticResponse.messageID = -1;
-					automaticResponse.messageType = "telex";
-					automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH TORONTO CENTER";
-					automaticResponse.SendCPDLCMessage();
-					mAcData[window->m_callsign].CPDLCMessages.push_back(automaticResponse);
+					window->m_textfields_.at(1).m_cpdlcmessage.SendCPDLCMessage();
+					mAcData[window->m_callsign].CPDLCMessages.push_back(window->m_textfields_.at(1).m_cpdlcmessage);
 
-				}
+					// certain automated messages:
+					if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "LOGON ACCEPTED") {
+						// make a copy
+						CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
+						automaticResponse.messageID = -1;
+						automaticResponse.messageType = "telex";
+						automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH TORONTO CENTER";
+						automaticResponse.SendCPDLCMessage();
+						mAcData[window->m_callsign].CPDLCMessages.push_back(automaticResponse);
 
-				// refresh the listbox
-				for (auto& win : CSiTRadar::menuState.radarScrWindows) {
-					if (win.second.m_callsign == window->m_callsign
-						&& win.second.m_winType == WINDOW_CPDLC)
-					{
-						for (auto& lbtoberefreshed : win.second.m_listboxes_) {
+					}
 
-							lbtoberefreshed.PopulateCPDLCListBox(mAcData[window->m_callsign].CPDLCMessages);
+					// refresh the listbox
+					for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+						if (win.second.m_callsign == window->m_callsign
+							&& win.second.m_winType == WINDOW_CPDLC)
+						{
+							for (auto& lbtoberefreshed : win.second.m_listboxes_) {
+
+								lbtoberefreshed.PopulateCPDLCListBox(mAcData[window->m_callsign].CPDLCMessages);
+							}
 						}
 					}
+
+				}
+				catch (const std::out_of_range& oor) {
+					// Handle the out_of_range exception
+					std::cerr << "Out of range exception: " << oor.what() << std::endl;
 				}
 
+				menuState.radarScrWindows.erase(stoi(id));
 			}
-			catch (const std::out_of_range& oor) {
-				// Handle the out_of_range exception
-				std::cerr << "Out of range exception: " << oor.what() << std::endl;
+			else {
+				window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: NO UPLINK MESSAGE CONTENT";
 			}
-
-			menuState.radarScrWindows.erase(stoi(id));
 		}
 
 	}

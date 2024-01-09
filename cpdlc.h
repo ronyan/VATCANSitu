@@ -19,6 +19,7 @@ public:
 	static std::string hoppieCode;  // Hoppie Logon Code
 	static std::string hoppieICAO;
 	static u_int CPDLCMessage::ids;
+	static bool firstPeek; //
 	int id;
 
 	bool isdlMessage; // if not DL message, then it is UL message
