@@ -742,7 +742,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 	RECT totalListBox{ winOrigin.x+4, winOrigin.y,  winOrigin.x + m_width, winOrigin.y + row * 17 };
 	if (row > 8) { totalListBox.bottom = winOrigin.y + 8 * 17; }
 	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
-	this->m_width = totalListBox.right - totalListBox.left;
+	//this->m_width = totalListBox.right - totalListBox.left;
 
 	DeleteObject(targetPen);
 	DeleteObject(targetPen2);
@@ -835,7 +835,7 @@ void STextField::RenderTextField(CDC* m_dc, POINT origin) {
 		m_dc->Draw3dRect(&r, C_MENU_GREY2, C_MENU_GREY4);
 		r.left += 8;
 
-		if (m_cpdlcmessage.hoppieMessageID != "") { // will be "" if nothing was pushed to it
+		if (m_cpdlcmessage.rawMessageContent != "") { // will be "" if nothing was pushed to it
 			// message ID
 			if (m_cpdlcmessage.messageID != -1) {
 				m_dc->DrawText(to_string(m_cpdlcmessage.messageID).c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_CALCRECT);

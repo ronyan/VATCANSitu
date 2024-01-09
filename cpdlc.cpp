@@ -94,14 +94,18 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 		// the chopped message is returned by reference and truncated
 		rawMessage = rawMessage.substr(secondBrace);
 
-		// substring the hoppie messageID
+		// substring the hoppie messageID ** this only shows in PEEK **
+
+		/*
 		size_t space = result.find(' ');
 		if (space != std::string::npos) {
 			parsedMessage.hoppieMessageID = result.substr(0, space);
 			result = result.substr(space+1);
 		}
+		*/
+
 		// get the callsign
-		space = result.find(' ');
+		size_t space = result.find(' ');
 		if (space != std::string::npos) {
 			parsedMessage.sender = result.substr(0, space);
 			result = result.substr(space+1);
@@ -190,11 +194,11 @@ void CPDLCMessage::SendCPDLCMessage() {
 	url = "http://www.hoppie.nl/acars/system/connect.html";
 	//url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
-	std::string postfields = "?logon=";
+	std::string postfields = "logon=";
 	postfields += this->hoppieCode;
-	postfields += "?from=";
+	postfields += "&from=";
 	postfields += this->hoppieICAO;
-	postfields += "?to=";
+	postfields += "&to=";
 	postfields += this->receipient;
 
 	std::string curlFriendlyRawMsg;
@@ -209,7 +213,7 @@ void CPDLCMessage::SendCPDLCMessage() {
 	}
 
 	if (this->messageType == "cpdlc") {
-		postfields += "?type=cpdlc";
+		postfields += "&type=cpdlc";
 		postfields += "&packet=/data2/";
 		postfields += std::to_string(this->messageID);
 		postfields += "/";
@@ -221,8 +225,8 @@ void CPDLCMessage::SendCPDLCMessage() {
 	}
 
 	if (this->messageType == "telex") {
-		postfields += "?type=telex";
-		postfields += "?packet=";
+		postfields += "&type=telex";
+		postfields += "&packet=";
 		postfields += curlFriendlyRawMsg;
 	}
 
@@ -231,7 +235,7 @@ void CPDLCMessage::SendCPDLCMessage() {
 	auto postCurl = curl_easy_init();
 
 	curl_easy_setopt(postCurl, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(postCurl, CURLOPT_POSTFIELDS, postfields);
+	curl_easy_setopt(postCurl, CURLOPT_POSTFIELDS, postfields.c_str());
 	curl_easy_setopt(postCurl, CURLOPT_WRITEFUNCTION, write_data);
 	curl_easy_setopt(postCurl, CURLOPT_WRITEDATA, &postResponse);
 	auto res = curl_easy_perform(postCurl);
@@ -252,7 +256,6 @@ void CPDLCMessage::GenerateReply(CPDLCMessage originalMessage) {
 
 	this->receipient = originalMessage.sender;
 	this->responseToMessageID = originalMessage.messageID;
-	this->hoppieMessageID = originalMessage.hoppieMessageID;
 	this->isdlMessage = !this->isdlMessage; // replies are the opposite type
 
 }
@@ -262,10 +265,10 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 	this->sender = this->hoppieICAO;
 	this->receipient = flightplan.GetCallsign();
 
-	char letter = 'A';
+	char letter = 'A'; // filler letter for now
 	std::string identifierLetter;
-	int pdcNumbers = stoi(this->hoppieMessageID) % 1000; // 3 digit number, generate with hoppie ID
-	letter += stoi(this->hoppieMessageID) % 25;
+	u_int pdcNumbers = static_cast<u_int>(this->timeParsed) % 1000; // 3 digit number, generate with hoppie ID
+	letter += static_cast<u_int>(this->timeParsed) % 25;
 	identifierLetter = letter;
 
 	// CPDLC only available in CYTZ and CYYZ in CZYZ if someone requests from elsewhere send
@@ -290,20 +293,22 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 	// truncate the route if too long
 	std::string rteStr = flightplan.GetFlightPlanData().GetRoute();
-	int nCharacters = 20;
+	int nCharacters = 60;
 
 	if (rteStr.length() > nCharacters) {
 
 		int index = nCharacters;
+		std::string substringBeforeSpace;
 		while (index < rteStr.length()) {
 			if (rteStr[index] == ' ') {
 				// Extract substring before the space
-				std::string substringBeforeSpace = rteStr.substr(0, index);
+				substringBeforeSpace = rteStr.substr(0, index);
+				break;
 			}
 			index++;
 		}
 
-		rteStr += "// FILED ROUTE";
+		rteStr = substringBeforeSpace + "// FILED ROUTE";
 	}
 	
 

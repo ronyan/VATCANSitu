@@ -2276,21 +2276,21 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		auto window = GetAppWindow(stoi(id));
 
 		if (func == "Close") {
-			menuState.radarScrWindows.erase(stoi(id));
-
-			// also close the dialogue
 
 			int i = -1;
 			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
-				if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+				if (win.second.m_callsign == window->m_callsign
 					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
 				{
 					i = win.first;
 				}
 			}
 			if (i >= 0) {
+				// close the dialog
 				menuState.radarScrWindows.erase(i);
 			}
+			// then close the main menu
+			menuState.radarScrWindows.erase(stoi(id));
 		}
 
 		if (func == "Close Dialog") {
@@ -2383,11 +2383,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == WINDOW_POINT_OUT) {
 		auto window = GetAppWindow(stoi(id));
-		if (!strcmp(func.c_str(), "Cancel")) {
+		if (func == "Cancel") {
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
-		if (!strcmp(func.c_str(), "Submit")) {
+		if (func == "Submit") {
 			string poMsg = "PO " + window->m_textfields_.back().m_text;
 			SendPointOut (window->m_textfields_.front().m_text.c_str(), poMsg.c_str(), &GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
 			mAcData[window->m_callsign].pointOutFromMe = true;
