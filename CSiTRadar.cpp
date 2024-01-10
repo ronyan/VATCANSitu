@@ -3993,9 +3993,11 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 	s = CPDLCMessage::PollCPDLCMessages();
 	CSiTRadar::menuState.lastCPDLCPoll = clock();
 
-	if (s.substr(0, 3) != "ok ") {
+	if (s.substr(0, 2) != "ok") {
 		CSiTRadar::menuState.CPDLCOn = false; // if string not okay, turn it off
-		CSiTRadar::m_pRadScr->GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Hoppie CPDLC", s.c_str(), true, false, false, false, false);
+		string hoppieError = "Hoppie Error, Try Reconnecting Error:";
+		hoppieError += s;
+		CSiTRadar::m_pRadScr->GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Hoppie CPDLC", hoppieError.c_str(), true, false, false, false, false);
 	}
 	// ParseCPDLC message chops messages off sequentially
 
