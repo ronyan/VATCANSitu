@@ -656,12 +656,6 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 
 				// need logic for whether the UP/DL pair is complete, or still pending.
 
-				if (!it->m_cpdlc_message_response.rawMessageContent.empty()) {
-					// if there is a response, put this on the second line, with the appropriate data. 
-
-					row++;
-				}
-
 				m_dc->Rectangle(&r);
 				r.left += 6;
 				m_dc->DrawText(cpdlcOutput.c_str(), &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
@@ -669,47 +663,51 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 				r.top += deltay;
 				deltay += 17;
 
-				// Check if an element with the specified responseToMessageID value was found
-				if (it_response != listBox_.end() 
-					&& it_response->m_cpdlc_message.messageType == "cpdlc" 
-					&& row < 7) { // cut off the response at the bottom in case the 8th row has a response;
+				if (it->m_cpdlc_message.messageID != -1) {// -1 is default n/a ID -- for messages without MIN
+					// Check if an element with the specified responseToMessageID value was found
+					while (it_response != listBox_.end()) {
 
-					string s = it_response->m_cpdlc_message.rawMessageContent;
+						if (it_response->m_cpdlc_message.messageType == "cpdlc"
+							&& row < 7) { // cut off the response at the bottom in case the 8th row has a response;
 
+							string s = it_response->m_cpdlc_message.rawMessageContent;
 
-					cpdlcOutput = ZuluTimeFormated(it_response->m_cpdlc_message.timeParsed);
-					if (it_response->m_cpdlc_message.isdlMessage) {
-						cpdlcOutput += "  |D/L  ";
+							cpdlcOutput = ZuluTimeFormated(it_response->m_cpdlc_message.timeParsed);
+							if (it_response->m_cpdlc_message.isdlMessage) {
+								cpdlcOutput += "  |D/L  ";
+							}
+							else {
+								cpdlcOutput += "  ^U/L     ";
+							}
+							if (it_response->m_cpdlc_message.rawMessageContent.length() > 25) {
+								cpdlcOutput += "FTXT: ";
+								cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent.substr(0, 25);
+								cpdlcOutput += "  >";
+							}
+							else {
+								cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent;
+							}
+
+							RECT r2 = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
+							m_dc->Rectangle(&r2);
+							r2.left += 6;
+							m_dc->DrawText(cpdlcOutput.c_str(), &r2, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+							r.top += deltay;
+							deltay += 17;
+							row++;
+
+						}
+						if (it_response + 1 != listBox_.end()) {
+							it_response = std::find_if(it_response + 1, listBox_.end(), [responseToFind](const SListBoxElement& msg) {
+								return msg.m_cpdlc_message.responseToMessageID == responseToFind;
+								});
+						}
+						else {
+							it_response++;
+						}
 					}
-					else {
-						cpdlcOutput += "  ^U/L     ";
-					}
-					if (it_response->m_cpdlc_message.rawMessageContent.length() > 25) {
-						cpdlcOutput += "FTXT: ";
-						cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent.substr(0, 25);
-						cpdlcOutput += "  >";
-					}
-					else {
-						cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent;
-					}
-
-					RECT r2 = { winOrigin.x + 3, winOrigin.y + deltay, winOrigin.x + m_width, winOrigin.y + deltay + 17 };
-					m_dc->Rectangle(&r2);
-					r2.left += 6;
-					m_dc->DrawText(cpdlcOutput.c_str(), &r2, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
-
-					r.top += deltay;
-					deltay += 17;
-					row++;
-					// Iterator points to the first element with the specified responseToMessageID value
-					// Access the element using *it_response
 				}
-				else {
-					// No element with the specified responseToMessageID value found
-				}
-
-
-
 			}
 
 			stripe++;
