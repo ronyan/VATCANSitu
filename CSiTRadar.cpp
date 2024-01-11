@@ -2746,7 +2746,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			menuState.MB3menu = false;
 			// get the callsign 
 			string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
-
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(cs.c_str());
 			// CPDLC Submenu things
 			// Make a window if it doesn't exist
 			bool exists = false;
@@ -2777,29 +2777,53 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			pdcuplink.responseRequired = "WU";
 			pdcuplink.messageID = mAcData[cs].CPDLCMessages.size()+1;
 
+#pragma region cpdlcsecondarymenu
 			// DIFFERENT MESSAGES GO HERE
 			if (ObjectIdStr == "CPDLCContact" || ObjectIdStr == "CPDLCMonitor") {
 				if (ObjectIdStr == "CPDLCContact") {
-					pdcuplink.rawMessageContent = "CONTACT ";
+					pdcuplink.rawMessageContent = "CONTACT @";
 				}
 				else if (ObjectIdStr == "CPDLCMonitor") {
-					pdcuplink.rawMessageContent = "MONITOR ";
+					pdcuplink.rawMessageContent = "MONITOR @";
 				}
 
 				if (strcmp(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController(), "")) {
 
 					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController();
-					pdcuplink.rawMessageContent += " ";
-					string s = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController();
+					string s = fp.GetCoordinatedNextController();
 					if (s == "UNICOM") {
-						pdcuplink.rawMessageContent += "122.8";
+						pdcuplink.rawMessageContent += "@ @122.8@";
 					}
 					else {
-						pdcuplink.rawMessageContent += CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController()).GetPrimaryFrequency());
+						pdcuplink.rawMessageContent += "@ @" + CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController()).GetPrimaryFrequency()) +"@";
 					}
 				}
 			}
 
+			if (ObjectIdStr == "CPDLCConfALT") {
+				pdcuplink.responseRequired = "NE";
+				pdcuplink.rawMessageContent = "CONFIRM ASSIGNED ALTITUDE";
+			}
+
+			if (ObjectIdStr == "CPDLCClimb" || ObjectIdStr == "CPDLCDescend") {
+
+				pdcuplink.responseRequired = "WU";
+				if (ObjectIdStr == "CPDLCClimb") {
+					pdcuplink.rawMessageContent = "CLIMB TO AND MAINTAIN @";
+				} else if (ObjectIdStr == "CPDLCDescend") {
+					pdcuplink.rawMessageContent = "DESCEND TO AND MAINTAIN @";
+				}
+				string alt;
+				if (fp.GetControllerAssignedData().GetClearedAltitude() != 0) {
+					alt = to_string(fp.GetClearedAltitude() / 100);
+				}
+				else {
+					alt = to_string(fp.GetFinalAltitude() / 100);
+				}
+				pdcuplink.rawMessageContent += "FL" + alt;
+			}
+
+#pragma endregion
 			// END OF MESSAGE EDITING BY CONTEXT MENU
 
 			auto it = findCPDLCEditorWindow(cs);

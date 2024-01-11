@@ -103,9 +103,9 @@ void CPopUpMenu::populateCPDLCOptions(string func) {
         m_listElements.emplace_back(SPopUpElement("MONITOR (UNAME) (FREQ)", "CPDLCMonitor", 0, 0, 160));
     }
     if (func == "Altitude") {
-        m_listElements.emplace_back(SPopUpElement("CLIMB TO AND MAINTAIN (ALT)", "CPDLCClimb", 0, 0, 180));
-        m_listElements.emplace_back(SPopUpElement("DESCEND TO AND MAINTAIN (ALT)", "CPDLCDescend", 0, 180));
-        m_listElements.emplace_back(SPopUpElement("CONFIRM ASSIGNED ALTITUDE", "CPDLCConfALT", 0, 180));
+        m_listElements.emplace_back(SPopUpElement("DESCEND TO AND MAINTAIN (ALT)", "CPDLCDescend", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("CLIMB TO AND MAINTAIN (ALT)", "CPDLCClimb", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("CONFIRM ASSIGNED ALTITUDE", "CPDLCConfALT", 0, 0, 190));
     }
 }
 
