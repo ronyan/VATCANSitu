@@ -116,6 +116,8 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 				b.m_textcolor = RGB(0, 200, 0);
 
 				if (j == 0 && i == 0) { b.text = "Standby"; }
+				if (j == 0 && i == 1) { b.text = "Radio"; }
+				if (j == 0 && i == 2) { b.text = "Altitude"; }
 				if (j == 2 && i == 4) { b.text = "PDC"; }
 
 				m_buttons_.push_back(b);

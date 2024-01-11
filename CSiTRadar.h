@@ -71,6 +71,11 @@ struct ACData {
     vector<CPDLCMessage> CPDLCMessages;
 };
 
+struct SCPDLCMenuData {
+    string func;
+    POINT pt;
+};
+
 struct SFocusItem {
     bool m_focus_on;
     STextField* m_focused_tf;
@@ -179,6 +184,7 @@ struct buttonStates {
     bool acListMaint;
     clock_t lastAcListMaint{};
 
+    SCPDLCMenuData CPDLCMenuData;
 
 };
 

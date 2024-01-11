@@ -225,7 +225,9 @@ void CPDLCMessage::SendCPDLCMessage() {
 		postfields += "&packet=/data2/";
 		postfields += std::to_string(this->messageID);
 		postfields += "/";
-		postfields += std::to_string(this->responseToMessageID);
+		if (this->responseToMessageID != -1) {
+			postfields += std::to_string(this->responseToMessageID);
+		}
 		postfields += "/";
 		postfields += this->responseRequired;
 		postfields += "/";
