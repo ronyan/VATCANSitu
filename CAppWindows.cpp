@@ -647,8 +647,11 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 				else {
 					cpdlcOutput += "  ^U/L  ";
 				}
-				if (it->m_cpdlc_message.rawMessageContent.length() > 25) {
+				if (it->m_cpdlc_message.messageType == "telex") {
 					cpdlcOutput += "FTXT: ";
+				}
+
+				if (it->m_cpdlc_message.rawMessageContent.length() > 25) {
 					cpdlcOutput += it->m_cpdlc_message.rawMessageContent.substr(0, 25);
 					cpdlcOutput += "  >";
 				}
@@ -681,8 +684,11 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 							else {
 								cpdlcOutput += "  ^U/L     ";
 							}
-							if (it_response->m_cpdlc_message.rawMessageContent.length() > 25) {
+
+							if (it->m_cpdlc_message.messageType == "telex") {
 								cpdlcOutput += "FTXT: ";
+							}
+							if (it_response->m_cpdlc_message.rawMessageContent.length() > 25) {
 								cpdlcOutput += it_response->m_cpdlc_message.rawMessageContent.substr(0, 25);
 								cpdlcOutput += "  >";
 							}

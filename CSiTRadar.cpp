@@ -2820,7 +2820,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				else {
 					alt = to_string(fp.GetFinalAltitude() / 100);
 				}
-				pdcuplink.rawMessageContent += "FL" + alt;
+				pdcuplink.rawMessageContent += "FL" + alt +"@";
 			}
 
 #pragma endregion
