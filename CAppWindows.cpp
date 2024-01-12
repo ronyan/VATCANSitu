@@ -560,6 +560,66 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 	int row = 0;
 	int stripe = 0;
 
+	int totalrows = 0;
+
+	// calculate total rows.
+	for (auto it = listBox_.rbegin(); it != listBox_.rend(); ++it) {
+
+		if (it->m_cpdlc_message.rawMessageContent == "WILCO" ||
+			it->m_cpdlc_message.rawMessageContent == "UNABLE" ||
+			it->m_cpdlc_message.rawMessageContent == "NEGATIVE" ||
+			it->m_cpdlc_message.rawMessageContent == "STANDBY" ||
+			it->m_cpdlc_message.rawMessageContent == "ROGER" ||
+			it->m_cpdlc_message.rawMessageContent == "AFFIRM" ||
+			it->m_cpdlc_message.rawMessageContent == "LOGON ACCEPTED") {
+
+		}
+
+		else {
+
+			int responseToFind = it->m_cpdlc_message.messageID;
+
+			auto it_response = std::find_if(listBox_.begin(), listBox_.end(), [responseToFind](const SListBoxElement& msg) {
+				return msg.m_cpdlc_message.responseToMessageID == responseToFind;
+				});
+
+				if (it->m_cpdlc_message.messageID != -1) {// -1 is default n/a ID -- for messages without MIN
+					// Check if an element with the specified responseToMessageID value was found
+					while (it_response != listBox_.end()) {
+
+						if (it_response->m_cpdlc_message.messageType == "cpdlc") { // cut off the response at the bottom in case the 8th row has a response;
+							totalrows++;
+						}
+						if (it_response + 1 != listBox_.end()) {
+
+							it_response = std::find_if(it_response + 1, listBox_.end(), [responseToFind](const SListBoxElement& msg) {
+								return msg.m_cpdlc_message.responseToMessageID == responseToFind;
+								});
+
+						}
+						else {
+							it_response++;
+						}
+					}
+				}
+
+			totalrows++;
+		}
+	}
+
+	if (totalrows > 8) {
+
+		m_has_scroll_bar = true;
+		SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x, m_origin.y }, m_LB_firstElem_idx, (row - m_max_elements) + 1);
+		scrollBar.m_height = m_height;
+		scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)row;
+		scrollBar.m_total_elements = row;
+		m_scrbar = scrollBar;
+
+		this->m_last_element = totalrows;
+	}
+
+
 	for (auto it = listBox_.rbegin(); it != listBox_.rend(); ++it) {
 
 		if (it->m_cpdlc_message.rawMessageContent == "WILCO" ||
@@ -721,24 +781,11 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 			stripe++;
 			row++;
 		}
-
-		if (row > 8) {
-			m_has_scroll_bar = true;
-			SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x, m_origin.y }, m_LB_firstElem_idx, (row - m_max_elements) + 1);
-			scrollBar.m_height = m_height;
-			scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)row;
-			scrollBar.m_total_elements = row;
-			m_scrbar = scrollBar;
-
-			this->m_last_element = row;
-		}
-
 	}
 
 	RECT totalListBox{ winOrigin.x+4, winOrigin.y,  winOrigin.x + m_width, winOrigin.y + row * 17 };
 	if (row > 8) { totalListBox.bottom = winOrigin.y + 8 * 17; }
 	m_dc->Draw3dRect(&totalListBox, C_MENU_GREY2, C_MENU_GREY4);
-	//this->m_width = totalListBox.right - totalListBox.left;
 
 	DeleteObject(targetPen);
 	DeleteObject(targetPen2);
