@@ -321,21 +321,20 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += " ";
 		this->rawMessageContent += flightplan.GetCallsign();
-		this->rawMessageContent += " CLRD TO @";
+		this->rawMessageContent += " CLRD TO ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
-		this->rawMessageContent += "@ OFF @";
+		this->rawMessageContent += " OFF ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
-		this->rawMessageContent += "@ VIA @";
+		this->rawMessageContent += " VIA ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
-		this->rawMessageContent += "@ SQUAWK @";
+		this->rawMessageContent += " SQUAWK ";
 		this->rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
-		this->rawMessageContent += "@ ATIS @";
+		this->rawMessageContent += " ATIS ";
 		this->rawMessageContent += atisLetter;
-		this->rawMessageContent += "@ CONTACT @";
+		this->rawMessageContent += " CONTACT ";
 		this->rawMessageContent += controller.GetCallsign();
-		this->rawMessageContent += "@ ON FREQ @";
+		this->rawMessageContent += " ON FREQ ";
 		this->rawMessageContent += FreqTruncate(controller.GetPrimaryFrequency());
-		this->rawMessageContent += "@";
 	
 		this->messageType = "cpdlc";
 
