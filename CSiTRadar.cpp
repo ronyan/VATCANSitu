@@ -1133,12 +1133,22 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 
 				//
-				// remember the window order if needed, max size is the number of windows
+				// clean up the window order based on whether or not it's in the the windowScrWindows
 
-				while (menuState.windowOrder.size() > menuState.radarScrWindows.size())
+				for (std::deque<int>::iterator it = menuState.windowOrder.begin(); it != menuState.windowOrder.end(); )
 				{
-					menuState.windowOrder.pop_back();
+					int toFind = *it;
+					if (find_if(menuState.radarScrWindows.begin(), menuState.radarScrWindows.end(), [toFind](const std::pair<int, CAppWindows>& pair) {
+						return pair.first == toFind;
+						}) == menuState.radarScrWindows.end()) {
+
+						it = menuState.windowOrder.erase(it);
+					}
+					else {
+						it++;
+						}
 				}
+
 
 				for (auto& window : menuState.radarScrWindows) {
 
