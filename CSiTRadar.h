@@ -185,6 +185,8 @@ struct buttonStates {
     clock_t lastAcListMaint{};
 
     SCPDLCMenuData CPDLCMenuData;
+    int topWindow{};
+    deque<int> windowOrder{};
 
 };
 

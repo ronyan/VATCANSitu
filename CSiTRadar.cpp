@@ -1133,37 +1133,59 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				}
 
 				//
+				// remember the window order if needed, max size is the number of windows
+
+				while (menuState.windowOrder.size() > menuState.radarScrWindows.size())
+				{
+					menuState.windowOrder.pop_back();
+				}
 
 				for (auto& window : menuState.radarScrWindows) {
-					SWindowElements r = window.second.DrawWindow(&dc);
-					AddScreenObject(WINDOW_TITLE_BAR, to_string(window.second.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.second.m_windowId_).c_str());
-					
-					for (auto &elem : window.second.m_buttons_) {
-						string windowFuncStr;
-						windowFuncStr = to_string(elem.windowID) + " " + elem.text;
-						AddScreenObject(window.second.m_winType, windowFuncStr.c_str(), elem.m_WindowButtonRect, true, windowFuncStr.c_str());
-					}
 
-					for (auto& listbox : window.second.m_listboxes_) {
-						for (auto& lbE : listbox.listBox_) {
-							string windowFuncStr;
-							windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(lbE.m_elementID);
-							AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
-						}
-						string lbFuncStr;
-						lbFuncStr = to_string(window.second.m_windowId_) + " " + to_string(listbox.m_ListBoxID);
-						AddScreenObject(WINDOW_SCROLL_ARROW_UP, lbFuncStr.c_str(), listbox.m_scrbar.uparrow, false, (lbFuncStr + " Up").c_str());
-						AddScreenObject(WINDOW_SCROLL_ARROW_DOWN, lbFuncStr.c_str(), listbox.m_scrbar.downarrow, false, (lbFuncStr + " Down").c_str());
-					}
+					int j = window.first;
 
-					for (auto& tf : window.second.m_textfields_) {
-						string windowFuncStr;
-						windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(tf.m_textFieldID);
-						AddScreenObject(WINDOW_TEXT_FIELD, windowFuncStr.c_str(), tf.m_textRect, true, windowFuncStr.c_str());
+					if (find(menuState.windowOrder.begin(), menuState.windowOrder.end(), j) == menuState.windowOrder.end()) {
+						menuState.windowOrder.emplace_front(j);
 					}
-					
-					
 				}
+
+				// draw the windows in order
+				try {
+					for (auto rit = menuState.windowOrder.rbegin(); rit != menuState.windowOrder.rend(); ++rit) {
+						int& i = *rit;
+						auto& window = menuState.radarScrWindows.at(i);
+						SWindowElements r = window.DrawWindow(&dc);
+						AddScreenObject(WINDOW_TITLE_BAR, to_string(window.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.m_windowId_).c_str());
+
+						for (auto& elem : window.m_buttons_) {
+							string windowFuncStr;
+							windowFuncStr = to_string(elem.windowID) + " " + elem.text;
+							AddScreenObject(window.m_winType, windowFuncStr.c_str(), elem.m_WindowButtonRect, true, windowFuncStr.c_str());
+						}
+
+						for (auto& listbox : window.m_listboxes_) {
+							for (auto& lbE : listbox.listBox_) {
+								string windowFuncStr;
+								windowFuncStr = to_string(window.m_windowId_) + " " + to_string(lbE.m_elementID);
+								AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
+							}
+							string lbFuncStr;
+							lbFuncStr = to_string(window.m_windowId_) + " " + to_string(listbox.m_ListBoxID);
+							AddScreenObject(WINDOW_SCROLL_ARROW_UP, lbFuncStr.c_str(), listbox.m_scrbar.uparrow, false, (lbFuncStr + " Up").c_str());
+							AddScreenObject(WINDOW_SCROLL_ARROW_DOWN, lbFuncStr.c_str(), listbox.m_scrbar.downarrow, false, (lbFuncStr + " Down").c_str());
+						}
+
+						for (auto& tf : window.m_textfields_) {
+							string windowFuncStr;
+							windowFuncStr = to_string(window.m_windowId_) + " " + to_string(tf.m_textFieldID);
+							AddScreenObject(WINDOW_TEXT_FIELD, windowFuncStr.c_str(), tf.m_textRect, true, windowFuncStr.c_str());
+						}
+					}
+				}
+				catch (...) {
+
+					}
+
 
 				if (menuState.MB3menu) {
 					if (menuState.MB3menuType == 0) { // aircraft tags
@@ -1955,6 +1977,17 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 {
 
 	menuState.bgM3Click = false;
+
+	if (ObjectType == WINDOW_TITLE_BAR) {
+
+		// move the clicked window to the top
+		auto it = find(menuState.windowOrder.begin(), menuState.windowOrder.end(), stoi(sObjectId));
+		if (it != menuState.windowOrder.end()) {
+			std::rotate(menuState.windowOrder.begin(), it, it + 1);
+		}
+		
+
+	}
 
 	string s, id, func;
 	// find window ID, then function from the string
@@ -3516,6 +3549,8 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 			if (menuState.radarScrWindows.count(stoi(sObjectId)) != 0) {
 				menuState.radarScrWindows.at(stoi(sObjectId)).m_origin 
 					= { Area.left , Area.top};
+
+				menuState.topWindow = stoi(sObjectId);
 			}
 		}
 	}
