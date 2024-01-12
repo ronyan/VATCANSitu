@@ -3763,15 +3763,16 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	}
 
 	bool isADSB{ false };
+
 	try {
 		isADSB = CSiTRadar::acADSB.at(callSign);      // vector::at throws an out-of-range
 	}
 	catch (const std::out_of_range& oor) {
-		
+
 	}
 
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
-	
+
 	string CJS = FlightPlan.GetTrackingControllerId();
 	string origin = FlightPlan.GetFlightPlanData().GetOrigin();
 	string destin = FlightPlan.GetFlightPlanData().GetDestination();
@@ -3797,6 +3798,14 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		acdata.isADSB = true;
 	}
 	*/
+
+	// store the data from before so it doesn't get erased.
+	try {
+		acdata.CPDLCMessages = mAcData.at(callSign).CPDLCMessages;
+	}
+	catch (std::out_of_range& oor) {
+		
+	}
 
 	mAcData[callSign] = acdata;
 

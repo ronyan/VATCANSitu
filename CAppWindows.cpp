@@ -679,7 +679,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 
 							cpdlcOutput = ZuluTimeFormated(it_response->m_cpdlc_message.timeParsed);
 							if (it_response->m_cpdlc_message.isdlMessage) {
-								cpdlcOutput += "  |D/L  ";
+								cpdlcOutput += "  |D/L     ";
 							}
 							else {
 								cpdlcOutput += "  ^U/L     ";
