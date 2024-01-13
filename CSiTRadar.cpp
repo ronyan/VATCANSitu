@@ -2848,7 +2848,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					pdcuplink.rawMessageContent = "MONITOR @";
 				}
 
-				if (strcmp(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController(), "")) {
+				// If I'm not tracking, the station will be the tracking controller -> i.e. after a radar handoff event
+				if (!GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerIsMe()) {
+					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign();
+					pdcuplink.rawMessageContent += "@ @" + CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign()).GetPrimaryFrequency()) + "@";
+				}
+				else if (strcmp(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController(), "")) {
 
 					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController();
 					string s = fp.GetCoordinatedNextController();
