@@ -2277,6 +2277,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH ";
 						// PUT THE DIFFERENT FIRS:
 
+						if (CPDLCMessage::hoppieICAO == "CDQX") { automaticResponse.rawMessageContent += "GANDER CENTER"; }
 						if (CPDLCMessage::hoppieICAO == "CZQM") { automaticResponse.rawMessageContent += "MONCTON CENTER"; }
 						if (CPDLCMessage::hoppieICAO == "CZUL") { automaticResponse.rawMessageContent += "MONTREAL CENTER"; }
 						if (CPDLCMessage::hoppieICAO == "CZYZ") { automaticResponse.rawMessageContent += "TORONTO CENTER"; }
@@ -2313,7 +2314,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				menuState.radarScrWindows.erase(stoi(id));
 			}
 			else {
-				window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: NO UPLINK MESSAGE CONTENT";
+				window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: INVALID UPLINK MESSAGE";
 			}
 		}
 
@@ -2339,6 +2340,45 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 			// then close the main menu
 			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+		if (func == "Connect") {
+
+			bool exists = false;
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (win.second.m_callsign == window->m_callsign
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					exists = true;
+				}
+			}
+			// If not draw it
+			if (!exists) {
+
+				try {
+					CAppWindows cpdlc({ Pt.x, Pt.y + 300 }, WINDOW_CPDLC_EDITOR, GetPlugIn()->FlightPlanSelectASEL(), CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(window->m_callsign).CPDLCMessages);
+					cpdlc.m_callsign = window->m_callsign;
+					CSiTRadar::menuState.radarScrWindows[cpdlc.m_windowId_] = cpdlc;
+				}
+				catch (std::out_of_range& err) {}
+
+			}
+
+			auto it = findCPDLCEditorWindow(window->m_callsign);
+			if (it != CSiTRadar::menuState.radarScrWindows.end()) {
+				CPDLCMessage pdcuplink;
+				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+				pdcuplink.messageType = "cpdlc";
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
+					pdcuplink.rawMessageContent = "LOGON ACCEPTED";
+					pdcuplink.responseRequired = "NE";
+				}
+				else {
+					pdcuplink.rawMessageContent = "ERR: Select LOGON REQUEST Message in CPDLC Window First";
+				}
+				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+			}
 		}
 
 #pragma region cpdlc_window_functions_paired
@@ -2382,7 +2422,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		auto it = findCPDLCEditorWindow(window->m_callsign);
 		if (it != CSiTRadar::menuState.radarScrWindows.end()) {
 
-			if (func == "Standby" || func == "Roger" || func == "Negative") {
+			if (func == "Standby" || func == "Roger" || func == "Negative" || func == "Affirm") {
 
 				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "" &&
 					it->second.m_textfields_.at(0).m_cpdlcmessage.responseRequired == "Y") {
@@ -2396,6 +2436,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						if (func == "Standby") { pdcuplink.rawMessageContent = "STANDBY"; }
 						if (func == "Roger") { pdcuplink.rawMessageContent = "ROGER"; } 
 						if (func == "Negative") { pdcuplink.rawMessageContent = "NEGATIVE"; } 
+						if (func == "Affirm") { pdcuplink.rawMessageContent = "AFFIRMATIVE"; }
 						pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
@@ -2404,40 +2445,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				else {
 
 					CPDLCMessage pdcuplink;
-					pdcuplink.rawMessageContent = "ERR: RESPONSE NOT REQUIRED FOR SELECTED D/L MSG";
+					pdcuplink.rawMessageContent = "ERR: SELECT A DOWNLINK MESSAGE FIRST";
 					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
 				}
-			}
-
-			if (func == "Affirm") {
-
-				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
-					// Do the thing
-					if (it->second.m_textfields_.size() > 0)
-					{
-
-						CPDLCMessage pdcuplink;
-						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
-						pdcuplink.messageType = "cpdlc";
-						pdcuplink.rawMessageContent = "AFFIRM"; // UM4
-						if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
-							pdcuplink.rawMessageContent = "LOGON ACCEPTED";
-							pdcuplink.responseRequired = "NE";
-						}
-						pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
-						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-					}
-				}
-				else {
-
-					CPDLCMessage pdcuplink;
-					pdcuplink.rawMessageContent = "ERR: RESPONSE TYPE NOT ALLOWED";
-					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-				}
-
 			}
 
 			if (func == "PDC") {
