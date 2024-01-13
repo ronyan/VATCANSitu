@@ -513,11 +513,13 @@ SWindowElements CAppWindows::DrawWindow(CDC* dc) {
 	// Draw textfields if present
 	for (auto& textf : this->m_textfields_) {
 
-		// Dynamic Text
-		if (!m_listboxes_.empty()) {
-			if (!m_listboxes_.at(0).listBox_.empty())
-			{
-				textf.m_text = this->m_listboxes_.at(0).listBox_.at(0).m_cpdlc_message.rawMessageContent;
+		// Dynamic Text for CPDLC Editor
+		if (m_winType == WINDOW_CPDLC_EDITOR) {
+			if (!m_listboxes_.empty()) {
+				if (!m_listboxes_.at(0).listBox_.empty())
+				{
+					textf.m_text = this->m_listboxes_.at(0).listBox_.at(0).m_cpdlc_message.rawMessageContent;
+				}
 			}
 		}
 		textf.RenderTextField(dc, m_origin);
