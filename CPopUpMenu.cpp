@@ -107,6 +107,14 @@ void CPopUpMenu::populateCPDLCOptions(string func) {
         m_listElements.emplace_back(SPopUpElement("CLIMB TO AND MAINTAIN (ALT)", "CPDLCClimb", 0, 0, 190));
         m_listElements.emplace_back(SPopUpElement("CONFIRM ASSIGNED ALTITUDE", "CPDLCConfALT", 0, 0, 190));
     }
+    if (func == "Speed") {
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED)", "CPDLCSpeed", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH)", "CPDLCMach", 0, 0, 190));
+    }
+    if (func == "Route") {
+        m_listElements.emplace_back(SPopUpElement("PROCEED DIRECT TO (FIX)", "CPDLCDirect", 0, 0, 190));
+    }
+
 }
 
 void CPopUpMenu::populateSecondaryMenu(string type) {

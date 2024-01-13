@@ -2343,6 +2343,13 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 #pragma region cpdlc_window_functions_paired
 
+		if (func == "Flight Plan") {
+
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			StartTagFunction(GetPlugIn()->FlightPlanSelectASEL().GetCallsign(), NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, Pt, Area);
+		
+		}
+
 		if (func == "Close Dialog") {
 			int i = -1;
 
@@ -2361,7 +2368,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			}
 		}
 
-		if (func == "Radio" || func == "Altitude") {
+		if (func == "Radio" || func == "Altitude" || func == "Speed" || func == "Route") {
 
 			menuState.MB3hoverRect = { 0,0,0,0 };
 			menuState.MB3menu = 1;
