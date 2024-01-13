@@ -187,9 +187,13 @@ std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC m
 
 	curl_easy_setopt(pollCurl, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(pollCurl, CURLOPT_WRITEFUNCTION, write_data);
+	curl_easy_setopt(pollCurl, CURLOPT_TIMEOUT_MS, 1500L);
 	curl_easy_setopt(pollCurl, CURLOPT_WRITEDATA, &rawHoppiePollString);
 
 	auto res = curl_easy_perform(pollCurl);
+	if (res == CURLE_OPERATION_TIMEDOUT) {
+		rawHoppiePollString = "Error: Poll request to Hoppie Timed Out, retry connection";
+	}
 	curl_easy_cleanup(pollCurl);
 
 	return rawHoppiePollString;
