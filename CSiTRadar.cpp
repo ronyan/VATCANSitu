@@ -4293,7 +4293,8 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 			m = CPDLCMessage::parseDLMessage(s);
 			// Attach CPDLC Messages to the aircraft
 			if (CSiTRadar::mAcData.find(m.sender) != CSiTRadar::mAcData.end()) {
-
+				std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
+				lock.lock();
 				CSiTRadar::mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
 
 				// if new messages refresh the listbox content for the CPDLC message
