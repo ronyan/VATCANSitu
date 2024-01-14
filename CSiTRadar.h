@@ -274,6 +274,9 @@ public:
     static unordered_map<string, bool> acADSB;
     static unordered_map<string, bool> acRVSM;
 
+    static std::shared_mutex airportMutex;
+    static std::shared_mutex mutex_mAcData;
+
     static buttonStates menuState;
 
     double wxRadLat;

@@ -14,7 +14,9 @@ bool CSiTRadar::halfSecTick = FALSE;
 CRadarScreen* CSiTRadar::m_pRadScr;
 unordered_map<int, ACList> acLists;
 unordered_map<string, bool> CSiTRadar::acADSB;
-unordered_map<string, bool> CSiTRadar::acRVSM;
+unordered_map<string, bool> CSiTRadar::acRVSM; 
+std::shared_mutex CSiTRadar::airportMutex;
+std::shared_mutex CSiTRadar::mutex_mAcData;
 
 CSiTRadar::CSiTRadar()
 {
@@ -3683,6 +3685,7 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string
 }
 
 void CSiTRadar::updateActiveRunways(int i) {
+
 	vector<string> activerwys{};
 
 	m_pRadScr->GetPlugIn()->SelectActiveSectorfile();
@@ -3690,7 +3693,9 @@ void CSiTRadar::updateActiveRunways(int i) {
 	menuState.activeRunwaysList.clear();
 	menuState.activeRunways.clear();
 	menuState.inactiveRwyList.clear();
-	// Active runway highlighting for ground screens
+
+
+	
 	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
 		string airport;
@@ -3698,13 +3703,19 @@ void CSiTRadar::updateActiveRunways(int i) {
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
 			airport = runway.GetAirportName();
-			CSiTRadar::menuState.activeArpt.insert(airport.substr(0, 4));
+			if (airport.length() > 3) {
+				std::unique_lock<std::shared_mutex> lock(airportMutex, std::defer_lock);
+				lock.lock();
+				CSiTRadar::menuState.activeArpt.insert(airport.substr(0, 4));
+			}
 
-			string airportrwy = airport + runway.GetRunwayName(0);
-			activerwys.push_back(airportrwy);
+			// string airportrwy = airport + runway.GetRunwayName(0);
+			// activerwys.push_back(airportrwy);
 
 		}
 	}
+
+	/*
 
 	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
@@ -3746,10 +3757,17 @@ void CSiTRadar::updateActiveRunways(int i) {
 			}
 		}
 	}
+
+	*/
+
 }
 
 void CSiTRadar::DisplayActiveRunways() {
 
+	// Displaying this was incorrect, removed now 
+	
+	/* 
+	
 	for (auto rwy : menuState.activeRunwaysList) {
 		m_pRadScr->ShowSectorFileElement(rwy, rwy.GetComponentName(0), false);
 	}
@@ -3767,6 +3785,8 @@ void CSiTRadar::DisplayActiveRunways() {
 	}
 
 	m_pRadScr->RefreshMapContent();
+
+	*/
 }
 
 void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
@@ -3923,8 +3943,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 		
 	}
 
+	std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
+	lock.lock();
 	mAcData[callSign] = acdata;
-
 
 }
 
@@ -3982,9 +4003,12 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
-	string callSign = FlightPlan.GetCallsign();
 
-	mAcData.erase(callSign);
+	string callSign = FlightPlan.GetCallsign();
+	try {
+		mAcData.erase(callSign);
+	}
+	catch (...) {}
 
 }
 
