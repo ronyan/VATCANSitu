@@ -3908,7 +3908,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 
 	it = CSiTRadar::acADSB.find(callSign);
 	if (it != CSiTRadar::acADSB.end()) {
-		isRVSM = it->second;
+		isADSB = it->second;
 	}
 
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
