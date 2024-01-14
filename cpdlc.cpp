@@ -310,16 +310,20 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 		rteStr = substringBeforeSpace + "// FILED ROUTE";
 	}
+
+	//ARINC 623 Messages
 	
 	if (flightplan.GetFlightPlanData().GetOrigin() == "CYTZ") {
 
 		this->responseRequired = "WU";
-	
+	/*
 		this->rawMessageContent = "CLD "; // Generate the PDC string;
 		this->rawMessageContent += ZuluTimeStringGen();
 		this->rawMessageContent += " ";
 		this->rawMessageContent += YYMMDDString();
 		this->rawMessageContent += " ";
+	*/
+
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
 		this->rawMessageContent += " PDC ";
 		this->rawMessageContent += std::to_string(pdcNumbers);
@@ -341,6 +345,30 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->rawMessageContent += FreqTruncate(controller.GetPrimaryFrequency());
 	
 		this->messageType = "cpdlc";
+
+	}
+
+	else if (flightplan.GetFlightPlanData().GetOrigin() == "CYUL") {
+
+		this->responseRequired = "WU";
+
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
+		this->rawMessageContent = " PDC "; // Generate the PDC string;
+		this->rawMessageContent += std::to_string(pdcNumbers);
+		this->rawMessageContent += " ";
+		this->rawMessageContent += flightplan.GetCallsign();
+		this->rawMessageContent += " CLRD TO ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
+ 		this->rawMessageContent += " OFF ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
+		this->rawMessageContent += " VIA ";
+		this->rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
+		this->rawMessageContent += " SQUAWK ";
+		this->rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
+		this->rawMessageContent += " NEXT FREQ ";
+		this->rawMessageContent += FreqTruncate(controller.GetPrimaryFrequency());
+		this->rawMessageContent += " ATIS ";
+		this->rawMessageContent += atisLetter;
 
 	}
 
@@ -370,11 +398,11 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 
 		this->rawMessageContent = "TIMESTAMP ";
 		this->rawMessageContent += ZuluTimeStringGen();
-		this->rawMessageContent += " @*PRE-DEPARTURE CLEARANCE* @FLT ";
+		this->rawMessageContent += " *PRE-DEPARTURE CLEARANCE* FLT ";
 		this->rawMessageContent += flightplan.GetCallsign();
 		this->rawMessageContent += " ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
-		this->rawMessageContent += " @";
+		this->rawMessageContent += " ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetAircraftFPType();
 		this->rawMessageContent += " FILED";
 		if (flightplan.GetFlightPlanData().GetFinalAltitude() > 18000) {
@@ -384,21 +412,21 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		else {
 			this->rawMessageContent += std::to_string(flightplan.GetFlightPlanData().GetFinalAltitude());
 		}
-		this->rawMessageContent += " @XPRD ";
+		this->rawMessageContent += " XPRD ";
 		this->rawMessageContent += flightplan.GetControllerAssignedData().GetSquawk();
-		this->rawMessageContent += " @USE SID ";
+		this->rawMessageContent += " USE SID ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetSidName();
-		this->rawMessageContent += " @DEPARTURE RUNWAY ";
+		this->rawMessageContent += " DEPARTURE RUNWAY ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDepartureRwy();
-		this->rawMessageContent += " @DESTINATION ";
+		this->rawMessageContent += " DESTINATION ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
-		this->rawMessageContent += " @*** ADVISE ATC IF RUNUP REQUIRED *** ";
-		this->rawMessageContent += "@CONTACT CLEARANCE WITH IDENTIFIER ";
+		this->rawMessageContent += " *** ADVISE ATC IF RUNUP REQUIRED *** ";
+		this->rawMessageContent += "CONTACT CLEARANCE WITH IDENTIFIER ";
 		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += identifierLetter;
-		this->rawMessageContent += " @";
+		this->rawMessageContent += " ";
 		this->rawMessageContent += rteStr;
-		this->rawMessageContent += " @END";
+		this->rawMessageContent += " END";
 		
 		this->messageType = "telex";
 
