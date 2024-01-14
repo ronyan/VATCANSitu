@@ -639,10 +639,14 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
 
         *pColorCode = TAG_COLOR_RGB_DEFINED;
         // If any CPDLC Messages 
-        if (!CSiTRadar::mAcData.at(FlightPlan.GetCallsign()).CPDLCMessages.empty()) {
-            COLORREF c = RGB(0,200,0);
-            strcpy_s(sItemString, 16, "\u00A4");
-            *pRGB = c;
+        auto it = CSiTRadar::mAcData.find(FlightPlan.GetCallsign());
+        if (it != CSiTRadar::mAcData.end()) {
+
+            if (!it->second.CPDLCMessages.empty()) {
+                COLORREF c = RGB(0, 200, 0);
+                strcpy_s(sItemString, 16, "\u00A4");
+                *pRGB = c;
+            }
         }
     
     }

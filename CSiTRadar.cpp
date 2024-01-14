@@ -791,18 +791,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					*/
 
 					// Tag Level Logic
-					if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
-						menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())) {
-						// Open tags for quick looked targets
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
-					}
-					else if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
-						!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())
-						&& CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked) {
+					try {
+						if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
+							menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())) {
+							// Open tags for quick looked targets
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
+						}
+						else if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
+							!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())
+							&& CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked) {
 
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = false;
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = false;
+						}
+					}
+					catch (const std::out_of_range& e) {
+						// Handle the out-of-range exception
+						// std::cerr << "Caught exception: " << e.what() << std::endl;
 					}
 
 					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
@@ -3900,7 +3906,7 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 
 	bool isADSB{ false };
 
-	auto it = CSiTRadar::acADSB.find(callSign);
+	it = CSiTRadar::acADSB.find(callSign);
 	if (it != CSiTRadar::acADSB.end()) {
 		isRVSM = it->second;
 	}
