@@ -303,6 +303,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), it->first) == menuState.recentCallsignsSeen.end())
 				{
 					// supported in C++11
+					std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
+					lock.lock();
 					it = mAcData.erase(it);
 				}
 				else {
