@@ -2906,8 +2906,8 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 						else if (nextCTR.substr(0, 3) == "MTL") { strNDA = "CZUL@"; }
 						else if (nextCTR.substr(0, 3) == "TOR") { strNDA = "CZYZ@"; }
 						else if (nextCTR.substr(0, 3) == "WPG") { strNDA = "CZWG@"; }
-						else if (nextCTR.substr(0, 3) == "CZEG") { strNDA = "CZEG@"; }
-						else if (nextCTR.substr(0, 3) == "CZVR") { strNDA = "CZVR@"; }
+						else if (nextCTR.substr(0, 4) == "CZEG") { strNDA = "CZEG@"; }
+						else if (nextCTR.substr(0, 4) == "CZVR") { strNDA = "CZVR@"; }
 						else { pdcuplink.rawMessageContent += "ERR: NDA NOT RECOGNIZED"; }
 
 					}
