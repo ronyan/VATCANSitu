@@ -2342,7 +2342,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
-		if (func == "Connect") {
+		if (func == "Connect" || func == "End Service") {
 
 			bool exists = false;
 			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
@@ -2375,6 +2375,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				}
 				else {
 					pdcuplink.rawMessageContent = "ERR: Select LOGON REQUEST Message in CPDLC Window First";
+
+					if (func == "End Service") {
+						pdcuplink.rawMessageContent = "END SERVICE";
+						pdcuplink.responseRequired = "NE";
+					}
 				}
 				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
@@ -2437,6 +2442,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						if (func == "Roger") { pdcuplink.rawMessageContent = "ROGER"; } 
 						if (func == "Negative") { pdcuplink.rawMessageContent = "NEGATIVE"; } 
 						if (func == "Affirm") { pdcuplink.rawMessageContent = "AFFIRMATIVE"; }
+						if (func == "Deferred") { pdcuplink.rawMessageContent = "REQUEST DEFERRED"; }
 						pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
@@ -2862,6 +2868,48 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					}
 					else {
 						pdcuplink.rawMessageContent += "@ @" + CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController()).GetPrimaryFrequency()) +"@";
+					}
+				}
+			}
+
+			if (ObjectIdStr == "CPDLCNDA") {
+
+				string nextCTR;
+				pdcuplink.rawMessageContent = "NEXT DATA AUTHORITY @";
+				// Logit for determining NDA:
+				if (!GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerIsMe()) {
+
+					string strNDA;
+					nextCTR = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign();
+
+					if (nextCTR.substr(0, 4) == "CZQX") { strNDA = "CDQX"; } // domestic, intentional "CDQX"
+					if (nextCTR.substr(0, 4) == "CZQM") { strNDA = "CZQM"; }
+					if (nextCTR.substr(0, 3) == "MTL") { strNDA = "CZUL"; }
+					if (nextCTR.substr(0, 3) == "TOR") { strNDA = "CZYZ"; }
+					if (nextCTR.substr(0, 3) == "WPG") { strNDA = "CZWG"; }
+					if (nextCTR.substr(0, 4) == "CZEG") { strNDA = "CZEG"; }
+					if (nextCTR.substr(0, 4) == "CZVR") { strNDA = "CZVR"; }
+
+					pdcuplink.rawMessageContent += strNDA + "@";
+				}
+				else if (strcmp(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController(), "")) {
+
+					string strNDA = fp.GetCoordinatedNextController();
+
+					if (strNDA == "UNICOM") {
+						pdcuplink.rawMessageContent += "ERR: NDA NOT RECOGNIZED";
+					}
+					else {
+
+						if (nextCTR.substr(0, 4) == "CZQX") { strNDA = "CDQX"; } // domestic, intentional "CDQX"
+						else if (nextCTR.substr(0, 4) == "CZQM") { strNDA = "CZQM@"; }
+						else if (nextCTR.substr(0, 3) == "MTL") { strNDA = "CZUL@"; }
+						else if (nextCTR.substr(0, 3) == "TOR") { strNDA = "CZYZ@"; }
+						else if (nextCTR.substr(0, 3) == "WPG") { strNDA = "CZWG@"; }
+						else if (nextCTR.substr(0, 3) == "CZEG") { strNDA = "CZEG@"; }
+						else if (nextCTR.substr(0, 3) == "CZVR") { strNDA = "CZVR@"; }
+						else { pdcuplink.rawMessageContent += "ERR: NDA NOT RECOGNIZED"; }
+
 					}
 				}
 			}
