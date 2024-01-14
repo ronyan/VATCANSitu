@@ -3886,11 +3886,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	// check against map
 
 	bool isRVSM{ false };
-	try {
-		isRVSM = CSiTRadar::acRVSM.at(callSign);      // vector::at throws an out-of-range
-	}
-	catch (const std::out_of_range& oor) {
-
+	auto it = CSiTRadar::acRVSM.find(callSign);
+	if (it != CSiTRadar::acRVSM.end()) {
+		isRVSM = it->second;
 	}
 
 	// first check for ICAO; then check FAA
@@ -3902,11 +3900,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 
 	bool isADSB{ false };
 
-	try {
-		isADSB = CSiTRadar::acADSB.at(callSign);      // vector::at throws an out-of-range
-	}
-	catch (const std::out_of_range& oor) {
-
+	auto it = CSiTRadar::acADSB.find(callSign);
+	if (it != CSiTRadar::acADSB.end()) {
+		isRVSM = it->second;
 	}
 
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
