@@ -120,7 +120,7 @@ void CPopUpMenu::populateCPDLCOptions(string func) {
         m_listElements.emplace_back(SPopUpElement("PROCEED DIRECT TO (FIX)", "CPDLCDirect", 0, 0, 190));
     }
     if (func == "Radar") {
-        m_listElements.emplace_back(SPopUpElement("RADAR SERVICES TERMINATED", "CPDLCRadarServTerm", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("SURVEILLANCE SERVICES TERMINATED", "CPDLCServTerm", 0, 0, 190));
     }
 
 }

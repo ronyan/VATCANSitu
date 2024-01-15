@@ -2373,10 +2373,16 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				catch (std::out_of_range& err) {}
 
 			}
-
+			CPDLCMessage pdcuplink;
 			auto it = findCPDLCEditorWindow(window->m_callsign);
-			if (it != CSiTRadar::menuState.radarScrWindows.end()) {
-				CPDLCMessage pdcuplink;
+			if (func == "End Service") {
+				pdcuplink.sender = CPDLCMessage::hoppieICAO;
+				pdcuplink.receipient = window->m_callsign;
+				pdcuplink.rawMessageContent = "END SERVICE";
+				pdcuplink.responseRequired = "NE";
+			}
+			else if (it != CSiTRadar::menuState.radarScrWindows.end()) {
+				
 				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
 				pdcuplink.messageType = "cpdlc";
 				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
@@ -2386,10 +2392,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				else {
 					pdcuplink.rawMessageContent = "ERR: Select LOGON REQUEST Message in CPDLC Window First";
 
-					if (func == "End Service") {
-						pdcuplink.rawMessageContent = "END SERVICE";
-						pdcuplink.responseRequired = "NE";
-					}
+
 				}
 				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
@@ -2882,7 +2885,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				}
 			}
 
-			if (ObjectIdStr == "CPDLCNDA") {
+			else if (ObjectIdStr == "CPDLCNDA") {
 
 				string nextCTR;
 				pdcuplink.rawMessageContent = "NEXT DATA AUTHORITY @";
@@ -2924,12 +2927,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				}
 			}
 
-			if (ObjectIdStr == "CPDLCConfALT") {
+			else if (ObjectIdStr == "CPDLCConfALT") {
 				pdcuplink.responseRequired = "NE";
 				pdcuplink.rawMessageContent = "CONFIRM ASSIGNED ALTITUDE";
 			}
 
-			if (ObjectIdStr == "CPDLCClimb" || ObjectIdStr == "CPDLCDescend") {
+			else if (ObjectIdStr == "CPDLCClimb" || ObjectIdStr == "CPDLCDescend") {
 
 				pdcuplink.responseRequired = "WU";
 				if (ObjectIdStr == "CPDLCClimb") {
@@ -2947,7 +2950,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				pdcuplink.rawMessageContent += "FL" + alt +"@";
 			}
 
-			if (ObjectIdStr.substr(0,10) == "CPDLCSpeed") {
+			else if (ObjectIdStr.substr(0,10) == "CPDLCSpeed") {
 				if (fp.GetControllerAssignedData().GetAssignedMach()) {
 					string setSpeed = to_string(fp.GetControllerAssignedData().GetAssignedSpeed());
 					pdcuplink.responseRequired = "WU";
@@ -2967,7 +2970,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += "@ OR LESS"; }
 				}
 			}
-			if (ObjectIdStr.substr(0,9) == "CPDLCMach") {
+			else if (ObjectIdStr.substr(0,9) == "CPDLCMach") {
 				if (fp.GetControllerAssignedData().GetAssignedMach()) {
 					string setMach = to_string(fp.GetControllerAssignedData().GetAssignedMach()/10);
 					pdcuplink.responseRequired = "WU";
@@ -2988,6 +2991,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				}
 			
 			}
+			else if (ObjectIdStr == "CPDLCServTerm") {
+				pdcuplink.responseRequired = "R";
+				pdcuplink.rawMessageContent = "SURVEILLANCE SERVICES TERMINATED";
+			}
+
+
 
 
 #pragma endregion
