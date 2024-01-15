@@ -424,16 +424,17 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 				auto it = CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.end() - 1;
 
 				if (it->isdlMessage) {
-					dc->SetTextColor(RGB(14, 215, 215));
+					dc->SetTextColor(C_CPDLC_BLUE);
 				}
 				else {
-					dc->SetTextColor(RGB(0, 200, 0));
+					dc->SetTextColor(C_CPDLC_GREEN);
 
 				}
 			}
 
 			dc->DrawText(cpdlcMnemonic.c_str(), &rline0, DT_LEFT | DT_CALCRECT);
 			dc->DrawText(cpdlcMnemonic.c_str(), &rline0, DT_LEFT);
+			rad->AddScreenObject(TAG_CPDLC_MNEMONIC, rt->GetCallsign(), rline0, true, "CPDLC Mnemonic");
 		}
 
 		// Line 1

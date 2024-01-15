@@ -23,6 +23,8 @@ const COLORREF C_MENU_GREEN = RGB(0, 135, 0);
 const COLORREF C_PTL_GREEN = RGB(3, 102, 0);
 const COLORREF C_WX_BLUE = RGB(0, 32, 120);
 const COLORREF C_PPS_TBS_PINK = RGB(244, 186, 255);
+const COLORREF C_CPDLC_GREEN = RGB(0, 200, 0);
+const COLORREF C_CPDLC_BLUE = RGB(14, 215, 215);
 
 // Math
 const double PI = 3.14159;
@@ -42,6 +44,7 @@ const int TAG_ITEM_FP_CS = 401;
 const int TAG_ITEM_FP_FINAL_ALTITUDE = 402;
 const int TAG_ALT = 403;
 const int TAG_CPDLC = 404;
+const int TAG_CPDLC_MNEMONIC = 405;
 
 const int TAG_ITEM_CPDLC = 4999;
 const int TAG_ITEM_IFR_REL = 5000;
