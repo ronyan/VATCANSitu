@@ -146,6 +146,53 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 	// Line 0 Items
 	string ssr = rt->GetPosition().GetSquawk();
 
+	string cpdlcMnemonic = "";
+	if (!CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.empty() && CSiTRadar::mAcData[rt->GetCallsign()].cpdlcMnemonic) {
+		auto it = CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.end() - 1;
+
+		string message = it->rawMessageContent;
+
+		if (it->isdlMessage) {
+			
+			size_t flPos = message.find("FL");
+			std::string extractedSubstring;
+
+			if (flPos != std::string::npos && message.length() >= flPos + 5) {
+				// Extract the substring "FL___"
+				extractedSubstring = message.substr(flPos, 5);
+				if (message.substr(0, 13) == "REQUEST CLIMB") { cpdlcMnemonic = "RC " + extractedSubstring; }
+				else if (message.substr(0, 15) == "REQUEST DESCEND") { cpdlcMnemonic = "RD " + extractedSubstring; }
+				else if (message.substr(0, 10) == "REQUEST FL") { cpdlcMnemonic = "R " + extractedSubstring; }
+				else if (message.substr(0, 21) == "REQUEST VOICE CONTACT") { cpdlcMnemonic = "R VOICE"; }
+			}
+			else if (message == "WILCO") { cpdlcMnemonic = "WILCO"; }
+			else {
+				cpdlcMnemonic = "";
+				std::cerr << "Error: 'FL' not found or insufficient characters after it." << std::endl;
+			}
+
+
+		}
+		else {
+			dc->SetTextColor(RGB(0, 200, 0));
+
+			size_t flPos = message.find("FL");
+			std::string extractedSubstring;
+
+			if (flPos != std::string::npos && message.length() >= flPos + 5) {
+				// Extract the substring "FL___"
+				extractedSubstring = message.substr(flPos, 5);
+				if (message.substr(0, 12) == "CLIMB TO AND") { cpdlcMnemonic = "CM " + extractedSubstring; }
+				else if (message.substr(0, 14) == "DESCEND TO AND") { cpdlcMnemonic = "DM " + extractedSubstring; }
+				else if (message.substr(0, 11) == "MAINTAIN FL") { cpdlcMnemonic = "M " + extractedSubstring; }
+			}
+			else {
+				cpdlcMnemonic = "";
+				std::cerr << "Error: 'FL' not found or insufficient characters after it." << std::endl;
+			}
+		}
+	}
+
 	// Line 1 Items
 	string cs = fp->GetCallsign();
 	string wtSymbol = " ";
@@ -362,6 +409,31 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 		if (blinking && CSiTRadar::halfSecTick)
 		{
 			dc->SetTextColor(C_WHITE);
+		}
+
+		// Line 0
+		RECT rline0 = {0,0,0,0};
+		rline0.top = line0.y;
+		rline0.left = line0.x;
+		rline0.bottom = line1.y;
+
+		if (CSiTRadar::mAcData[rt->GetCallsign()].cpdlcMnemonic) {
+			dc->SelectObject(CFontHelper::Euroscope14);
+			
+			if (!CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.empty()) {
+				auto it = CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.end() - 1;
+
+				if (it->isdlMessage) {
+					dc->SetTextColor(RGB(14, 215, 215));
+				}
+				else {
+					dc->SetTextColor(RGB(0, 200, 0));
+
+				}
+			}
+
+			dc->DrawText(cpdlcMnemonic.c_str(), &rline0, DT_LEFT | DT_CALCRECT);
+			dc->DrawText(cpdlcMnemonic.c_str(), &rline0, DT_LEFT);
 		}
 
 		// Line 1

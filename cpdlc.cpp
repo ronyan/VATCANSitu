@@ -161,7 +161,36 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 				parsedMessage.rawMessageContent.pop_back();
 			}
 
-			int a = 0;
+			// menmonic opening logic for DL messages:
+			if (parsedMessage.rawMessageContent.length() == 5) {
+				if (parsedMessage.rawMessageContent.substr(0, 5) == "WILCO") {
+					parsedMessage.opensMnemonic = true;
+				}
+			}
+
+			if (parsedMessage.rawMessageContent.length() >= 10) {
+				if (parsedMessage.rawMessageContent.substr(0, 10) == "REQUEST FL") {
+					parsedMessage.opensMnemonic = true;
+				}
+			}
+
+			if (parsedMessage.rawMessageContent.length() >= 13) {
+				if (parsedMessage.rawMessageContent.substr(0, 13) == "REQUEST CLIMB") {
+					parsedMessage.opensMnemonic = true;
+				}
+			}
+
+			if (parsedMessage.rawMessageContent.length() >= 15) {
+				if (parsedMessage.rawMessageContent.substr(0, 15) == "REQUEST DESCEND") {
+					parsedMessage.opensMnemonic = true;
+				}
+			}
+
+			if (parsedMessage.rawMessageContent.length() == 23) {
+				if (parsedMessage.rawMessageContent.substr(0, 23) == "REQUEST VOICE CONTACT") {
+					parsedMessage.opensMnemonic = true;
+				}
+			}
 		}
 
 	}
@@ -171,7 +200,7 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 
 std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC messages; Should be called every 50-70s to get new messages
 	std::string url;
-	url = "http://www.hoppie.nl/acars/system/connect.html?logon=" + CPDLCMessage::hoppieCode + "&from=" + CPDLCMessage::hoppieICAO + "&to=SERVER";
+	//url = "http://www.hoppie.nl/acars/system/connect.html?logon=" + CPDLCMessage::hoppieCode + "&from=" + CPDLCMessage::hoppieICAO + "&to=SERVER";
 
 	if (CPDLCMessage::firstPeek) {
 		url += "&type=peek";
@@ -179,7 +208,7 @@ std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC m
 		url += "&type=poll";
 	}
 
-	//url = "https://ronyan.github.io/hoppie-html-test-cases/";
+	url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
 	std::string rawHoppiePollString;
 

@@ -2935,7 +2935,9 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 			else if (ObjectIdStr == "CPDLCClimb" || ObjectIdStr == "CPDLCDescend") {
 
+				pdcuplink.opensMnemonic = true;
 				pdcuplink.responseRequired = "WU";
+
 				if (ObjectIdStr == "CPDLCClimb") {
 					pdcuplink.rawMessageContent = "CLIMB TO AND MAINTAIN @";
 				} else if (ObjectIdStr == "CPDLCDescend") {
@@ -4353,7 +4355,9 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 				std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
 				lock.lock();
 				CSiTRadar::mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
-
+				if (m.opensMnemonic) {
+					CSiTRadar::mAcData.at(m.sender).cpdlcMnemonic = true;
+				}
 				// if new messages refresh the listbox content for the CPDLC message
 				for (auto& win : CSiTRadar::menuState.radarScrWindows) {
 					if (!strcmp(win.second.m_callsign.c_str(), m.sender.c_str())

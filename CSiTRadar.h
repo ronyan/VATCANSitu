@@ -69,6 +69,7 @@ struct ACData {
     int follower{ 1 }; // 0 is light, 1 is med, 2 heavy, 3 super
 
     vector<CPDLCMessage> CPDLCMessages;
+    bool cpdlcMnemonic{ false };
 };
 
 struct SCPDLCMenuData {

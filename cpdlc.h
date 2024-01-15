@@ -28,6 +28,7 @@ public:
 	bool isdlMessage; // if not DL message, then it is UL message
 	bool isCompleted{ false }; // checkmark if completed
 	bool sent{ false };
+	bool opensMnemonic{ false };
 
 	std::time_t timeParsed; // time that message was created
 	std::string hoppieMessageID{""}; // from the api, empty string if doesn't exist
