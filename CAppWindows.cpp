@@ -120,6 +120,7 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 				if (j == 0 && i == 2) { b.text = "Altitude"; }
 				if (j == 0 && i == 3) { b.text = "Speed"; }
 				if (j == 0 && i == 4) { b.text = "Route"; }
+				if (j == 1 && i == 0) { b.text = "Radar"; }
 				if (j == 2 && i == 0) { b.text = "Misc"; }
 				if (j == 2 && i == 4) { b.text = "PDC"; }
 

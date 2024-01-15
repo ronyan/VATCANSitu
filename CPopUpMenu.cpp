@@ -108,11 +108,19 @@ void CPopUpMenu::populateCPDLCOptions(string func) {
         m_listElements.emplace_back(SPopUpElement("CONFIRM ASSIGNED ALTITUDE", "CPDLCConfALT", 0, 0, 190));
     }
     if (func == "Speed") {
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED) OR GREATER", "CPDLCSpeed+", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED) OR LESS", "CPDLCSpeed-", 0, 0, 190));
         m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED)", "CPDLCSpeed", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH) OR GREATER", "CPDLCMach+", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH) OR LESS", "CPDLCMach-", 0, 0, 190));
         m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH)", "CPDLCMach", 0, 0, 190));
+
     }
     if (func == "Route") {
         m_listElements.emplace_back(SPopUpElement("PROCEED DIRECT TO (FIX)", "CPDLCDirect", 0, 0, 190));
+    }
+    if (func == "Radar") {
+        m_listElements.emplace_back(SPopUpElement("RADAR SERVICES TERMINATED", "CPDLCRadarServTerm", 0, 0, 190));
     }
 
 }
