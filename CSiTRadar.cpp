@@ -2377,6 +2377,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			auto it = findCPDLCEditorWindow(window->m_callsign);
 			if (func == "End Service") {
 				pdcuplink.sender = CPDLCMessage::hoppieICAO;
+				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 				pdcuplink.receipient = window->m_callsign;
 				pdcuplink.rawMessageContent = "END SERVICE";
 				pdcuplink.responseRequired = "NE";
