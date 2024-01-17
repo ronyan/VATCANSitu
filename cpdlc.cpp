@@ -156,6 +156,7 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 				parsedMessage.responseToMessageID = stoi(components.at(3));
 			}
 			parsedMessage.responseRequired = components.at(4);
+			
 			if (components.at(5).length() > 1) {
 				parsedMessage.rawMessageContent = components.at(5);
 				parsedMessage.rawMessageContent.pop_back();
