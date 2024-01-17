@@ -2373,7 +2373,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				catch (std::out_of_range& err) {}
 
 			}
-
+			
 			CPDLCMessage pdcuplink;
 			auto it = findCPDLCEditorWindow(window->m_callsign);
 
@@ -2386,8 +2386,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					pdcuplink.receipient = window->m_callsign;
 					pdcuplink.rawMessageContent = "END SERVICE";
 					pdcuplink.responseRequired = "NE";
-
+					pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
 				}
 					
 				else if (func == "Connect") {
