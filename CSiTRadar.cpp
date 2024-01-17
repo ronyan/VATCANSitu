@@ -2956,14 +2956,14 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			}
 
 			else if (ObjectIdStr.substr(0,10) == "CPDLCSpeed") {
-				if (fp.GetControllerAssignedData().GetAssignedMach()) {
+				if (fp.GetControllerAssignedData().GetAssignedSpeed()) {
 					string setSpeed = to_string(fp.GetControllerAssignedData().GetAssignedSpeed());
 					pdcuplink.responseRequired = "WU";
 					pdcuplink.rawMessageContent = "MAINTAIN @";
 					pdcuplink.rawMessageContent += setSpeed + "KTS@";
 
-					if (ObjectIdStr == "CPDLCSpeed+") { pdcuplink.rawMessageContent += "@ OR GREATER"; }
-					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += "@ OR LESS"; }
+					if (ObjectIdStr == "CPDLCSpeed+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += " OR LESS"; }
 
 				}
 				else {
@@ -2971,19 +2971,19 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					pdcuplink.rawMessageContent = "MAINTAIN @";
 					pdcuplink.rawMessageContent += setSpeed + "KTS@";
 
-					if (ObjectIdStr == "CPDLCSpeed+") { pdcuplink.rawMessageContent += "@ OR GREATER"; }
-					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += "@ OR LESS"; }
+					if (ObjectIdStr == "CPDLCSpeed+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += " OR LESS"; }
 				}
 			}
 			else if (ObjectIdStr.substr(0,9) == "CPDLCMach") {
 				if (fp.GetControllerAssignedData().GetAssignedMach()) {
-					string setMach = to_string(fp.GetControllerAssignedData().GetAssignedMach()/10);
+					string setMach = to_string(fp.GetControllerAssignedData().GetAssignedMach());
 					pdcuplink.responseRequired = "WU";
 					pdcuplink.rawMessageContent = "MAINTAIN @M0.";
 					pdcuplink.rawMessageContent += setMach +"@";
 
-					if (ObjectIdStr == "CPDLCMach+") { pdcuplink.rawMessageContent += "@ OR GREATER"; }
-					if (ObjectIdStr == "CPDLCMach-") { pdcuplink.rawMessageContent += "@ OR LESS"; }
+					if (ObjectIdStr == "CPDLCMach+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCMach-") { pdcuplink.rawMessageContent += " OR LESS"; }
 
 				} else {
 					string setMach = to_string(fp.GetFlightPlanData().PerformanceGetMach(fp.GetFlightPlanData().GetFinalAltitude(), 0));
@@ -2991,8 +2991,8 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					pdcuplink.rawMessageContent = "MAINTAIN @M0.";
 					pdcuplink.rawMessageContent += setMach + "@";
 
-					if (ObjectIdStr == "CPDLCMach+") { pdcuplink.rawMessageContent += "@ OR GREATER"; }
-					if (ObjectIdStr == "CPDLCMach-") { pdcuplink.rawMessageContent += "@ OR LESS"; }
+					if (ObjectIdStr == "CPDLCMach+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCMach-") { pdcuplink.rawMessageContent += " OR LESS"; }
 				}
 			
 			}
