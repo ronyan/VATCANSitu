@@ -2381,8 +2381,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				pdcuplink.receipient = window->m_callsign;
 				pdcuplink.rawMessageContent = "END SERVICE";
 				pdcuplink.responseRequired = "NE";
+
+				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 			}
-			else if (it != CSiTRadar::menuState.radarScrWindows.end()) {
+			else if (func == "Connect") {
 				
 				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
 				pdcuplink.messageType = "cpdlc";
