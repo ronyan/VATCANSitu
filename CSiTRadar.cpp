@@ -2441,7 +2441,8 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		auto it = findCPDLCEditorWindow(window->m_callsign);
 		if (it != CSiTRadar::menuState.radarScrWindows.end()) {
 
-			if (func == "Standby" || func == "Roger" || func == "Negative" || func == "Affirm") {
+			if (func == "Unable" || func == "Standby" || func == "Roger" || func == "Negative" || func == "Affirm"
+			|| func == "Deferred") {
 
 				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "" &&
 					it->second.m_textfields_.at(0).m_cpdlcmessage.responseRequired == "Y") {
@@ -2452,6 +2453,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						CPDLCMessage pdcuplink;
 						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
 						pdcuplink.messageType = "cpdlc";
+						if (func == "Unable") { pdcuplink.rawMessageContent = "UNABLE"; }
 						if (func == "Standby") { pdcuplink.rawMessageContent = "STANDBY"; }
 						if (func == "Roger") { pdcuplink.rawMessageContent = "ROGER"; } 
 						if (func == "Negative") { pdcuplink.rawMessageContent = "NEGATIVE"; } 
