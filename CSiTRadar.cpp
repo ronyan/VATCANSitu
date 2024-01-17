@@ -2373,42 +2373,32 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				catch (std::out_of_range& err) {}
 
 			}
-			
 			CPDLCMessage pdcuplink;
 			auto it = findCPDLCEditorWindow(window->m_callsign);
-
-			if (it != CSiTRadar::menuState.radarScrWindows.end()) {
-
-				if (func == "End Service") {
-
-					pdcuplink.sender = CPDLCMessage::hoppieICAO;
-					pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
-					pdcuplink.receipient = window->m_callsign;
-					pdcuplink.rawMessageContent = "END SERVICE";
-					pdcuplink.responseRequired = "NE";
-					pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
-					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-				}
-					
-				else if (func == "Connect") {
-
-					pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
-					pdcuplink.messageType = "cpdlc";
-
-					if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
-						pdcuplink.rawMessageContent = "LOGON ACCEPTED";
-						pdcuplink.responseRequired = "NE";
-					}
-					else {
-						pdcuplink.rawMessageContent = "ERR: Select LOGON REQUEST Message in CPDLC Window First";
-					}
-					pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
-					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-				}
+			if (func == "End Service") {
+				pdcuplink.sender = CPDLCMessage::hoppieICAO;
+				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+				pdcuplink.receipient = window->m_callsign;
+				pdcuplink.rawMessageContent = "END SERVICE";
+				pdcuplink.responseRequired = "NE";
 			}
-	
+			else if (it != CSiTRadar::menuState.radarScrWindows.end()) {
+				
+				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+				pdcuplink.messageType = "cpdlc";
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
+					pdcuplink.rawMessageContent = "LOGON ACCEPTED";
+					pdcuplink.responseRequired = "NE";
+				}
+				else {
+					pdcuplink.rawMessageContent = "ERR: Select LOGON REQUEST Message in CPDLC Window First";
+
+
+				}
+				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+			}
+		}
 
 #pragma region cpdlc_window_functions_paired
 
