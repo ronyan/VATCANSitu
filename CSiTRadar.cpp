@@ -2882,7 +2882,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController();
 					string s = fp.GetCoordinatedNextController();
-					if (s == "UNICOM") {
+					if (s == "UNICOM" || s == "") {
 						pdcuplink.rawMessageContent += "@ @122.8@";
 					}
 					else {
@@ -2950,10 +2950,20 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				}
 				string alt;
 				if (fp.GetControllerAssignedData().GetClearedAltitude() != 0) {
-					alt = to_string(fp.GetClearedAltitude() / 100);
+					if (fp.GetControllerAssignedData().GetClearedAltitude() < 29000) {
+						alt = 290;
+					}
+					else {
+						alt = to_string(fp.GetClearedAltitude() / 100);
+					}
 				}
 				else {
-					alt = to_string(fp.GetFinalAltitude() / 100);
+					if (fp.GetFinalAltitude() < 29000) {
+						alt = 290;
+					}
+					else {
+						alt = to_string(fp.GetFinalAltitude() / 100);
+					}
 				}
 				pdcuplink.rawMessageContent += "FL" + alt +"@";
 			}
