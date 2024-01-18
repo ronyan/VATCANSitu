@@ -166,6 +166,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 				else if (message.substr(0, 21) == "REQUEST VOICE CONTACT") { cpdlcMnemonic = "R VOICE"; }
 			}
 			else if (message == "WILCO") { cpdlcMnemonic = "WILCO"; }
+			else if (message == "UNABLE") { cpdlcMnemonic = "UNABLE"; }
 			else {
 				cpdlcMnemonic = "";
 				std::cerr << "Error: 'FL' not found or insufficient characters after it." << std::endl;

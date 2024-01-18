@@ -2950,22 +2950,24 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				}
 				string alt;
 				if (fp.GetControllerAssignedData().GetClearedAltitude() != 0) {
-					if (fp.GetControllerAssignedData().GetClearedAltitude() < 29000) {
-						alt = 290;
+					if (fp.GetControllerAssignedData().GetClearedAltitude() < 18000) {
+						alt = to_string(fp.GetControllerAssignedData().GetClearedAltitude());
 					}
 					else {
 						alt = to_string(fp.GetClearedAltitude() / 100);
+						pdcuplink.rawMessageContent += "FL" + alt + "@";
+
 					}
 				}
 				else {
-					if (fp.GetFinalAltitude() < 29000) {
-						alt = 290;
+					if (fp.GetFinalAltitude() < 18000) {
+						alt = to_string(fp.GetFinalAltitude());
 					}
 					else {
 						alt = to_string(fp.GetFinalAltitude() / 100);
+						pdcuplink.rawMessageContent += "FL" + alt + "@";
 					}
 				}
-				pdcuplink.rawMessageContent += "FL" + alt +"@";
 			}
 
 			else if (ObjectIdStr.substr(0,10) == "CPDLCSpeed") {
