@@ -2456,6 +2456,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						CPDLCMessage pdcuplink;
 						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
 						pdcuplink.messageType = "cpdlc";
+						pdcuplink.responseRequired = "NE";
 						if (func == "Unable") { pdcuplink.rawMessageContent = "UNABLE"; }
 						if (func == "Standby") { pdcuplink.rawMessageContent = "STANDBY"; }
 						if (func == "Roger") { pdcuplink.rawMessageContent = "ROGER"; } 
