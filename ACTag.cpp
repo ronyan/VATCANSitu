@@ -450,7 +450,8 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 			rline1.top -= 2;
 		}
 
-		if (!CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.empty())
+		if(count_if(CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.begin(), CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.end(), [](const CPDLCMessage& msg) { return (msg.isdlMessage && msg.messageType == "cpdlc"); }))
+		//if (!CSiTRadar::mAcData[rt->GetCallsign()].CPDLCMessages.empty())
 		{
 			// Draw the ADSB status indicator
 			RECT adsbsquare{};

@@ -2195,7 +2195,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			mAcData[window->m_callsign].directToPendingFixName = "";
 
 			auto it = findCPDLCEditorWindow(window->m_callsign);
-			it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
+			if (it != menuState.radarScrWindows.end()) {
+				it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
+			}
 
 			menuState.radarScrWindows.erase(stoi(id));
 		}
@@ -2683,7 +2685,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					mAcData[window->m_callsign].directToPendingFixName = le_text;
 
 					auto it = findCPDLCEditorWindow(window->m_callsign);
-					it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "PROCEED DIRECT @" + le_text + "@";
+					if (it != menuState.radarScrWindows.end()) {
+						it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "PROCEED DIRECT @" + le_text + "@";
+					}
 				}
 				else {
 					mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
@@ -2692,7 +2696,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					mAcData[window->m_callsign].directToLineOn = false;
 
 					auto it = findCPDLCEditorWindow(window->m_callsign);
-					it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
+					if (it != menuState.radarScrWindows.end()) {
+						it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
+					}
 				}
 			}
 		}
