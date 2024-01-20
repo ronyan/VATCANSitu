@@ -311,6 +311,8 @@ public:
 
     void OnRefresh(HDC hdc, int phase);
 
+    void SetTextToClipBoard(const std::string& string);
+
     void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
         const char* sObjectId,
         POINT Pt,

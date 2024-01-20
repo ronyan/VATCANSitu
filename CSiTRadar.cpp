@@ -2393,7 +2393,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
-		if (func == "Connect" || func == "End Service") {
+		if (func == "Connect" || func == "End Service" || func == "PDC") {
 
 			bool exists = false;
 			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
@@ -2441,6 +2441,33 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				}
 				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+			}
+			if (func == "PDC") {
+
+				// PDC helper even if no CPDLC
+				CPDLCMessage pdcuplink;
+				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+				string FPUI = pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A"); // FIX ATIS LETTER to be dynamic
+
+				GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetControllerAssignedData().SetScratchPadString(FPUI.c_str());
+
+
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
+					// Do the thing
+					if (it->second.m_textfields_.size() > 0)
+					{
+
+						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+					}
+				}
+				else {
+
+					SetTextToClipBoard(pdcuplink.rawMessageContent);
+					pdcuplink.rawMessageContent.insert(0, "ERR: NO DOWNLINK, PDC COPIED TO CLIPBOARD:");
+					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+				}
 			}
 		}
 
@@ -2516,32 +2543,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
 				}
-			}
-
-			if (func == "PDC") {
-
-				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
-					// Do the thing
-					if (it->second.m_textfields_.size() > 0)
-					{
-
-						CPDLCMessage pdcuplink;
-						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
-						pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A"); // FIX ATIS LETTER to be dynamic
-
-						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-					}
-				}
-				else {
-
-					CPDLCMessage pdcuplink;
-					pdcuplink.rawMessageContent = "ERR: CANNOT GENERATE PDC MSG RESPONSE TO SELECTED D/L MESSAGE TYPE";
-
-					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
-
-				}
-
 			}
 		}
 	}
@@ -4481,4 +4482,17 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 			}
 		}
 	}
+}
+
+void CSiTRadar::SetTextToClipBoard(const std::string& string) {
+
+	HGLOBAL hGlobal;
+	size_t bSize = string.size() + 1;
+	hGlobal = GlobalAlloc(GPTR, bSize);
+	memcpy_s(hGlobal, bSize, string.c_str(), bSize);
+	OpenClipboard(nullptr);
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hGlobal);
+	CloseClipboard();
+
 }

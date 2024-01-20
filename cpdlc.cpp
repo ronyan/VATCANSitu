@@ -301,7 +301,7 @@ void CPDLCMessage::GenerateReply(CPDLCMessage originalMessage) {
 
 }
 
-void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, EuroScopePlugIn::CController& controller, std::string atisLetter) {
+std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, EuroScopePlugIn::CController& controller, std::string atisLetter) {
 
 	this->sender = this->hoppieICAO;
 	this->receipient = flightplan.GetCallsign();
@@ -460,7 +460,8 @@ void CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, Euro
 		this->messageType = "telex";
 
 	}
-
+	std::string FPUI = std::to_string(pdcNumbers) + identifierLetter;
+	return FPUI;
 }
 
 void CPDLCMessage::processMessage() { // should loop with every Poll try resending messages or automatically generate responses where appropriate
