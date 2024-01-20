@@ -8,7 +8,7 @@ static std::size_t write_data(void* buffer, std::size_t size, std::size_t nmemb,
 
 u_int CPDLCMessage::ids = 0;
 std::string CPDLCMessage::hoppieCode = "";
-std::string CPDLCMessage::hoppieICAO = "CYYZ";
+std::string CPDLCMessage::hoppieICAO = "";
 bool CPDLCMessage::firstPeek = true;
 
 std::string CPDLCMessage::YYMMDDString() {

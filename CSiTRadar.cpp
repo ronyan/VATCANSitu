@@ -2147,9 +2147,17 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 							rtestr.insert(0, pposStr);
 						}
 						else {
+							string rtestr2 = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetRoute();
 							rtestr = pposStr;
 							for (size_t i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
-								rtestr += mAcData[cs].acFPRoute.fix_names.at(i) + " ";
+								auto it_resume_route = rtestr2.find(mAcData[cs].acFPRoute.fix_names.at(i));
+								if (it_resume_route != string::npos) {
+									rtestr += rtestr2.substr(it_resume_route);
+									break;
+								}
+								else {
+									rtestr += mAcData[cs].acFPRoute.fix_names.at(i) + " ";
+								}
 							}
 						}
 
@@ -2171,7 +2179,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				}
 			}
 
-			GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+			//GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
 			menuState.radarScrWindows.erase(stoi(id));
 			mAcData[cs].directToLineOn = false;
 			mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
@@ -2185,6 +2193,9 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0; 
 			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
 			mAcData[window->m_callsign].directToPendingFixName = "";
+
+			auto it = findCPDLCEditorWindow(window->m_callsign);
+			it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
 
 			menuState.radarScrWindows.erase(stoi(id));
 		}
@@ -2279,6 +2290,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 					// certain automated messages:
 					if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "LOGON ACCEPTED") {
+
+						// change the state to 
+						mAcData[window->m_callsign].cpdlcState = 1;
+
 						// make a copy
 						CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
 						automaticResponse.messageID = mAcData[window->m_callsign].CPDLCMessages.size()+1;
@@ -2300,6 +2315,11 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 							});
 						
 						mAcData[window->m_callsign].CPDLCMessages.push_back(automaticResponse);
+
+					}
+					else if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "SERVICE TERMINATED") {
+
+						mAcData[window->m_callsign].cpdlcState = 0;
 
 					}
 
@@ -2661,12 +2681,18 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					int index = std::distance(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), it);
 					mAcData[window->m_callsign].directToPendingPosition = mAcData[window->m_callsign].acFPRoute.route_fix_positions.at(index);
 					mAcData[window->m_callsign].directToPendingFixName = le_text;
+
+					auto it = findCPDLCEditorWindow(window->m_callsign);
+					it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "PROCEED DIRECT @" + le_text + "@";
 				}
 				else {
 					mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
 					mAcData[window->m_callsign].directToPendingPosition.m_Longitude = 0.0;
 					mAcData[window->m_callsign].directToPendingFixName = "";
 					mAcData[window->m_callsign].directToLineOn = false;
+
+					auto it = findCPDLCEditorWindow(window->m_callsign);
+					it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
 				}
 			}
 		}
@@ -2866,6 +2892,42 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 #pragma region cpdlcsecondarymenu
 			// DIFFERENT MESSAGES GO HERE
+
+			if (ObjectIdStr == "CPDLCDirect") {
+
+				// maintain route in plugin ac-model
+				int numPts = GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointsNumber();
+				string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+				ACRoute rte;
+				rte.fix_names.clear();
+				rte.route_fix_positions.clear();
+				mAcData[cs].acFPRoute = rte;
+				for (int i = 0; i < numPts; i++) {
+					rte.fix_names.push_back(GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointName(i));
+					rte.route_fix_positions.push_back(GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointPosition(i));
+				}
+				mAcData[cs].acFPRoute = rte;
+
+				bool exists = false;
+				for (auto& win : menuState.radarScrWindows) {
+					if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign())
+						&& win.second.m_winType == WINDOW_DIRECT_TO)
+					{
+						win.second.m_origin = { Pt.x + 310, Pt.y + 200 };
+						exists = true;
+					}
+				}
+				// If not draw it
+				if (!exists) {
+					CAppWindows dctto({ Pt.x + 310, Pt.y + 200 }, WINDOW_DIRECT_TO, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea(), &mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].acFPRoute);
+					menuState.radarScrWindows[dctto.m_windowId_] = dctto;
+				}
+
+				pdcuplink.rawMessageContent = "PROCEED DIRECT @" + mAcData[cs].directToPendingFixName + "@";
+				
+			}
+
+
 			if (ObjectIdStr == "CPDLCContact" || ObjectIdStr == "CPDLCMonitor") {
 				if (ObjectIdStr == "CPDLCContact") {
 					pdcuplink.rawMessageContent = "CONTACT @";
@@ -2879,7 +2941,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign();
 					pdcuplink.rawMessageContent += "@ @" + CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign()).GetPrimaryFrequency()) + "@";
 				}
-				else if (strcmp(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController(), "")) {
+				else {
 
 					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController();
 					string s = fp.GetCoordinatedNextController();
@@ -4370,11 +4432,15 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 			m = CPDLCMessage::parseDLMessage(s);
 			// Attach CPDLC Messages to the aircraft
 			if (CSiTRadar::mAcData.find(m.sender) != CSiTRadar::mAcData.end()) {
+
 				std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
 				lock.lock();
 				CSiTRadar::mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
 				if (m.opensMnemonic) {
 					CSiTRadar::mAcData.at(m.sender).cpdlcMnemonic = true;
+				}
+				if (m.rawMessageContent == "LOGOFF") { // logoff will set the state back to 0
+					CSiTRadar::mAcData.at(m.sender).cpdlcState = 0;
 				}
 				// if new messages refresh the listbox content for the CPDLC message
 				for (auto& win : CSiTRadar::menuState.radarScrWindows) {

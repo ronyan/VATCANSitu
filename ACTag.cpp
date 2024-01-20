@@ -168,7 +168,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 			else if (message == "WILCO") { cpdlcMnemonic = "WILCO"; }
 			else if (message == "UNABLE") { cpdlcMnemonic = "UNABLE"; }
 			else {
-				cpdlcMnemonic = "";
+				cpdlcMnemonic = "D/L"; // default for any other message
 				std::cerr << "Error: 'FL' not found or insufficient characters after it." << std::endl;
 			}
 
@@ -188,7 +188,7 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 				else if (message.substr(0, 11) == "MAINTAIN FL") { cpdlcMnemonic = "M " + extractedSubstring; }
 			}
 			else {
-				cpdlcMnemonic = "";
+				cpdlcMnemonic = "U/L"; // default for any other message
 				std::cerr << "Error: 'FL' not found or insufficient characters after it." << std::endl;
 			}
 		}
@@ -460,10 +460,18 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 			adsbsquare.right = adsbsquare.left + 8;
 			
 			HPEN targetPen = CreatePen(PS_SOLID, 1, RGB(0, 200, 0));
-			dc->SelectObject(targetPen);
-			HBRUSH targetBrush = CreateSolidBrush(RGB(0,200,0));
+			HBRUSH targetBrush = CreateSolidBrush(RGB(0, 200, 0));
 
-			dc->SelectObject(targetBrush);
+			dc->SelectObject(targetPen);
+			if (CSiTRadar::mAcData[rt->GetCallsign()].cpdlcState == 1) {
+				dc->SelectObject(targetBrush);
+			}
+
+			// empty box until LOGGED ON
+			else {
+				dc->SelectStockObject(NULL_BRUSH);
+			}
+
 			dc->Rectangle(&adsbsquare);
 
 			DeleteObject(targetBrush);

@@ -67,8 +67,12 @@ CAppWindows::CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radare
 		b.m_width = 60;
 		b.text = "Send";
 		b.windowID = m_windowId_;
-
 		m_buttons_.push_back(b);
+
+		b.m_width = 80;
+		b.location = { 6, 219 };
+		b.text = "Edit Element";
+		// m_buttons_.push_back(b);
 		
 		STextField stf;
 		stf.m_parentWindowID = m_windowId_;

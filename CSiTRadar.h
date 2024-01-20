@@ -70,6 +70,7 @@ struct ACData {
 
     vector<CPDLCMessage> CPDLCMessages;
     bool cpdlcMnemonic{ false };
+    int cpdlcState{ 0 }; // 0 is not connected, 1 connected
 };
 
 struct SCPDLCMenuData {
