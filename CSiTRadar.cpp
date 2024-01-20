@@ -2141,12 +2141,30 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						}
 						pposStr += " ";
 						string rtestr = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetRoute();
+						string dct_airway = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointAirwayName(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex());
+						if (dct_airway.length() > 6) { 
+							dct_airway = dct_airway.substr(0,5);
+						}
+
+						auto ita = rtestr.find(dct_airway.c_str());
+						// if the point is just a point in the fp, cut the rest of the f/p
 						auto itr = rtestr.find(c.c_str());
+
 						if (itr != rtestr.npos) {
 							rtestr = rtestr.substr(itr);
 							rtestr.insert(0, pposStr);
 						}
-						else {
+
+						// if direct to waypoint is on an airway, just find the airway and append the fix before it
+
+						else if (ita != rtestr.npos) {
+
+							rtestr = rtestr.substr(ita);
+							rtestr.insert(0, c + " ");
+							rtestr.insert(0, pposStr);
+
+						} else {
+
 							string rtestr2 = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetRoute();
 							rtestr = pposStr;
 							for (size_t i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
