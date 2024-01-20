@@ -2181,6 +2181,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().SetRoute(rtestr.c_str());
 						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().AmendFlightPlan();
+						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str()); // set the direct point again, after reparsing the string
 
 						mAcData[cs].directToLineOn = false;
 						mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
