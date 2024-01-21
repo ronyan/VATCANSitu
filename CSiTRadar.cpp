@@ -2317,7 +2317,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 						// make a copy
 						CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
-						automaticResponse.messageID = mAcData[window->m_callsign].CPDLCMessages.size()+1;
+						automaticResponse.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
 						automaticResponse.messageType = "cpdlc";
 						automaticResponse.responseRequired = "R";
 						automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH ";
@@ -2418,12 +2418,10 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			auto it = findCPDLCEditorWindow(window->m_callsign);
 			if (func == "End Service") {
 				pdcuplink.sender = CPDLCMessage::hoppieICAO;
-				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+				pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
 				pdcuplink.receipient = window->m_callsign;
 				pdcuplink.rawMessageContent = "END SERVICE";
 				pdcuplink.responseRequired = "NE";
-
-				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
 				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 			}
 			else if (func == "Connect") {
@@ -2439,7 +2437,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 
 				}
-				pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+				pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
 				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 			}
 			if (func == "PDC") {
@@ -2540,7 +2538,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						if (func == "Negative") { pdcuplink.rawMessageContent = "NEGATIVE"; } 
 						if (func == "Affirm") { pdcuplink.rawMessageContent = "AFFIRMATIVE"; }
 						if (func == "Deferred") { pdcuplink.rawMessageContent = "REQUEST DEFERRED"; }
-						pdcuplink.messageID = mAcData[window->m_callsign].CPDLCMessages.size();
+						pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
 						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
 
 					}
@@ -2923,7 +2921,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			pdcuplink.receipient = cs;
 			pdcuplink.isdlMessage = false;
 			pdcuplink.responseRequired = "WU";
-			pdcuplink.messageID = mAcData[cs].CPDLCMessages.size()+1;
+			pdcuplink.messageID = count_if(mAcData[cs].CPDLCMessages.begin(), mAcData[cs].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1; // start at 1
 
 #pragma region cpdlcsecondarymenu
 			// DIFFERENT MESSAGES GO HERE
