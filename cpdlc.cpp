@@ -345,6 +345,7 @@ std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpla
 	if (flightplan.GetFlightPlanData().GetOrigin() == "CYTZ") {
 
 		this->responseRequired = "WU";
+		this->messageType = "cpdlc";
 	/*
 		this->rawMessageContent = "CLD "; // Generate the PDC string;
 		this->rawMessageContent += ZuluTimeStringGen();
@@ -373,18 +374,18 @@ std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpla
 		this->rawMessageContent += " ON FREQ ";
 		this->rawMessageContent += FreqTruncate(controller.GetPrimaryFrequency());
 	
-		this->messageType = "cpdlc";
-
 	}
 
 	else if (flightplan.GetFlightPlanData().GetOrigin() == "CYUL") {
 
 		this->responseRequired = "WU";
+		this->messageType = "cpdlc";
 
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetOrigin();
 		this->rawMessageContent = " PDC "; // Generate the PDC string;
 		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += " ";
+
 		this->rawMessageContent += flightplan.GetCallsign();
 		this->rawMessageContent += " CLRD TO ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
@@ -450,7 +451,7 @@ std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpla
 		this->rawMessageContent += " DESTINATION ";
 		this->rawMessageContent += flightplan.GetFlightPlanData().GetDestination();
 		this->rawMessageContent += " *** ADVISE ATC IF RUNUP REQUIRED *** ";
-		this->rawMessageContent += "CONTACT CLEARANCE WITH IDENTIFIER ";
+		this->rawMessageContent += "CONTACT ATC WITH IDENTIFIER ";
 		this->rawMessageContent += std::to_string(pdcNumbers);
 		this->rawMessageContent += identifierLetter;
 		this->rawMessageContent += " ";

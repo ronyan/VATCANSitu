@@ -2447,7 +2447,16 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				// PDC helper even if no CPDLC
 				CPDLCMessage pdcuplink;
 				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
-				string FPUI = pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), GetPlugIn()->ControllerMyself(), "A"); // FIX ATIS LETTER to be dynamic
+				string atisLetter;
+				if (wxRadar::arptAtisLetter.find(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetFlightPlanData().GetOrigin()) != wxRadar::arptAtisLetter.end()) {
+					atisLetter = wxRadar::arptAtisLetter.at(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetFlightPlanData().GetOrigin());
+				}
+				else {
+					atisLetter = "";
+				}
+
+				string FPUI = pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()),
+					GetPlugIn()->ControllerMyself(), atisLetter);
 
 				GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetControllerAssignedData().SetScratchPadString(FPUI.c_str());
 
