@@ -149,16 +149,23 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 
 			}
 
-			if (!components.at(2).empty()) {
-				parsedMessage.messageID = stoi(components.at(2));
+			if (components.size() >= 6) {
+
+
+				if (!components.at(2).empty()) {
+					parsedMessage.messageID = stoi(components.at(2));
+				}
+				if (!components.at(3).empty()) {
+					parsedMessage.responseToMessageID = stoi(components.at(3));
+				}
+				parsedMessage.responseRequired = components.at(4);
+				if (components.at(5).length() > 1) {
+					parsedMessage.rawMessageContent = components.at(5);
+					parsedMessage.rawMessageContent.pop_back();
+				}
 			}
-			if (!components.at(3).empty()) {
-				parsedMessage.responseToMessageID = stoi(components.at(3));
-			}
-			parsedMessage.responseRequired = components.at(4);
-			if (components.at(5).length() > 1) {
-				parsedMessage.rawMessageContent = components.at(5);
-				parsedMessage.rawMessageContent.pop_back();
+			else {
+				parsedMessage.rawMessageContent = "INVALID DOWNLINK MESSAGE";
 			}
 
 			// menmonic opening logic for DL messages:
