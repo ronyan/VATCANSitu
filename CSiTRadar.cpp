@@ -4486,13 +4486,18 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 
 void CSiTRadar::SetTextToClipBoard(const std::string& string) {
 
-	HGLOBAL hGlobal;
+	HGLOBAL hglbCopy;
 	size_t bSize = string.size() + 1;
-	hGlobal = GlobalAlloc(GPTR, bSize);
-	memcpy_s(hGlobal, bSize, string.c_str(), bSize);
+	hglbCopy = GlobalAlloc(GPTR, bSize);
+	if (hglbCopy == NULL)
+	{
+		CloseClipboard();
+		return;
+	}
+	memcpy_s(hglbCopy, bSize, string.c_str(), bSize);
 	OpenClipboard(nullptr);
 	EmptyClipboard();
-	SetClipboardData(CF_TEXT, hGlobal);
+	SetClipboardData(CF_TEXT, hglbCopy);
 	CloseClipboard();
 
 }
