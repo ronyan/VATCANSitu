@@ -428,6 +428,8 @@ std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpla
 			this->rawMessageContent += " ATIS ";
 			this->rawMessageContent += atisLetter;
 
+			return "CDAPending";
+
 		}
 
 		// ARINC 622 
