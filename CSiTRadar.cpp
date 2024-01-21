@@ -4487,7 +4487,7 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 					}
 				}
 				if (m.rawMessageContent.length() > 24) {
-					if (m.rawMessageContent.substr(24) == "REQUEST PREDEP CLEARANCE") {
+					if (m.rawMessageContent.substr(0,24) == "REQUEST PREDEP CLEARANCE") {
 
 						string origin = GetPlugIn()->FlightPlanSelect(m.sender.c_str()).GetFlightPlanData().GetOrigin();
 
