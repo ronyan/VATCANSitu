@@ -47,7 +47,7 @@ public:
 	~CPDLCMessage();
 
 	static std::string CPDLCMessage::PollCPDLCMessages();
-	std::string MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, EuroScopePlugIn::CController& controller, std::string atisLetter);
+	std::string MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightplan, EuroScopePlugIn::CController& controller, std::string atisLetter, std::string subtype = "");
 	void GenerateReply(CPDLCMessage originalMessage);
 	void SendCPDLCMessage();
 	static CPDLCMessage parseDLMessage(std::string& rawMessage);

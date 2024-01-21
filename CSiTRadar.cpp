@@ -4488,6 +4488,23 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 						}
 					}
 				}
+
+				if (m.rawMessageContent.substr(24) == "REQUEST PREDEP CLEARANCE") {
+
+					string origin = GetPlugIn()->FlightPlanSelect(m.sender.c_str()).GetFlightPlanData().GetOrigin();
+
+					if (origin == "CYUL" || origin == "CYWG" || origin == "CYTZ") {
+
+						CPDLCMessage FSMPDCResponse;
+
+						FSMPDCResponse.MakePDCMessage(GetPlugIn()->FlightPlanSelect(m.sender.c_str()), GetPlugIn()->ControllerMyself(), "", "FSM");
+
+						std::future<void> asyncsend = std::async(std::launch::async, [&] {
+							return FSMPDCResponse.SendCPDLCMessage();
+							});
+					}
+
+				}
 			}
 		}
 	}
