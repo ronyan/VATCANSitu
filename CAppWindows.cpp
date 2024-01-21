@@ -620,7 +620,7 @@ void SListBox::RenderCPDLCListBox(int firstElem, int numElem, int maxElements, P
 	if (totalrows > 8) {
 
 		m_has_scroll_bar = true;
-		SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x, m_origin.y }, m_LB_firstElem_idx, (totalrows - m_max_elements) + 1);
+		SListBoxScrollBar scrollBar(m_height, 10, m_ListBoxID, { m_origin.x - 3, m_origin.y }, m_LB_firstElem_idx, (totalrows - m_max_elements) + 1);
 		scrollBar.m_height = m_height;
 		scrollBar.m_slider_height_ratio = (double)m_max_elements / (double)totalrows;
 		scrollBar.m_total_elements = totalrows;

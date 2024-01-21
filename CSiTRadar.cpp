@@ -2419,6 +2419,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			if (func == "End Service") {
 				pdcuplink.sender = CPDLCMessage::hoppieICAO;
 				pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
+				pdcuplink.isdlMessage = false; 
 				pdcuplink.receipient = window->m_callsign;
 				pdcuplink.rawMessageContent = "END SERVICE";
 				pdcuplink.responseRequired = "NE";
@@ -2443,7 +2444,6 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			if (func == "PDC") {
 
 				// PDC helper even if no CPDLC
-				CPDLCMessage pdcuplink;
 				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
 				string atisLetter;
 				if (wxRadar::arptAtisLetter.find(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetFlightPlanData().GetOrigin()) != wxRadar::arptAtisLetter.end()) {
@@ -4110,6 +4110,8 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	// store the data from before so it doesn't get erased.
 	try {
 		acdata.CPDLCMessages = mAcData.at(callSign).CPDLCMessages;
+		acdata.cpdlcState = mAcData.at(callSign).cpdlcState;
+		
 	}
 	catch (std::out_of_range& oor) {
 		
@@ -4487,7 +4489,7 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 					}
 				}
 				if (m.rawMessageContent.length() > 24) {
-					if (m.rawMessageContent.substr(0,24) == "REQUEST PREDEP CLEARANCE") {
+					if (m.rawMessageContent.find("REQUEST PREDEP CLEARANCE") != std::string::npos) {
 
 						string origin = GetPlugIn()->FlightPlanSelect(m.sender.c_str()).GetFlightPlanData().GetOrigin();
 
