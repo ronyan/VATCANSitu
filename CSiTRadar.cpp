@@ -4486,22 +4486,23 @@ void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
 						}
 					}
 				}
+				if (m.rawMessageContent.length() > 24) {
+					if (m.rawMessageContent.substr(24) == "REQUEST PREDEP CLEARANCE") {
 
-				if (m.rawMessageContent.substr(24) == "REQUEST PREDEP CLEARANCE") {
+						string origin = GetPlugIn()->FlightPlanSelect(m.sender.c_str()).GetFlightPlanData().GetOrigin();
 
-					string origin = GetPlugIn()->FlightPlanSelect(m.sender.c_str()).GetFlightPlanData().GetOrigin();
+						if (origin == "CYUL" || origin == "CYWG" || origin == "CYTZ") {
 
-					if (origin == "CYUL" || origin == "CYWG" || origin == "CYTZ") {
+							CPDLCMessage FSMPDCResponse;
 
-						CPDLCMessage FSMPDCResponse;
+							FSMPDCResponse.MakePDCMessage(GetPlugIn()->FlightPlanSelect(m.sender.c_str()), GetPlugIn()->ControllerMyself(), "", "FSM");
 
-						FSMPDCResponse.MakePDCMessage(GetPlugIn()->FlightPlanSelect(m.sender.c_str()), GetPlugIn()->ControllerMyself(), "", "FSM");
+							std::future<void> asyncsend = std::async(std::launch::async, [&] {
+								return FSMPDCResponse.SendCPDLCMessage();
+								});
+						}
 
-						std::future<void> asyncsend = std::async(std::launch::async, [&] {
-							return FSMPDCResponse.SendCPDLCMessage();
-							});
 					}
-
 				}
 			}
 		}
