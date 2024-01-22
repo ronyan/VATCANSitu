@@ -2421,6 +2421,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
 				pdcuplink.isdlMessage = false; 
 				pdcuplink.receipient = window->m_callsign;
+				pdcuplink.messageType = "cpdlc";
 				pdcuplink.rawMessageContent = "END SERVICE";
 				pdcuplink.responseRequired = "NE";
 				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
@@ -3546,6 +3547,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (menuState.lastWxRefresh == 0 || (clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC > 600) {
 			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			menuState.lastWxRefresh = clock();
+		}
+	}
+	
+	if (ObjectType == TAG_CPDLC_MNEMONIC) {
+		if (Button == BUTTON_RIGHT) {
+			CSiTRadar::mAcData[sObjectId].cpdlcMnemonic = false;
 		}
 	}
 	
