@@ -330,7 +330,7 @@ std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpla
 
 	// truncate the route if too long
 	std::string rteStr = flightplan.GetFlightPlanData().GetRoute();
-	int nCharacters = 60;
+	int nCharacters = 52;
 
 	if (rteStr.length() > nCharacters) {
 
@@ -346,6 +346,9 @@ std::string CPDLCMessage::MakePDCMessage(EuroScopePlugIn::CFlightPlan& flightpla
 		}
 
 		rteStr = substringBeforeSpace + "// FILED ROUTE";
+	}
+	else if (rteStr.length() == nCharacters) {
+		rteStr += "// FILED ROUTE";
 	}
 
 	if (subtype == "FSM") {
