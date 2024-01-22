@@ -6,20 +6,20 @@
 
 struct SPopUpElement
 {
-	string m_text;
+	std::string m_text;
 	int m_isHeaderFooter;
 	bool m_hasArrow;
-	string m_function;
+	std::string m_function;
 	int m_width;
 	RECT elementRect;
-	SPopUpElement(string t, string function, int header, bool hasarrow) {
+	SPopUpElement(std::string t, std::string function, int header, bool hasarrow) {
 		m_text = t;
 		m_isHeaderFooter = header;
 		m_hasArrow = hasarrow;
 		m_function = function;
 		m_width = 115;
 	}
-	SPopUpElement(string t, string function, int header, bool hasarrow, int width) {
+	SPopUpElement(std::string t, std::string function, int header, bool hasarrow, int width) {
 		m_text = t;
 		m_isHeaderFooter = header;
 		m_hasArrow = hasarrow;
@@ -31,6 +31,7 @@ struct SPopUpElement
 class CPopUpMenu
 {
 public:
+
 	POINT m_origin;
 	vector<SPopUpElement> m_listElements{};
 	CFlightPlan* m_fp;
@@ -39,6 +40,7 @@ public:
 	static RECT prevRect;
 	static RECT totalRect;
 	int m_width_;
+	COLORREF textColor = RGB(230, 230, 230);
 
 	CPopUpMenu(POINT p) {
 		m_origin = p;
@@ -53,7 +55,8 @@ public:
 	void drawPopUpMenu(CDC* dc);
 	void highlightSelection(CDC* dc, RECT rect);
 	void populateMenu();
+	void populateCPDLCOptions(string func);
 	void drawElement(SPopUpElement& element, POINT p);
-	void populateSecondaryMenu(string type);
+	void populateSecondaryMenu(std::string type);
 };
 

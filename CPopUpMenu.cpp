@@ -95,6 +95,36 @@ void CPopUpMenu::populateMenu()
     
 }
 
+void CPopUpMenu::populateCPDLCOptions(string func) {
+
+    if (func == "Radio") {
+        m_listElements.emplace_back(SPopUpElement("NEXT DATA AUTHORITY (FACI)", "CPDLCNDA", 0, 0, 160));
+        m_listElements.emplace_back(SPopUpElement("CONTACT (UNAME) (FREQ)", "CPDLCContact", 0, 0, 160));
+        m_listElements.emplace_back(SPopUpElement("MONITOR (UNAME) (FREQ)", "CPDLCMonitor", 0, 0, 160));
+    }
+    if (func == "Altitude") {
+        m_listElements.emplace_back(SPopUpElement("DESCEND TO AND MAINTAIN (ALT)", "CPDLCDescend", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("CLIMB TO AND MAINTAIN (ALT)", "CPDLCClimb", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("CONFIRM ASSIGNED ALTITUDE", "CPDLCConfALT", 0, 0, 190));
+    }
+    if (func == "Speed") {
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED) OR GREATER", "CPDLCSpeed+", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED) OR LESS", "CPDLCSpeed-", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (SPEED)", "CPDLCSpeed", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH) OR GREATER", "CPDLCMach+", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH) OR LESS", "CPDLCMach-", 0, 0, 190));
+        m_listElements.emplace_back(SPopUpElement("MAINTAIN (MACH)", "CPDLCMach", 0, 0, 190));
+
+    }
+    if (func == "Route") {
+        m_listElements.emplace_back(SPopUpElement("PROCEED DIRECT TO (FIX)", "CPDLCDirect", 0, 0, 190));
+    }
+    if (func == "Radar") {
+        m_listElements.emplace_back(SPopUpElement("SURVEILLANCE SERVICES TERMINATED", "CPDLCServTerm", 0, 0, 190));
+    }
+
+}
+
 void CPopUpMenu::populateSecondaryMenu(string type) {
     if (!strcmp(type.c_str(), "ManHandoff") || !strcmp(type.c_str(), "PointOut")) {
 
@@ -130,7 +160,7 @@ void CPopUpMenu::drawElement(SPopUpElement& element, POINT p) {
     int sDC = m_dc->SaveDC();
 
     m_dc->SelectObject(CFontHelper::Segoe14);
-    m_dc->SetTextColor(RGB(230, 230, 230));
+    m_dc->SetTextColor(this->textColor);
 
     //default is unpressed state
     COLORREF pressedcolor = RGB(66, 66, 66);
