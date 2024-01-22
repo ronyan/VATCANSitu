@@ -239,8 +239,8 @@ std::string CPDLCMessage::PollCPDLCMessages() { // Returns raw string of CPDLC m
 void CPDLCMessage::SendCPDLCMessage() {
 
 	std::string url;
-	//url = "http://www.hoppie.nl/acars/system/connect.html";
-	url = "https://ronyan.github.io/hoppie-html-test-cases/";
+	url = "http://www.hoppie.nl/acars/system/connect.html";
+	//url = "https://ronyan.github.io/hoppie-html-test-cases/";
 
 	std::string postfields = "logon=";
 	postfields += this->hoppieCode;
