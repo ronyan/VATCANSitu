@@ -1,0 +1,25 @@
+name: Build pre-release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+    - name: Checkout vatcansitu
+      uses: actions/checkout@v3
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build artifact from source
+      run: msbuild "${env:GITHUB_WORKSPACE}\VATCANSitu.vcxproj" /p:AssemblyName=VATCANSitu-nightly
+
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "VATCANSitu-nightly.dll"
+        prerelease: true
