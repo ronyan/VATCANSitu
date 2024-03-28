@@ -16,10 +16,10 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Build artifact from source
-      run: msbuild "${env:GITHUB_WORKSPACE}\VATCANSitu.vcxproj" /p:AssemblyName=VATCANSitu-nightly
+      run: msbuild "${env:GITHUB_WORKSPACE}\VATCANSitu.vcxproj"
 
-    - name: Create release
-      uses: ncipollo/release-action@v1
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
-        artifacts: "VATCANSitu-nightly.dll"
-        prerelease: true
+        name: Plugin DLL
+        path: Debug\VATCANSitu.dll
