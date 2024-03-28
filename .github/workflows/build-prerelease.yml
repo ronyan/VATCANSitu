@@ -1,4 +1,4 @@
-name: Build pre-release
+name: Build artifact from latest code changes
 
 on:
   push:
