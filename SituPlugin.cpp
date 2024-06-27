@@ -5,10 +5,6 @@
 #include "ACTag.h"
 #include "CFontHelper.h"
 
-const int TAG_ITEM_IFR_REL = 5000;
-const int TAG_FUNC_IFR_REL_REQ = 5001;
-const int TAG_FUNC_IFR_RELEASED = 5002;
-
 bool held = false;
 bool injected = false;
 bool kbF1 = false;
@@ -16,6 +12,7 @@ bool kbF3 = false;
 bool kbF4 = false;
 size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
+DWORD rmbtime = 0;
 
 POINT SituPlugin::prevMousePt = { 0,0 };
 int SituPlugin::prevMouseDelta = 0;
@@ -571,13 +568,16 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         case WM_MBUTTONDBLCLK: {
         }
         case WM_RBUTTONDOWN: {
+            rmbtime = GetTickCount(); // Record the current time
             CSiTRadar::menuState.MB3clickedPt = Pt;
             CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
             return CallNextHookEx(NULL, nCode, wParam, lParam);
         }
         case WM_RBUTTONUP: {
+            DWORD duration = GetTickCount() - rmbtime;
             if (Pt.x == CSiTRadar::menuState.MB3clickedPt.x &&
-                Pt.y == CSiTRadar::menuState.MB3clickedPt.y) {
+                Pt.y == CSiTRadar::menuState.MB3clickedPt.y && 
+                (duration > 500)) {
 
                 CSiTRadar::menuState.bgM3Click = true;
 
@@ -598,13 +598,15 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 SituPlugin::SituPlugin()
 	: EuroScopePlugIn::CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE,
 		"VATCANSitu",
-		"0.5.11.0",
+		"0.5.12.3",
 		"Ron Yan",
 		"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)")
 {
     RegisterTagItemType("IFR Release", TAG_ITEM_IFR_REL);
+    RegisterTagItemType("CPDLC State", TAG_ITEM_CPDLC);
     RegisterTagItemFunction("Request IFR Release", TAG_FUNC_IFR_REL_REQ);
     RegisterTagItemFunction("Grant IFR Release", TAG_FUNC_IFR_RELEASED);
+    RegisterTagItemFunction("Open CPDLC Menu", TAG_FUNCTION_OPEN_CPDLC_WINDOW);
 
     DWORD appProc = GetCurrentThreadId();
     appHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, NULL, appProc);
@@ -637,6 +639,22 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
     COLORREF* pRGB,
     double* pFontSize) {
 
+    if (ItemCode == TAG_ITEM_CPDLC) {
+
+        *pColorCode = TAG_COLOR_RGB_DEFINED;
+        // If any CPDLC Messages 
+        auto it = CSiTRadar::mAcData.find(FlightPlan.GetCallsign());
+        if (it != CSiTRadar::mAcData.end()) {
+
+            if (!it->second.CPDLCMessages.empty()) {
+                COLORREF c = RGB(0, 200, 0);
+                strcpy_s(sItemString, 16, "\u00A4");
+                *pRGB = c;
+            }
+        }
+    
+    }
+
     if (ItemCode == TAG_ITEM_IFR_REL) {
 
         strcpy_s(sItemString, 16, "\u00AC");
@@ -649,6 +667,7 @@ void SituPlugin::OnGetTagItem(EuroScopePlugIn::CFlightPlan FlightPlan,
             strcpy_s(sItemString, 16, "\u00A4");
             *pRGB = c;
         }
+
         if (strncmp(FlightPlan.GetControllerAssignedData().GetScratchPadString(), "RREL", 4) == 0) {
             strcpy_s(sItemString, 16, "\u00A4");
             COLORREF c = RGB(9, 171, 0);
@@ -663,6 +682,27 @@ inline void SituPlugin::OnFunctionCall(int FunctionId, const char* sItemString, 
     CFlightPlan fp;
     fp = FlightPlanSelectASEL();
     string spString = fp.GetControllerAssignedData().GetScratchPadString();
+
+    if (FunctionId == TAG_FUNCTION_OPEN_CPDLC_WINDOW) {
+
+        bool exists = false;
+        for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+            if (!strcmp(win.second.m_callsign.c_str(), sItemString)
+                && win.second.m_winType == WINDOW_CPDLC)
+            {
+                win.second.m_origin = { Pt.x, Pt.y };
+                exists = true;
+            }
+        }
+        // If not draw it
+        if (!exists) {
+
+            CAppWindows cpdlc({ Pt.x, Pt.y }, WINDOW_CPDLC, fp, CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(fp.GetCallsign()).CPDLCMessages);
+            cpdlc.m_callsign = fp.GetCallsign();
+            CSiTRadar::menuState.radarScrWindows[cpdlc.m_windowId_] = cpdlc;
+
+        }
+    }
 
     if (FunctionId == TAG_FUNC_IFR_REL_REQ) {
         if (strncmp(spString.c_str(), "RREQ", 4) == 0) {

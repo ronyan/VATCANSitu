@@ -312,7 +312,7 @@ public:
         CDC dc;
         dc.Attach(hdc);
 
-        dc.SelectObject(CFontHelper::Segoe14);
+        dc.SelectObject(CFontHelper::Segoe12);
         dc.SetTextColor(RGB(230, 230, 230));
 
         //default is unpressed state

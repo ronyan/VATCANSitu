@@ -1,12 +1,21 @@
 #pragma once
 #include "SituPlugin.h"
 #include "constants.h"
+#include "cpdlc.h"
 #include <vector>
 #include "CFontHelper.h"
 
 struct SWindowElements {
 	RECT titleBarRect;
 	vector<RECT> ListBoxRect;
+};
+
+struct SWindowText {
+	COLORREF color;
+	int size;
+	POINT location;
+	string text;
+	void RenderText(CDC* m_dc, POINT origin);
 };
 
 struct SListBoxScrollBar {
@@ -102,11 +111,31 @@ struct SListBoxElement {
 	int m_listElementHeight;
 	bool m_selected_{ false };
 	string m_ListBoxElementText;
+	CPDLCMessage m_cpdlc_message;
+	CPDLCMessage m_cpdlc_message_response;
 	RECT m_ListBoxRect;
+
+	SListBoxElement(int width, CPDLCMessage& message) {
+		m_width = width;
+		m_cpdlc_message = message;
+
+		m_elementID = m_elementIDcount;
+		m_elementIDcount++;
+	}
+
+	SListBoxElement(int width, CPDLCMessage& message, CPDLCMessage& messageresponse) {
+		m_width = width;
+		m_cpdlc_message = message;
+		m_cpdlc_message_response = messageresponse;
+
+		m_elementID = m_elementIDcount;
+		m_elementIDcount++;
+	}
 
 	SListBoxElement(int width, string text) {
 		m_width = width;
 		m_ListBoxElementText = text;
+
 		m_elementID = m_elementIDcount;
 		m_elementIDcount++;
 	}
@@ -133,6 +162,8 @@ struct STextField {
 	string m_text;
 	RECT m_textRect;
 	POINT m_location_;
+	int m_textfield_type;
+	CPDLCMessage m_cpdlcmessage;
 
 	STextField() {
 		m_textFieldID = m_textFieldIDcount;
@@ -155,10 +186,10 @@ struct SListBox {
 	int m_width;
 	unsigned long m_ListBoxID;
 	int m_windowID_;
-	int m_nearestPtIdx;
+	int m_nearestPtIdx{ 0 };
 	int m_LB_firstElem_idx{ 0 };
 	int m_max_elements;
-	int m_last_element;
+	int m_last_element{ 0 };
 	int m_height;
 	bool m_has_scroll_bar{ false };
 	string selectItem{};
@@ -176,6 +207,19 @@ struct SListBox {
 			listBox_.emplace_back(SListBoxElement(300, lbe));
 		}
 	}
+	void PopulateCPDLCListBox(vector<CPDLCMessage>& msgs) {
+		// link up CPDLC messages;
+		listBox_.clear(); // clear the LB upon refresh
+		int i=0; 
+		for (auto& msg : msgs ) {
+
+			SListBoxElement lbe(330, msg);
+			listBox_.push_back(lbe);
+			i++;
+
+		}
+	}
+
 	void PopulateDirectListBox(ACRoute* rte, CFlightPlan fp) {
 
 		m_nearestPtIdx = fp.GetExtractedRoute().GetPointsCalculatedIndex();
@@ -218,12 +262,14 @@ struct SListBox {
 		}
 	}
 	void RenderListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
+	void RenderCPDLCListBox(int firstElem, int numElem, int maxElements, POINT winOrigin);
 	void ScrollUp() {
 		if (m_LB_firstElem_idx > 0) {
 			m_LB_firstElem_idx--;
 		}
 	}
 	void ScrollDown() {
+
 		if (m_nearestPtIdx + m_LB_firstElem_idx + m_max_elements < m_last_element)
 		{
 			m_LB_firstElem_idx++;
@@ -244,6 +290,7 @@ struct SWindowButton {
 	string text;
 	RECT m_WindowButtonRect;
 	CDC* m_dc;
+	COLORREF m_textcolor{ RGB(230, 230, 230) };
 
 	SWindowButton() {}
 	
@@ -256,8 +303,17 @@ struct SWindowButton {
 	void RenderButton(POINT p) {
 		int sDC = m_dc->SaveDC();
 
-		m_dc->SelectObject(CFontHelper::Segoe14);
-		m_dc->SetTextColor(RGB(230, 230, 230));
+		CFont font;
+		LOGFONT lgfont;
+
+		memset(&lgfont, 0, sizeof(LOGFONT));
+		lgfont.lfWeight = 500;
+		strcpy_s(lgfont.lfFaceName, _T("Segoe UI"));
+		lgfont.lfHeight = 14;
+		font.CreateFontIndirect(&lgfont);
+
+		m_dc->SelectObject(font);
+		m_dc->SetTextColor(m_textcolor);
 
 		HPEN targetPen = CreatePen(PS_SOLID, 1, C_MENU_GREY1);
 		HBRUSH targetBrush = CreateSolidBrush(C_MENU_GREY3);
@@ -294,17 +350,30 @@ public:
 	POINT m_origin;
 	string windowTitle;
 	bool m_visible_;
+
+	// Each Window has a vector of listboxes, buttons, textfields and static text
 	vector<SListBox> m_listboxes_;
 	vector<SWindowButton> m_buttons_;
 	vector<STextField> m_textfields_;
+	vector<SWindowText> m_text_;
 
 	CAppWindows();
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, vector<string>* lbElements);
+	CAppWindows(POINT origin, int winType, CFlightPlan& fp, RECT radarea, vector<CPDLCMessage>& cpdlcmsgs);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea, ACRoute* rte);
 	CAppWindows(POINT origin, int winType, CFlightPlan fp, RECT radarea);
 	CAppWindows(POINT origin, int winType, RECT radarea);
-	SListBox GetListBox(int id) {
-		return *find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](const SListBox& obj) { return obj.m_ListBoxID == id; });
+	SListBox& GetListBox(int id) {
+		auto it = find_if(m_listboxes_.begin(), m_listboxes_.end(), [&id](SListBox& obj) { return obj.m_ListBoxID == id; });
+
+		if (it != m_listboxes_.end()) {
+			return *it;
+		}
+		else {
+			// Handle the case when the ListBox with the specified id is not found.
+			// You can throw an exception, return a default object, or handle it based on your requirements.
+			throw std::out_of_range("ListBox with specified ID not found");
+		}
 	}
 	SWindowElements DrawWindow(CDC* dc);
 
