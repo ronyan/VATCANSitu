@@ -12,6 +12,7 @@ bool kbF3 = false;
 bool kbF4 = false;
 size_t jurisdictionIndex = 0;
 size_t oldJurisdictionSize = 0;
+DWORD rmbtime = 0;
 
 POINT SituPlugin::prevMousePt = { 0,0 };
 int SituPlugin::prevMouseDelta = 0;
@@ -567,13 +568,16 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
         case WM_MBUTTONDBLCLK: {
         }
         case WM_RBUTTONDOWN: {
+            rmbtime = GetTickCount(); // Record the current time
             CSiTRadar::menuState.MB3clickedPt = Pt;
             CSiTRadar::menuState.MB3hoverRect = { 0,0,0,0 };
             return CallNextHookEx(NULL, nCode, wParam, lParam);
         }
         case WM_RBUTTONUP: {
+            DWORD duration = GetTickCount() - rmbtime;
             if (Pt.x == CSiTRadar::menuState.MB3clickedPt.x &&
-                Pt.y == CSiTRadar::menuState.MB3clickedPt.y) {
+                Pt.y == CSiTRadar::menuState.MB3clickedPt.y && 
+                (duration > 500)) {
 
                 CSiTRadar::menuState.bgM3Click = true;
 
