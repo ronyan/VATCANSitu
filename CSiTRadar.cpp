@@ -2338,7 +2338,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						mAcData[window->m_callsign].CPDLCMessages.push_back(automaticResponse);
 
 					}
-					else if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "SERVICE TERMINATED") {
+					else if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "END SERVICE") {
 
 						mAcData[window->m_callsign].cpdlcState = 0;
 

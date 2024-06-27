@@ -163,43 +163,13 @@ CPDLCMessage CPDLCMessage::parseDLMessage(std::string& rawMessage) { // breaks u
 					parsedMessage.rawMessageContent = components.at(5);
 					parsedMessage.rawMessageContent.pop_back();
 				}
+				// All D/L messages open mnemonic -> parsed in the display part
+				parsedMessage.opensMnemonic = true;
 			}
 			else {
 				parsedMessage.rawMessageContent = "INVALID DOWNLINK MESSAGE";
 			}
-
-			// menmonic opening logic for DL messages:
-			if (parsedMessage.rawMessageContent.length() == 5) {
-				if (parsedMessage.rawMessageContent.substr(0, 5) == "WILCO") {
-					parsedMessage.opensMnemonic = true;
-				}
-			}
-
-			if (parsedMessage.rawMessageContent.length() >= 10) {
-				if (parsedMessage.rawMessageContent.substr(0, 10) == "REQUEST FL") {
-					parsedMessage.opensMnemonic = true;
-				}
-			}
-
-			if (parsedMessage.rawMessageContent.length() >= 13) {
-				if (parsedMessage.rawMessageContent.substr(0, 13) == "REQUEST CLIMB") {
-					parsedMessage.opensMnemonic = true;
-				}
-			}
-
-			if (parsedMessage.rawMessageContent.length() >= 15) {
-				if (parsedMessage.rawMessageContent.substr(0, 15) == "REQUEST DESCEND") {
-					parsedMessage.opensMnemonic = true;
-				}
-			}
-
-			if (parsedMessage.rawMessageContent.length() == 23) {
-				if (parsedMessage.rawMessageContent.substr(0, 23) == "REQUEST VOICE CONTACT") {
-					parsedMessage.opensMnemonic = true;
-				}
-			}
 		}
-
 	}
 
 	return parsedMessage;

@@ -171,9 +171,8 @@ void CACTag::DrawRTACTag(CDC *dc, CRadarScreen *rad, CRadarTarget *rt, CFlightPl
 				cpdlcMnemonic = "D/L"; // default for any other message
 				std::cerr << "Error: 'FL' not found or insufficient characters after it." << std::endl;
 			}
-
-
 		}
+		// Uplink Messages
 		else {
 			dc->SetTextColor(RGB(0, 200, 0));
 
