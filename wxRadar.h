@@ -11,6 +11,7 @@
 #include "CAsyncResponse.h"
 #include <set>
 #include <shared_mutex>
+#include <unordered_map>
 
 using namespace Gdiplus;
 
@@ -549,10 +550,10 @@ public:
     }
 
     static cell wxReturn[256][256];
-    static string wxLatCtr; 
+    static string wxLatCtr;
     static string wxLongCtr;
     static int zoomLevel;
-    static string ts; 
+    static string ts;
 
     static map<string, string> arptAltimeter;
     static map<string, string> arptAtisLetter;
@@ -561,9 +562,14 @@ public:
     static std::shared_mutex atisLetterMutex;
     static json jsVatsimDataFeed;
 
+    static std::unordered_map<uint32_t, int> colorDbzMap;
+    static void initColorDbzMap();
+    static int colorToDbz(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+
     static void loadPNG(std::vector<unsigned char>& buffer, const std::string& filename); //designed for loading files from hard disk in an std::vector
 
-    static void parseRadarPNG(CRadarScreen* rad); 
+    static std::string getSituWxDir();
+    static void parseRadarPNG(CRadarScreen* rad);
     static int renderRadar(Graphics* g, CRadarScreen* rad, bool showAllPrecip);
 
     static vector<CAsyncResponse> asyncMessages;
@@ -576,20 +582,24 @@ public:
 
         if (rainViewerJson)
         {
-            curl_easy_setopt(rainViewerJson, CURLOPT_URL, "https://api.rainviewer.com/public/maps.json");
+            curl_easy_setopt(rainViewerJson, CURLOPT_URL, "https://api.rainviewer.com/public/weather-maps.json");
             curl_easy_setopt(rainViewerJson, CURLOPT_WRITEFUNCTION, write_data);
             curl_easy_setopt(rainViewerJson, CURLOPT_WRITEDATA, &rainViewerJsonString);
-            CURLcode res;
-            res = curl_easy_perform(rainViewerJson);
+            curl_easy_perform(rainViewerJson);
             curl_easy_cleanup(rainViewerJson);
         }
 
         try {
-            json j = json::parse(rainViewerJsonString.c_str());
-            wxRadar::ts = to_string(j.back());
+            json j = json::parse(rainViewerJsonString);
+
+            string host = j["host"];
+            string path = j["radar"]["past"].back()["path"];
+
+            wxRadar::ts = host + path;
+
         }
         catch (exception& e) {
-            rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", string("Failed to get RainViewer JSON" + string(e.what())).c_str(), true, true, true, true, true);
+            rad->GetPlugIn()->DisplayUserMessage("VATCANSitu", "Error", (string("Failed to get RainViewer JSON: ") + e.what()).c_str(), true, true, true, true, true);
         }
     }
 

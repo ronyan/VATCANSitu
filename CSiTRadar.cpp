@@ -15,9 +15,13 @@ CRadarScreen* CSiTRadar::m_pRadScr;
 unordered_map<int, ACList> acLists;
 unordered_map<string, bool> CSiTRadar::acADSB;
 unordered_map<string, bool> CSiTRadar::acRVSM;
+std::shared_mutex CSiTRadar::airportMutex;
+std::shared_mutex CSiTRadar::mutex_mAcData;
 
 CSiTRadar::CSiTRadar()
 {
+	wxRadar::initColorDbzMap();
+
 	m_pRadScr = this;
 
 	halfSec = clock();
@@ -46,12 +50,14 @@ CSiTRadar::CSiTRadar()
 			}
 		}
 
-		std::ifstream settings_file(".\\situWx\\settings.json");
+		std::ifstream settings_file((wxRadar::getSituWxDir() + "settings.json").c_str());
 		if (settings_file.is_open()) {
 			json j = json::parse(settings_file);
 
 			wxRadar::wxLatCtr = j["wxlat"];
 			wxRadar::wxLongCtr = j["wxlong"];
+
+			CPDLCMessage::hoppieCode = j["hoppieCode"];
 
 			acLists[LIST_TIME_ATIS].p.x = j["atisList"]["x"];
 			acLists[LIST_TIME_ATIS].p.y = j["atisList"]["y"];
@@ -77,11 +83,13 @@ CSiTRadar::CSiTRadar()
 		}
 		// write defaults if no file
 		else {
-			std::ofstream settings_file(".\\situWx\\settings.json");
+			std::ofstream settings_file((wxRadar::getSituWxDir() + "settings.json").c_str());
 
 			json j;
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
+
+			j["hoppieCode"] = CPDLCMessage::hoppieCode;
 
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
@@ -109,7 +117,7 @@ CSiTRadar::CSiTRadar()
 
 
 	try {
-		if ( (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) ||
+		if ((((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) ||
 			menuState.lastWxRefresh == 0) {
 			std::future<void> fa = std::async(std::launch::async, wxRadar::GetRainViewerJSON, this);
 			std::future<void> fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
@@ -145,13 +153,15 @@ CSiTRadar::~CSiTRadar()
 	// Save settings file
 	try {
 
-		std::ifstream settings_file(".\\situWx\\settings.json");
+		std::ifstream settings_file((wxRadar::getSituWxDir() + "settings.json").c_str());
 		if (settings_file.is_open()) {
-			std::ofstream settings_file(".\\situWx\\settings.json");
+			std::ofstream settings_file((wxRadar::getSituWxDir() + "settings.json").c_str());
 
 			json j;
 			j["wxlat"] = wxRadar::wxLatCtr;
 			j["wxlong"] = wxRadar::wxLongCtr;
+
+			j["hoppieCode"] = CPDLCMessage::hoppieCode;
 
 			j["atisList"]["x"] = acLists[LIST_TIME_ATIS].p.x;
 			j["atisList"]["y"] = acLists[LIST_TIME_ATIS].p.y;
@@ -181,7 +191,7 @@ CSiTRadar::~CSiTRadar()
 
 void CSiTRadar::OnRefresh(HDC hdc, int phase)
 {
-	std::future<void> fb, fc, fd;
+	std::future<void> fb, fc, fd, fe;
 
 	if (m_pRadScr != this) {
 		m_pRadScr = this;
@@ -200,11 +210,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		menuState.focusedItem.m_focus_on = false;
 	}
 	else {
-	// see if any focused items are set
+		// see if any focused items are set
 		menuState.focusedItem.m_focus_on = false;
 		for (auto& win : menuState.radarScrWindows) {
 			for (auto& tf : win.second.m_textfields_) {
-				if(tf.m_focused) {
+				if (tf.m_focused) {
 					menuState.focusedItem.m_focus_on = true;
 					menuState.focusedItem.m_focused_tf = &tf;
 				}
@@ -222,7 +232,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	RECT radarea = GetRadarArea();
 
 	// Get threaded messages
-	for (auto &message : wxRadar::asyncMessages) {
+	for (auto& message : wxRadar::asyncMessages) {
 		GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Warning", message.reponseMessage.c_str(), true, false, false, false, false);
 	}
 	wxRadar::asyncMessages.clear();
@@ -236,11 +246,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 	}
 
 	if (phase == REFRESH_PHASE_BEFORE_TAGS) {
+
 		if (((clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC) > 600 && (menuState.wxAll || menuState.wxHigh)) {
 
 			// autorefresh weather download every 10 minutes
 			fb = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			menuState.lastWxRefresh = clock();
+		}
+
+		if (((clock() - menuState.lastCPDLCPoll) / CLOCKS_PER_SEC) > 60 && (menuState.CPDLCOn)) {
+
+			CSiTRadar::asyncCPDLCFetch();
+			menuState.lastCPDLCPoll = clock();
+
 		}
 
 		if (((clock() - menuState.lastMetarRefresh) / CLOCKS_PER_SEC) > 600) { // update METAR every 10 mins
@@ -287,6 +305,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				if (std::find(menuState.recentCallsignsSeen.begin(), menuState.recentCallsignsSeen.end(), it->first) == menuState.recentCallsignsSeen.end())
 				{
 					// supported in C++11
+					std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
+					lock.lock();
 					it = mAcData.erase(it);
 				}
 				else {
@@ -306,9 +326,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					++squawkCodeIt;
 				}
 			}
-
-			menuState.lastAcListMaint = clock();
-			GetPlugIn()->DisplayUserMessage("VATCAN Situ", "menuState.squawkCodes:", to_string(menuState.squawkCodes.size()).c_str(), true, false, false, false, false);
 
 		}
 	}
@@ -333,7 +350,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
 					radarTarget = GetPlugIn()->RadarTargetSelectNext(radarTarget))
 				{
-					
+
 					string callSign = radarTarget.GetCallsign();
 					CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
 					bool isCorrelated = radarTarget.GetCorrelatedFlightPlan().IsValid();
@@ -434,7 +451,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				MessageList.PopulatetList(msgList);
 				MessageList.DrawList();
 				*/
-				
+
 
 
 				for (CRadarTarget radarTarget = GetPlugIn()->RadarTargetSelectFirst(); radarTarget.IsValid();
@@ -513,24 +530,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						if (strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), GetPlugIn()->ControllerMyself().GetPositionId()) != 0 &&
 							strcmp(radarTarget.GetCorrelatedFlightPlan().GetHandoffTargetControllerId(), "") == 0) {
 
-	
 
-								if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
-									&& !menuState.filterBypassAll
-									) {
+
+							if (altFilterOn && radarTarget.GetPosition().GetPressureAltitude() < altFilterLow * 100
+								&& !menuState.filterBypassAll
+								) {
+								continue;
+							}
+
+							if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
+								&& !menuState.filterBypassAll
+								&& !isDest) {
+
+								if (radarTarget.GetPosition().GetRadarFlags() != 1) { // can't filter primary targets will make it just respect the high limit, to avoid ground clutter
 									continue;
 								}
 
-								if (altFilterOn && altFilterHigh > 0 && radarTarget.GetPosition().GetPressureAltitude() > altFilterHigh * 100
-									&& !menuState.filterBypassAll
-									&& !isDest) {
+							}
 
-									if (radarTarget.GetPosition().GetRadarFlags() != 1) { // can't filter primary targets will make it just respect the high limit, to avoid ground clutter
-										continue;
-									}
-
-								}
-							
 						}
 					}
 
@@ -559,7 +576,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						RECT dctFixNameRect;
 						dctFixNameRect.top = ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition).y + 3;
-						dctFixNameRect.left = ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition).x -15;
+						dctFixNameRect.left = ConvertCoordFromPositionToPixel(mAcData[callSign].directToPendingPosition).x - 15;
 
 						dc.DrawText(mAcData[callSign].directToPendingFixName.c_str(), &dctFixNameRect, DT_CENTER | DT_CALCRECT);
 						dc.DrawText(mAcData[callSign].directToPendingFixName.c_str(), &dctFixNameRect, DT_CENTER);
@@ -578,13 +595,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					if (hasPTL.find(radarTarget.GetCallsign()) != hasPTL.end()) {
 
 						HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
-						
+
 					}
 					else if (menuState.ptlAll && radarTarget.GetPosition().GetRadarFlags() != 0) {
 						if (radarTarget.GetPosition().GetRadarFlags() == 4 && !isADSB) {}
 						else {
 							HaloTool::drawPTL(&dc, radarTarget, this, p, menuState.ptlLength);
-							
+
 						}
 					}
 					else if ((CSiTRadar::menuState.ebPTL && radarTarget.GetPosition().GetReportedHeading() > 0 && radarTarget.GetPosition().GetReportedHeading() < 181) ||
@@ -607,7 +624,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								radarTarget.GetCorrelatedFlightPlan().GetDistanceToDestination() > 1 &&
 								radarTarget.GetPosition().GetPressureAltitude() > 500) {
 
-								int i = radarTarget.GetTrackHeading() - menuState.tbsHdg + 10 ; // ES reports in true, 10 for mag var in CYYZ
+								int i = radarTarget.GetTrackHeading() - menuState.tbsHdg + 10; // ES reports in true, 10 for mag var in CYYZ
 
 								if (i < 7 && i > -7)
 								{
@@ -737,7 +754,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 					// logic for the color of the PPS
 					if (radarTarget.GetPosition().GetRadarFlags() == 0) { ppsColor = C_PPS_YELLOW; }
-					else if (radarTarget.GetPosition().GetRadarFlags() == 1 ) { ppsColor = C_PPS_MAGENTA; }
+					else if (radarTarget.GetPosition().GetRadarFlags() == 1) { ppsColor = C_PPS_MAGENTA; }
 					else if (!strcmp(radarTarget.GetPosition().GetSquawk(), "7600") || !strcmp(radarTarget.GetPosition().GetSquawk(), "7700")) { ppsColor = C_PPS_RED; }
 					else if (isVFR && isCorrelated) { ppsColor = C_PPS_ORANGE; }
 					else { ppsColor = C_PPS_YELLOW; }
@@ -747,7 +764,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					RECT prect = CPPS::DrawPPS(&dc, isCorrelated, isVFR, isADSB, isRVSM, radarTarget.GetPosition().GetRadarFlags(), ppsColor, radarTarget.GetPosition().GetSquawk(), p);
 					AddScreenObject(AIRCRAFT_SYMBOL, callSign.c_str(), prect, FALSE, "");
 
-					if (radarTarget.GetPosition().GetRadarFlags() != 0 && radarTarget.GetPosition().GetRadarFlags() !=4) {
+					if (radarTarget.GetPosition().GetRadarFlags() != 0 && radarTarget.GetPosition().GetRadarFlags() != 4) {
 						CACTag::DrawRTACTag(&dc, this, &radarTarget, &radarTarget.GetCorrelatedFlightPlan(), &rtagOffset);
 						if (radarTarget.GetGS() > 10) {
 							CACTag::DrawHistoryDots(&dc, &radarTarget);
@@ -759,7 +776,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							CACTag::DrawHistoryDots(&dc, &radarTarget);
 						}
 					}
-					
+
 					// ADSB targets; if no primary or secondary radar, but the plane has ADSB equipment suffix (assumed space based ADS-B with no gaps)
 					/*
 					if (radarTarget.GetPosition().GetRadarFlags() == 0
@@ -773,18 +790,24 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					*/
 
 					// Tag Level Logic
-					if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
-						menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())) {
-						// Open tags for quick looked targets
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
-					}
-					else if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
-						!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())
-						&& CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked) {
+					try {
+						if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
+							menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())) {
+							// Open tags for quick looked targets
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 1;
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = true;
+						}
+						else if (menuState.nearbyCJS.find(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId()) != menuState.nearbyCJS.end() &&
+							!menuState.nearbyCJS.at(radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerId())
+							&& CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked) {
 
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
-						CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = false;
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].tagType = 0;
+							CSiTRadar::mAcData[radarTarget.GetCallsign()].isQuickLooked = false;
+						}
+					}
+					catch (const std::out_of_range& e) {
+						// Handle the out-of-range exception
+						// std::cerr << "Caught exception: " << e.what() << std::endl;
 					}
 
 					if (radarTarget.GetCorrelatedFlightPlan().GetTrackingControllerIsMe()) {
@@ -928,36 +951,36 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						}
 					}
-					else if (mAcData[callSign].pointOutToMe){
+					else if (mAcData[callSign].pointOutToMe) {
 
 						if (mAcData[callSign].pointOutPendingApproval) { // change to flashing for point out events;
 
-								dc.Rectangle(&selectBox);
-								RECT rectHighlight;
-								string POString, POString2;
-								POString = "P/Out " + mAcData[callSign].POTarget;
-								POString2 = mAcData[callSign].POString;
+							dc.Rectangle(&selectBox);
+							RECT rectHighlight;
+							string POString, POString2;
+							POString = "P/Out " + mAcData[callSign].POTarget;
+							POString2 = mAcData[callSign].POString;
 
-								rectHighlight.left = p.x - 9;
-								rectHighlight.right = p.x + 20;
-								rectHighlight.top = p.y + 8;
-								rectHighlight.bottom = p.y + 28;
-								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
+							rectHighlight.left = p.x - 9;
+							rectHighlight.right = p.x + 20;
+							rectHighlight.top = p.y + 8;
+							rectHighlight.bottom = p.y + 28;
+							AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 
-								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+							dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
 
-								if (halfSecTick) {
-									dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
-								}
-								rectHighlight.top = rectHighlight.bottom - 3;
+							if (halfSecTick) {
+								dc.DrawText(POString.c_str(), &rectHighlight, DT_LEFT);
+							}
+							rectHighlight.top = rectHighlight.bottom - 3;
 
-								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
-								if (halfSecTick) {
-									dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
-								}
-								AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
+							dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT | DT_CALCRECT);
+							if (halfSecTick) {
+								dc.DrawText(POString2.c_str(), &rectHighlight, DT_LEFT);
+							}
+							AddScreenObject(HIGHLIGHT_POINT_OUT_ACCEPT, callSign.c_str(), rectHighlight, false, "Accept Point Out");
 
-								
+
 						}
 						else {
 							dc.Rectangle(&selectBox);
@@ -983,13 +1006,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 						dc.Rectangle(&selectBox);
 
-						if ( ((clock() - mAcData[callSign].POAcceptTime) / CLOCKS_PER_SEC) < 8 &&
+						if (((clock() - mAcData[callSign].POAcceptTime) / CLOCKS_PER_SEC) < 8 &&
 							((clock() - mAcData[callSign].POAcceptTime) / CLOCKS_PER_SEC) > 0 &&
 							halfSecTick) {
 
 							bool i = true;
 
-						} else {
+						}
+						else {
 
 							RECT rectHighlight;
 							string POString, POString2;
@@ -1019,48 +1043,48 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 				if (menuState.showExtrapFP == TRUE) {
 					for (CFlightPlan flightPlan = GetPlugIn()->FlightPlanSelectFirst(); flightPlan.IsValid();
 						flightPlan = GetPlugIn()->FlightPlanSelectNext(flightPlan)) {
-	
+
 						if (flightPlan.GetCorrelatedRadarTarget().IsValid()) { continue; }
-	
+
 						// if the flightplan does not have a correlated radar target
 						if (flightPlan.GetFPState() == FLIGHT_PLAN_STATE_SIMULATED) {
-	
+
 							// Store the points for history dots, only store new if position updated
 							if (mAcData[flightPlan.GetCallsign()].prevPosition.empty()) {
-	
+
 								mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
-	
+
 							}
-	
+
 							else {
 								if ((flightPlan.GetFPTrackPosition().GetPosition().m_Latitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Latitude) &&
 									(flightPlan.GetFPTrackPosition().GetPosition().m_Longitude != mAcData[flightPlan.GetCallsign()].prevPosition.back().m_Longitude)) {
-	
+
 									if (static_cast<int>(mAcData[flightPlan.GetCallsign()].prevPosition.size()) < menuState.numHistoryDots) {
-	
+
 										mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
-	
+
 									}
 									else {
-	
+
 										mAcData[flightPlan.GetCallsign()].prevPosition.pop_front();
 										mAcData[flightPlan.GetCallsign()].prevPosition.push_back(flightPlan.GetFPTrackPosition().GetPosition());
 									}
 								}
 							}
-	
+
 							CACTag::DrawFPACTag(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, &fptagOffset);
 							CACTag::DrawFPConnector(&dc, this, &flightPlan.GetCorrelatedRadarTarget(), &flightPlan, C_PPS_ORANGE, &fptagOffset);
 							CACTag::DrawHistoryDots(&dc, &flightPlan);
-	
+
 							POINT p = ConvertCoordFromPositionToPixel(flightPlan.GetFPTrackPosition().GetPosition());
-	
+
 							// draw the orange airplane symbol (credits andrewogden1678)
 							GraphicsContainer gCont;
 							gCont = g.BeginContainer();
-	
+
 							// Airplane icon 
-	
+
 							Point points[19] = {
 								Point(0,-6),
 								Point(-1,-5),
@@ -1082,19 +1106,19 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 								Point(1,-5),
 								Point(0,-6)
 							};
-	
+
 							g.RotateTransform((REAL)flightPlan.GetFPTrackPosition().GetReportedHeading());
 							g.TranslateTransform((REAL)p.x, (REAL)p.y, MatrixOrderAppend);
-	
+
 							SolidBrush orangeBrush(Color(255, 242, 120, 57));
-	
+
 							g.FillPolygon(&orangeBrush, points, 19);
 							g.EndContainer(gCont);
-	
+
 							DeleteObject(&orangeBrush);
-	
+
 						}
-	
+
 					}
 				}
 
@@ -1120,39 +1144,8 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				//
 
-				for (auto window : menuState.radarScrWindows) {
-					SWindowElements r = window.second.DrawWindow(&dc);
-					AddScreenObject(WINDOW_TITLE_BAR, to_string(window.second.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.second.m_windowId_).c_str());
-					
-					for (auto &elem : window.second.m_buttons_) {
-						string windowFuncStr;
-						windowFuncStr = to_string(elem.windowID) + " " + elem.text;
-						AddScreenObject(window.second.m_winType, windowFuncStr.c_str(), elem.m_WindowButtonRect, true, windowFuncStr.c_str());
-					}
-
-					for (auto& listbox : window.second.m_listboxes_) {
-						for (auto& lbE : listbox.listBox_) {
-							string windowFuncStr;
-							windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(lbE.m_elementID);
-							AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
-						}
-						string lbFuncStr;
-						lbFuncStr = to_string(window.second.m_windowId_) + " " + to_string(listbox.m_ListBoxID);
-						AddScreenObject(WINDOW_SCROLL_ARROW_UP, lbFuncStr.c_str(), listbox.m_scrbar.uparrow, false, (lbFuncStr + " Up").c_str());
-						AddScreenObject(WINDOW_SCROLL_ARROW_DOWN, lbFuncStr.c_str(), listbox.m_scrbar.downarrow, false, (lbFuncStr + " Down").c_str());
-					}
-
-					for (auto& tf : window.second.m_textfields_) {
-						string windowFuncStr;
-						windowFuncStr = to_string(window.second.m_windowId_) + " " + to_string(tf.m_textFieldID);
-						AddScreenObject(WINDOW_TEXT_FIELD, windowFuncStr.c_str(), tf.m_textRect, true, windowFuncStr.c_str());
-					}
-					
-					
-				}
-
 				if (menuState.MB3menu) {
-					if (menuState.MB3menuType == 0) {
+					if (menuState.MB3menuType == 0) { // aircraft tags
 						CPopUpMenu acPopup(menuState.MB3clickedPt, &GetPlugIn()->FlightPlanSelect(GetPlugIn()->FlightPlanSelectASEL().GetCallsign()), m_pRadScr);
 						acPopup.populateMenu();
 						acPopup.m_origin.y += (acPopup.m_listElements.size() * 20);
@@ -1188,12 +1181,6 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 							}
 						}
 					}
-					if (menuState.MB3menuType == 1) {
-
-						// Reserved for future expansion for other RMB clicks
-
-
-					}
 				}
 
 				if (menuState.bgM3Click) {
@@ -1204,7 +1191,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					bgMenu.m_listElements.emplace_back(SPopUpElement("Free Text", "freetext", 2, 0, 130));
 					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Clear", "llc", 0, 0, 130));
 					bgMenu.m_listElements.emplace_back(SPopUpElement("Lat Long Readout", "llr", 0, 0, 130));
-					bgMenu.m_listElements.emplace_back(SPopUpElement("Display","display",1,0, 130));
+					bgMenu.m_listElements.emplace_back(SPopUpElement("Display", "display", 1, 0, 130));
 					bgMenu.m_origin.y += (bgMenu.m_listElements.size() * 20);
 					if (bgMenu.m_origin.y > radarea.bottom) { bgMenu.m_origin.y = radarea.bottom; }
 					if ((bgMenu.m_origin.x + 120) > radarea.right) { bgMenu.m_origin.x = radarea.right - 120; }
@@ -1214,7 +1201,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
 					}
 					bgMenu.highlightSelection(&dc, menuState.MB3hoverRect);
-					
+
 				}
 
 				// Draw the CSiT Tools Menu; starts at rad area top left then moves right
@@ -1230,13 +1217,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				if (menuLayer == 0 || menuLayer == 2) {
 
-						POINT modOrigin;
-						modOrigin.x = 8;
+					POINT modOrigin;
+					modOrigin.x = 8;
 
-						string numCJSAC = to_string(menuState.numJurisdictionAC);
-						TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
+					string numCJSAC = to_string(menuState.numJurisdictionAC);
+					TopMenu::MakeText(dc, { modOrigin.x, radarea.top + 14 }, 42, 15, numCJSAC.c_str());
 
-						if (!menuState.setup) {
+					if (!menuState.setup) {
 
 						menuButton but_tagHL = { { modOrigin.x + 50, radarea.top + 6 }, "Tag HL", 43, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 						but = TopMenu::DrawBut(&dc, but_tagHL);
@@ -1286,6 +1273,13 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						menuButton but_bigACID = { {225, 66}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.bigACID };
 						but = TopMenu::DrawBut(&dc, but_bigACID);
 						ButtonToScreen(this, but, "Big ACID Toggle", BUTTON_MENU_SETUP);
+
+						auto cpdlcICAO = TopMenu::MakeField(dc, { 225, 38 }, 28, 15, CPDLCMessage::hoppieICAO.c_str());
+						AddScreenObject(BUTTON_MENU_CPDLC, "cpdlcICAO", cpdlcICAO, 0, "");
+
+						menuButton CPDLC_Logon = { {257, 36}, "Logon", 38, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, menuState.CPDLCOn };
+						but = TopMenu::DrawBut(&dc, CPDLC_Logon);
+						ButtonToScreen(this, but, "CPDLC Logon", BUTTON_MENU_SETUP);
 
 						menuButton but_close_setup = { {245, 170}, "Close", 50, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 						but = TopMenu::DrawBut(&dc, but_close_setup);
@@ -1469,7 +1463,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					};
 
 					POINT targetModuleOrigin = { 980, radarea.top + 6 };
-					
+
 					if (!menuState.crda) {
 
 						menuButton but_psrpoor = { {targetModuleOrigin.x, radarea.top + 6 }, "", 30,23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
@@ -1551,11 +1545,11 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 						{-2,0}
 					};
 
-					menuButton but_lightning = { { modOrigin.x+62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					menuButton but_lightning = { { modOrigin.x + 62, radarea.top + 6 }, "", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_lightning);
 					TopMenu::DrawIconBut(&dc, but_lightning, icon_bolt, 7);
 
-					menuButton but_hist = { { modOrigin.x+62, radarea.top + 31 }, "Hist", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
+					menuButton but_hist = { { modOrigin.x + 62, radarea.top + 31 }, "Hist", 30, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_GREY4, 0 };
 					TopMenu::DrawBut(&dc, but_hist);
 
 					menutopleft.x = menutopleft.x + 200;
@@ -1564,7 +1558,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				// CRDA / TBS menu
 				if (menuState.crda) {
-				
+
 					TopMenu::DrawBackground(dc, { 975, radarea.top }, 200, 95);
 
 					TopMenu::MakeText(dc, { 990, 33 }, 45, 15, "TBS FAC :");
@@ -1644,7 +1638,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					menuButton but_close_dest_arpt = { {488, 90}, "Close", 40, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_close_dest_arpt);
 					ButtonToScreen(this, but, "Close Dest", BUTTON_MENU_CLOSE_DEST);
-					
+
 					menuButton but_clear_dest_arpt = { {398, 78}, "Clear All Dest", 80, 20, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_clear_dest_arpt);
 					ButtonToScreen(this, but, "Clear All Dest", BUTTON_MENU_CLEAR_DEST);
@@ -1666,14 +1660,14 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 					but_quickLook = { {828, 55}, "Select All", 70, 23, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, 0 };
 					but = TopMenu::DrawBut(&dc, but_quickLook);
 					ButtonToScreen(this, but, "Select All", BUTTON_MENU_QUICK_LOOK);
-					
+
 					int deltax = 0;
 					int deltay = 0;
 
 					for (auto cjs : menuState.nearbyCJS) {
 
 
-						but_quickLook = { {317+deltax, radarea.top + 12 + deltay}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
+						but_quickLook = { {317 + deltax, radarea.top + 12 + deltay}, "", 10, 10, C_MENU_GREY3, C_MENU_GREY2, C_MENU_TEXT_WHITE, cjs.second };
 						but = TopMenu::DrawBut(&dc, but_quickLook);
 						ButtonToScreen(this, but, cjs.first.c_str(), BUTTON_MENU_QL_CJS);
 
@@ -1687,164 +1681,164 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 
 				else if (menuLayer == 1) {
 
-				POINT elementOrigin = CPoint(radarea.left + 10, radarea.top + 6);
-				RECT r;
+					POINT elementOrigin = CPoint(radarea.left + 10, radarea.top + 6);
+					RECT r;
 
-				// Alt Filter Submenu
-				if (altFilterOpts) {
+					// Alt Filter Submenu
+					if (altFilterOpts) {
 
-					string altFilterLowFL = to_string(altFilterLow);
-					if (altFilterLowFL.size() < 3) {
-						altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
-					}
-					string altFilterHighFL = to_string(altFilterHigh);
-					if (altFilterHighFL.size() < 3) {
-						altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
-					}
-
-
-					r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "Cancel", FALSE);
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Cancel", r, 0, "");
-
-					elementOrigin.x += 52;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "", FALSE);
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 50, 15, "Clear");
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 50, 15, "Filter");
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Clear Filter", r, 0, "");
-
-					elementOrigin.x += 52;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "OK", FALSE);
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "OK", r, 0, "");
-					elementOrigin.x += 40;
-					elementOrigin.y += 6;
-
-					r = TopMenu::MakeText(dc, elementOrigin, 55, 15, "Top:");
-					elementOrigin.x += 45;
-					rHLim = TopMenu::MakeField(dc, elementOrigin, 25, 15, altFilterHighFL.c_str());
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
-
-					elementOrigin.x -= 45; elementOrigin.y += 20;
-
-					TopMenu::MakeText(dc, elementOrigin, 55, 15, "Base:");
-					elementOrigin.x += 45;
-					rLLim = TopMenu::MakeField(dc, elementOrigin, 25, 15, altFilterLowFL.c_str());
-					AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
-
-				}
-
-				// Halo submenu
-
-				if (menuState.haloTool) {
-
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
-					AddScreenObject(BUTTON_MENU_HALO_CLOSE, "Close", r, 0, "");
-
-					elementOrigin.x += 72;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halos");
-					AddScreenObject(BUTTON_MENU_HALO_CLEAR_ALL, "Clear All Halos", r, 0, "");
-
-					elementOrigin.x += 72;
-					TopMenu::MakeText(dc, elementOrigin, 220, 13, "Halo Radius - nm");
-
-					// Halo options loop
-
-					elementOrigin.y += 13;
-					elementOrigin.x += 20;
-
-					
-					for (int idx = 0; idx < 6; idx++) {
-						bool pressed = FALSE;
-						if (haloOptions[idx] == menuState.haloRad) {
-							pressed = TRUE;
+						string altFilterLowFL = to_string(altFilterLow);
+						if (altFilterLowFL.size() < 3) {
+							altFilterLowFL.insert(altFilterLowFL.begin(), 3 - altFilterLowFL.size(), '0');
 						}
-						RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(haloOptions[idx]).c_str(), pressed);
-						AddScreenObject(BUTTON_MENU_HALO_OPTIONS, to_string(haloOptions[idx]).c_str(), r, 0, "");
-						elementOrigin.x += 22;
-					}
-					
-
-					elementOrigin.y = radarea.top + 6;
-					// End PTL options
-
-					elementOrigin.x = 370;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", menuState.haloCursor);
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Display");
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halo Cursor");
-					AddScreenObject(BUTTON_MENU_HALO_MOUSE, "Mouse", r, 0, "");
-
-					elementOrigin.x = 460;
-					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Toggle Halo cursor ON - OFF.");
-					elementOrigin.y += 16;
-					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Select a Halo Radius.");
-					elementOrigin.y += 16;
-					TopMenu::MakeText(dc, elementOrigin, 200, 15, "Click on target to toggle Halo ON - OFF.");
-										
-				}
-
-
-				// PTL submenu
-				if (menuState.ptlTool) {
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
-					AddScreenObject(BUTTON_MENU_PTL_CLOSE, "Close", r, 0, "");
-
-					
-					elementOrigin.x += 72;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
-					TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "PTLs");
-					AddScreenObject(BUTTON_MENU_PTL_CLEAR_ALL, "Clear All PTLs", r, 0, "");
-
-					elementOrigin.x += 72;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "PTL All", menuState.ptlAll);
-					AddScreenObject(BUTTON_MENU_PTL_ALL_ON, "PTL All on", r, 0, "");
-
-					elementOrigin.x += 72;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 70, 23, "Uncorr", FALSE);
-
-					r = TopMenu::DrawButton(&dc, { elementOrigin.x, elementOrigin.y + 23 }, 70, 23, "Timeout", FALSE);
-
-					elementOrigin.x += 72;
-					TopMenu::MakeText(dc, elementOrigin, 250, 15, "PTL Length - Minutes");
-
-					// PTL options loop
-
-					elementOrigin.y += 15;
-					elementOrigin.x += 12;
-
-					for (int idx = 0; idx < 20; idx++) {
-						bool pressed = FALSE;
-						if (ptlOptions[idx] == menuState.ptlLength) {
-							pressed = TRUE;
+						string altFilterHighFL = to_string(altFilterHigh);
+						if (altFilterHighFL.size() < 3) {
+							altFilterHighFL.insert(altFilterHighFL.begin(), 3 - altFilterHighFL.size(), '0');
 						}
-						if (idx == 10) {
-							elementOrigin.y += 15;
-							elementOrigin.x -= 220;
-						}
-						RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(ptlOptions[idx]).c_str(), pressed);
-						AddScreenObject(BUTTON_MENU_PTL_OPTIONS, to_string(ptlOptions[idx]).c_str(), r, 0, "");
-						elementOrigin.x += 22;
+
+
+						r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "Cancel", FALSE);
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Cancel", r, 0, "");
+
+						elementOrigin.x += 52;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "", FALSE);
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 50, 15, "Clear");
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 50, 15, "Filter");
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "Clear Filter", r, 0, "");
+
+						elementOrigin.x += 52;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 50, 46, "OK", FALSE);
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "OK", r, 0, "");
+						elementOrigin.x += 40;
+						elementOrigin.y += 6;
+
+						r = TopMenu::MakeText(dc, elementOrigin, 55, 15, "Top:");
+						elementOrigin.x += 45;
+						rHLim = TopMenu::MakeField(dc, elementOrigin, 25, 15, altFilterHighFL.c_str());
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "HLim", rHLim, 0, "");
+
+						elementOrigin.x -= 45; elementOrigin.y += 20;
+
+						TopMenu::MakeText(dc, elementOrigin, 55, 15, "Base:");
+						elementOrigin.x += 45;
+						rLLim = TopMenu::MakeField(dc, elementOrigin, 25, 15, altFilterLowFL.c_str());
+						AddScreenObject(BUTTON_MENU_ALT_FILT_OPT, "LLim", rLLim, 0, "");
+
 					}
 
-					elementOrigin.y = radarea.top + 6;
-					// End PTL options
+					// Halo submenu
 
-					elementOrigin.x = 540;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", menuState.wbPTL);
-					AddScreenObject(BUTTON_MENU_PTL_WB, "WB PTL Toggle", r, 0, "");
-					elementOrigin.x = 577;
-					r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", menuState.ebPTL);
-					AddScreenObject(BUTTON_MENU_PTL_EB, "EB PTL Toggle", r, 0, "");
+					if (menuState.haloTool) {
 
-					elementOrigin.x = 610;
-					TopMenu::MakeText(dc, elementOrigin, 150, 15, "Click on targets to toggle");
-					elementOrigin.y += 16;
-					TopMenu::MakeText(dc, elementOrigin, 150, 15, "PTL ON-OFF.");
-					
-				}
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
+						AddScreenObject(BUTTON_MENU_HALO_CLOSE, "Close", r, 0, "");
 
-				// Rings submenu
+						elementOrigin.x += 72;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halos");
+						AddScreenObject(BUTTON_MENU_HALO_CLEAR_ALL, "Clear All Halos", r, 0, "");
+
+						elementOrigin.x += 72;
+						TopMenu::MakeText(dc, elementOrigin, 220, 13, "Halo Radius - nm");
+
+						// Halo options loop
+
+						elementOrigin.y += 13;
+						elementOrigin.x += 20;
+
+
+						for (int idx = 0; idx < 6; idx++) {
+							bool pressed = FALSE;
+							if (haloOptions[idx] == menuState.haloRad) {
+								pressed = TRUE;
+							}
+							RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(haloOptions[idx]).c_str(), pressed);
+							AddScreenObject(BUTTON_MENU_HALO_OPTIONS, to_string(haloOptions[idx]).c_str(), r, 0, "");
+							elementOrigin.x += 22;
+						}
+
+
+						elementOrigin.y = radarea.top + 6;
+						// End PTL options
+
+						elementOrigin.x = 370;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", menuState.haloCursor);
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Display");
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "Halo Cursor");
+						AddScreenObject(BUTTON_MENU_HALO_MOUSE, "Mouse", r, 0, "");
+
+						elementOrigin.x = 460;
+						TopMenu::MakeText(dc, elementOrigin, 200, 15, "Toggle Halo cursor ON - OFF.");
+						elementOrigin.y += 16;
+						TopMenu::MakeText(dc, elementOrigin, 200, 15, "Select a Halo Radius.");
+						elementOrigin.y += 16;
+						TopMenu::MakeText(dc, elementOrigin, 200, 15, "Click on target to toggle Halo ON - OFF.");
+
+					}
+
+
+					// PTL submenu
+					if (menuState.ptlTool) {
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "Close", FALSE);
+						AddScreenObject(BUTTON_MENU_PTL_CLOSE, "Close", r, 0, "");
+
+
+						elementOrigin.x += 72;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "", FALSE);
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 12 }, 70, 15, "Clear All");
+						TopMenu::MakeText(dc, { elementOrigin.x, elementOrigin.y + 22 }, 70, 15, "PTLs");
+						AddScreenObject(BUTTON_MENU_PTL_CLEAR_ALL, "Clear All PTLs", r, 0, "");
+
+						elementOrigin.x += 72;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 46, "PTL All", menuState.ptlAll);
+						AddScreenObject(BUTTON_MENU_PTL_ALL_ON, "PTL All on", r, 0, "");
+
+						elementOrigin.x += 72;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 70, 23, "Uncorr", FALSE);
+
+						r = TopMenu::DrawButton(&dc, { elementOrigin.x, elementOrigin.y + 23 }, 70, 23, "Timeout", FALSE);
+
+						elementOrigin.x += 72;
+						TopMenu::MakeText(dc, elementOrigin, 250, 15, "PTL Length - Minutes");
+
+						// PTL options loop
+
+						elementOrigin.y += 15;
+						elementOrigin.x += 12;
+
+						for (int idx = 0; idx < 20; idx++) {
+							bool pressed = FALSE;
+							if (ptlOptions[idx] == menuState.ptlLength) {
+								pressed = TRUE;
+							}
+							if (idx == 10) {
+								elementOrigin.y += 15;
+								elementOrigin.x -= 220;
+							}
+							RECT r = TopMenu::DrawButton(&dc, elementOrigin, 20, 15, to_string(ptlOptions[idx]).c_str(), pressed);
+							AddScreenObject(BUTTON_MENU_PTL_OPTIONS, to_string(ptlOptions[idx]).c_str(), r, 0, "");
+							elementOrigin.x += 22;
+						}
+
+						elementOrigin.y = radarea.top + 6;
+						// End PTL options
+
+						elementOrigin.x = 540;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "WB", menuState.wbPTL);
+						AddScreenObject(BUTTON_MENU_PTL_WB, "WB PTL Toggle", r, 0, "");
+						elementOrigin.x = 577;
+						r = TopMenu::DrawButton(&dc, elementOrigin, 35, 46, "EB", menuState.ebPTL);
+						AddScreenObject(BUTTON_MENU_PTL_EB, "EB PTL Toggle", r, 0, "");
+
+						elementOrigin.x = 610;
+						TopMenu::MakeText(dc, elementOrigin, 150, 15, "Click on targets to toggle");
+						elementOrigin.y += 16;
+						TopMenu::MakeText(dc, elementOrigin, 150, 15, "PTL ON-OFF.");
+
+					}
+
+					// Rings submenu
 
 				}
 			}
@@ -1860,7 +1854,7 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 			// refresh jurisdictional list on zoom change
 			CSiTRadar::menuState.jurisdictionalAC.clear();
 
-	
+
 			for (auto& ac : CSiTRadar::mAcData) {
 
 				if (ac.second.isJurisdictional) {
@@ -1909,7 +1903,69 @@ void CSiTRadar::OnRefresh(HDC hdc, int phase)
 		}
 	}
 
-	
+	// Draw CPDLC windows on ALL screen types
+	if (phase == REFRESH_PHASE_AFTER_LISTS) {
+
+		for (std::deque<int>::iterator it = menuState.windowOrder.begin(); it != menuState.windowOrder.end(); )
+		{
+			int toFind = *it;
+			if (find_if(menuState.radarScrWindows.begin(), menuState.radarScrWindows.end(), [toFind](const std::pair<int, CAppWindows>& pair) {
+				return pair.first == toFind;
+				}) == menuState.radarScrWindows.end()) {
+				it = menuState.windowOrder.erase(it);
+			}
+			else { it++; }
+		}
+
+		for (auto& window : menuState.radarScrWindows) {
+			int j = window.first;
+			if (find(menuState.windowOrder.begin(), menuState.windowOrder.end(), j) == menuState.windowOrder.end()) {
+				menuState.windowOrder.emplace_front(j);
+			}
+		}
+
+		try {
+			for (auto rit = menuState.windowOrder.rbegin(); rit != menuState.windowOrder.rend(); ++rit) {
+				int& i = *rit;
+				auto& window = menuState.radarScrWindows.at(i);
+				SWindowElements r = window.DrawWindow(&dc);
+				AddScreenObject(WINDOW_TITLE_BAR, to_string(window.m_windowId_).c_str(), r.titleBarRect, true, to_string(window.m_windowId_).c_str());
+
+				for (auto& elem : window.m_buttons_) {
+					string windowFuncStr = to_string(elem.windowID) + " " + elem.text;
+					AddScreenObject(window.m_winType, windowFuncStr.c_str(), elem.m_WindowButtonRect, true, windowFuncStr.c_str());
+				}
+
+				for (auto& listbox : window.m_listboxes_) {
+					for (auto& lbE : listbox.listBox_) {
+						string windowFuncStr = to_string(window.m_windowId_) + " " + to_string(lbE.m_elementID);
+						AddScreenObject(WINDOW_LIST_BOX_ELEMENT, windowFuncStr.c_str(), lbE.m_ListBoxRect, true, windowFuncStr.c_str());
+					}
+					string lbFuncStr = to_string(window.m_windowId_) + " " + to_string(listbox.m_ListBoxID);
+					AddScreenObject(WINDOW_SCROLL_ARROW_UP, lbFuncStr.c_str(), listbox.m_scrbar.uparrow, false, (lbFuncStr + " Up").c_str());
+					AddScreenObject(WINDOW_SCROLL_ARROW_DOWN, lbFuncStr.c_str(), listbox.m_scrbar.downarrow, false, (lbFuncStr + " Down").c_str());
+				}
+
+				for (auto& tf : window.m_textfields_) {
+					string windowFuncStr = to_string(window.m_windowId_) + " " + to_string(tf.m_textFieldID);
+					AddScreenObject(WINDOW_TEXT_FIELD, windowFuncStr.c_str(), tf.m_textRect, true, windowFuncStr.c_str());
+				}
+			}
+		}
+		catch (...) {}
+
+		if (menuState.MB3menu && menuState.MB3menuType == 1) {
+			CPopUpMenu CPDLCContextMenu(menuState.CPDLCMenuData.pt);
+			CPDLCContextMenu.textColor = RGB(0, 200, 0);
+			CPDLCContextMenu.populateCPDLCOptions(menuState.CPDLCMenuData.func);
+			CPDLCContextMenu.m_origin.y += CPDLCContextMenu.m_listElements.size() * 20;
+			CPDLCContextMenu.drawPopUpMenu(&dc);
+			for (auto& element : CPDLCContextMenu.m_listElements) {
+				AddScreenObject(BUTTON_MENU_RMB_MENU, element.m_function.c_str(), element.elementRect, false, element.m_text.c_str());
+			}
+			CPDLCContextMenu.highlightSelection(&dc, menuState.MB3hoverRect);
+		}
+	}
 
 	g.ReleaseHDC(hdc);
 	dc.Detach();
@@ -1924,6 +1980,17 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	menuState.bgM3Click = false;
 
+	if (ObjectType == WINDOW_TITLE_BAR) {
+
+		// move the clicked window to the top
+		auto it = find(menuState.windowOrder.begin(), menuState.windowOrder.end(), stoi(sObjectId));
+		if (it != menuState.windowOrder.end()) {
+			std::rotate(menuState.windowOrder.begin(), it, it + 1);
+		}
+
+
+	}
+
 	string s, id, func;
 	// find window ID, then function from the string
 	s = sObjectId;
@@ -1935,25 +2002,38 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 	if (ObjectType == WINDOW_SCROLL_ARROW_UP) {
 		auto window = GetAppWindow(stoi(id));
-		auto lb = window->GetListBox(atoi(func.c_str()));
+		auto& lb = window->GetListBox(atoi(func.c_str()));
+
 		lb.ScrollUp();
-		lb.listBox_.clear();
-		lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-		window->m_listboxes_.clear();
-		window->m_listboxes_.push_back(lb);
+
+		if (window->m_winType != WINDOW_CPDLC)
+		{
+
+			lb.listBox_.clear();
+			lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			//window->m_listboxes_.clear();
+			//window->m_listboxes_.push_back(lb);
+		}
 		RequestRefresh();
 	}
 
 	if (ObjectType == WINDOW_SCROLL_ARROW_DOWN) {
 		auto window = GetAppWindow(stoi(id));
-		auto lb = window->GetListBox(atoi(func.c_str()));
+		auto& lb = window->GetListBox(atoi(func.c_str()));
 
 		lb.ScrollDown();
-		lb.listBox_.clear();
-		lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
-		window->m_listboxes_.clear();
-		window->m_listboxes_.push_back(lb);
+
+		if (window->m_winType != WINDOW_CPDLC)
+		{
+			lb.listBox_.clear();
+			lb.PopulateDirectListBox(&mAcData[window->m_callsign].acFPRoute, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+		}
 		RequestRefresh();
+	}
+
+	if (ObjectType == TAG_CPDLC) {
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		StartTagFunction(GetPlugIn()->FlightPlanSelectASEL().GetCallsign(), GetPlugIn()->GetPlugInName(), TAG_CPDLC, sObjectId, GetPlugIn()->GetPlugInName(), TAG_FUNCTION_OPEN_CPDLC_WINDOW, Pt, Area);
 	}
 
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
@@ -2007,56 +2087,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						c = lelem.m_ListBoxElementText;
 						menuState.radarScrWindows.erase(stoi(id));
 						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
-
-						string pposStr;
-						float lat, lon, latmin, lonmin;
-						double longitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Longitude, &lon);
-						double latitudedecmin = modf(GetPlugIn()->RadarTargetSelect(cs.c_str()).GetPosition().GetPosition().m_Latitude, &lat);
-
-						latmin = static_cast<float>(abs(round(latitudedecmin * 60)));
-						lonmin = static_cast<float>(abs(round(longitudedecmin * 60)));
-						string lonstring = to_string(static_cast<int>(abs(lon)));
-						if (lonstring.size() < 3) {
-							lonstring.insert(lonstring.begin(), 3 - lonstring.size(), '0');
-						}
-
-						if (lon < 0) {
-							if (lat > 0) {
-								// W N
-								pposStr = to_string(static_cast<int>(lat)) + to_string(static_cast<int>(latmin)) + "N" + lonstring + to_string(static_cast<int>(lonmin)) + "W";
-							}
-							else {
-								// W S
-								pposStr = to_string(static_cast<int>(abs(lat))) + to_string(static_cast<int>(latmin)) + "S" + lonstring + to_string(static_cast<int>(lonmin)) + "W";
-							}
-
-						}
-						else {
-							if (lat > 0) {
-								//  E N
-								pposStr = to_string(static_cast<int>(lat)) + to_string(static_cast<int>(latmin)) + "N" + lonstring + to_string(static_cast<int>(lonmin)) + "E";
-							}
-							else {
-								// E S
-								pposStr = to_string(static_cast<int>(abs(lat))) + to_string(static_cast<int>(latmin)) + "S" + lonstring + to_string(static_cast<int>(lonmin)) + "E";
-							}
-						}
-						pposStr += " ";
-						string rtestr = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().GetRoute();
-						auto itr = rtestr.find(c.c_str());
-						if (itr != rtestr.npos) {
-							rtestr = rtestr.substr(itr);
-							rtestr.insert(0, pposStr);
-						}
-						else {
-							rtestr = pposStr;
-							for (size_t i = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetExtractedRoute().GetPointsAssignedIndex(); i < mAcData[cs].acFPRoute.fix_names.size(); i++) {
-								rtestr += mAcData[cs].acFPRoute.fix_names.at(i) + " ";
-							}
-						}
-
-						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().SetRoute(rtestr.c_str());
-						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetFlightPlanData().AmendFlightPlan();
+						GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetScratchPadString(c.c_str());
 
 						mAcData[cs].directToLineOn = false;
 						mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
@@ -2073,7 +2104,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 				}
 			}
 
-			GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
+			//GetPlugIn()->FlightPlanSelect(cs.c_str()).GetControllerAssignedData().SetDirectToPointName(c.c_str());
 			menuState.radarScrWindows.erase(stoi(id));
 			mAcData[cs].directToLineOn = false;
 			mAcData[cs].directToPendingPosition.m_Latitude = 0.0;
@@ -2084,9 +2115,14 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 
 		if (!strcmp(func.c_str(), "Cancel")) {
 			mAcData[window->m_callsign].directToLineOn = false;
-			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0; 
+			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
 			mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
 			mAcData[window->m_callsign].directToPendingFixName = "";
+
+			auto it = findCPDLCEditorWindow(window->m_callsign);
+			if (it != menuState.radarScrWindows.end()) {
+				it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
+			}
 
 			menuState.radarScrWindows.erase(stoi(id));
 		}
@@ -2136,7 +2172,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 
 		if (!strcmp(func.c_str(), "Submit")) {
-			string c; 
+			string c;
 			// if the textbox is selected, else go with the choice in menu
 			if (menuState.focusedItem.m_focus_on) {
 				c = menuState.focusedItem.m_focused_tf->m_text;
@@ -2162,15 +2198,281 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 		}
 	}
 
-	if (ObjectType == WINDOW_POINT_OUT) {
+	if (ObjectType == WINDOW_CPDLC_EDITOR) {
+
 		auto window = GetAppWindow(stoi(id));
-		if (!strcmp(func.c_str(), "Cancel")) {
+
+		if (func == "Send") {
+
+			if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent != "" && window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent.substr(0, 4) != "ERR:") {
+
+				try {
+
+					std::future<void> asyncOperation = std::async(std::launch::async, [&] {
+						return window->m_textfields_.at(1).m_cpdlcmessage.SendCPDLCMessage();
+						});
+					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					window->m_textfields_.at(1).m_cpdlcmessage.timeParsed = currentTime;
+					mAcData[window->m_callsign].CPDLCMessages.push_back(window->m_textfields_.at(1).m_cpdlcmessage);
+
+					// certain automated messages:
+					if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "LOGON ACCEPTED") {
+
+						// change the state to 
+						mAcData[window->m_callsign].cpdlcState = 1;
+
+						// make a copy
+						CPDLCMessage automaticResponse = window->m_textfields_.at(1).m_cpdlcmessage;
+						automaticResponse.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
+						automaticResponse.messageType = "cpdlc";
+						automaticResponse.responseRequired = "R";
+						automaticResponse.rawMessageContent = "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH ";
+						// PUT THE DIFFERENT FIRS:
+
+						if (CPDLCMessage::hoppieICAO == "CDQX") { automaticResponse.rawMessageContent += "GANDER CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZQM") { automaticResponse.rawMessageContent += "MONCTON CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZUL") { automaticResponse.rawMessageContent += "MONTREAL CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZYZ") { automaticResponse.rawMessageContent += "TORONTO CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZWG") { automaticResponse.rawMessageContent += "WINNIPEG CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZEG") { automaticResponse.rawMessageContent += "EDMONTON CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZVR") { automaticResponse.rawMessageContent += "VANCOUVER CENTER"; }
+
+						std::future<void> asyncsend = std::async(std::launch::async, [&] {
+							asyncOperation.get(); // make sure the first LOGON accepted message is sent first" -- FSLABS parsing
+							return automaticResponse.SendCPDLCMessage();
+							});
+
+						mAcData[window->m_callsign].CPDLCMessages.push_back(automaticResponse);
+
+					}
+					else if (window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent == "END SERVICE") {
+
+						mAcData[window->m_callsign].cpdlcState = 0;
+
+					}
+
+					// refresh the listbox
+					for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+						if (win.second.m_callsign == window->m_callsign
+							&& win.second.m_winType == WINDOW_CPDLC)
+						{
+							for (auto& lbtoberefreshed : win.second.m_listboxes_) {
+
+								lbtoberefreshed.PopulateCPDLCListBox(mAcData[window->m_callsign].CPDLCMessages);
+							}
+						}
+					}
+
+				}
+				catch (const std::out_of_range& oor) {
+					// Handle the out_of_range exception
+					std::cerr << "Out of range exception: " << oor.what() << std::endl;
+				}
+
+				menuState.radarScrWindows.erase(stoi(id));
+			}
+			else {
+				window->m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: INVALID UPLINK MESSAGE";
+			}
+		}
+
+	}
+
+	if (ObjectType == WINDOW_CPDLC) {
+
+		auto window = GetAppWindow(stoi(id));
+
+		if (func == "Close") {
+
+			int i = -1;
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (win.second.m_callsign == window->m_callsign
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					i = win.first;
+				}
+			}
+			if (i >= 0) {
+				// close the dialog
+				menuState.radarScrWindows.erase(i);
+			}
+			// then close the main menu
 			menuState.radarScrWindows.erase(stoi(id));
 		}
 
-		if (!strcmp(func.c_str(), "Submit")) {
+		if (func == "Connect" || func == "End Service" || func == "PDC") {
+
+			bool exists = false;
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (win.second.m_callsign == window->m_callsign
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					exists = true;
+				}
+			}
+			// If not draw it
+			if (!exists) {
+
+				try {
+					CAppWindows cpdlc({ Pt.x, Pt.y + 300 }, WINDOW_CPDLC_EDITOR, GetPlugIn()->FlightPlanSelectASEL(), CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(window->m_callsign).CPDLCMessages);
+					cpdlc.m_callsign = window->m_callsign;
+					CSiTRadar::menuState.radarScrWindows[cpdlc.m_windowId_] = cpdlc;
+				}
+				catch (std::out_of_range& err) {}
+
+			}
+			CPDLCMessage pdcuplink;
+			auto it = findCPDLCEditorWindow(window->m_callsign);
+			if (func == "End Service") {
+				pdcuplink.sender = CPDLCMessage::hoppieICAO;
+				pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
+				pdcuplink.isdlMessage = false;
+				pdcuplink.receipient = window->m_callsign;
+				pdcuplink.messageType = "cpdlc";
+				pdcuplink.rawMessageContent = "END SERVICE";
+				pdcuplink.responseRequired = "NE";
+				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+			}
+			else if (func == "Connect") {
+
+				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+				pdcuplink.messageType = "cpdlc";
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent == "REQUEST LOGON") {
+					pdcuplink.rawMessageContent = "LOGON ACCEPTED";
+					pdcuplink.responseRequired = "NE";
+				}
+				else {
+					pdcuplink.rawMessageContent = "ERR: Select LOGON REQUEST Message in CPDLC Window First";
+
+
+				}
+				pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
+				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+			}
+			if (func == "PDC") {
+
+				// PDC helper even if no CPDLC
+				pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+				string atisLetter;
+				if (wxRadar::arptAtisLetter.find(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetFlightPlanData().GetOrigin()) != wxRadar::arptAtisLetter.end()) {
+					atisLetter = wxRadar::arptAtisLetter.at(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetFlightPlanData().GetOrigin());
+				}
+				else {
+					atisLetter = "";
+				}
+
+				string FPUI = pdcuplink.MakePDCMessage(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()),
+					GetPlugIn()->ControllerMyself(), atisLetter);
+
+				GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()).GetControllerAssignedData().SetScratchPadString(FPUI.c_str());
+
+
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "") {
+					// Do the thing
+					if (it->second.m_textfields_.size() > 0)
+					{
+
+						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+					}
+				}
+				else {
+
+					SetTextToClipBoard(pdcuplink.rawMessageContent);
+					pdcuplink.rawMessageContent.insert(0, "ERR: NO DOWNLINK, PDC COPIED TO CLIPBOARD:");
+					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+				}
+			}
+		}
+
+#pragma region cpdlc_window_functions_paired
+
+		if (func == "Flight Plan") {
+
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			StartTagFunction(GetPlugIn()->FlightPlanSelectASEL().GetCallsign(), NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, Pt, Area);
+
+		}
+
+		if (func == "Close Dialog") {
+			int i = -1;
+
+			// Close the dialog
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					i = win.first;
+				}
+			}
+
+			// Then close the main message viewer
+			if (i >= 0) {
+				menuState.radarScrWindows.erase(i);
+			}
+		}
+
+		if (func == "Radio" || func == "Altitude" || func == "Speed" || func == "Route") {
+
+			menuState.MB3hoverRect = { 0,0,0,0 };
+			menuState.MB3menu = 1;
+			menuState.MB3menuType = 1;
+			menuState.CPDLCMenuData.pt = { Area.left, Area.bottom };
+			menuState.CPDLCMenuData.func = func;
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+
+		}
+
+		auto it = findCPDLCEditorWindow(window->m_callsign);
+		if (it != CSiTRadar::menuState.radarScrWindows.end()) {
+
+			if (func == "Unable" || func == "Standby" || func == "Roger" || func == "Negative" || func == "Affirm"
+				|| func == "Deferred") {
+
+				if (it->second.m_textfields_.at(0).m_cpdlcmessage.rawMessageContent != "" &&
+					it->second.m_textfields_.at(0).m_cpdlcmessage.responseRequired == "Y") {
+					// Do the thing
+					if (it->second.m_textfields_.size() > 0)
+					{
+
+						CPDLCMessage pdcuplink;
+						pdcuplink.GenerateReply(it->second.m_textfields_.at(0).m_cpdlcmessage);
+						pdcuplink.messageType = "cpdlc";
+						pdcuplink.responseRequired = "NE";
+						if (func == "Unable") { pdcuplink.rawMessageContent = "UNABLE"; }
+						if (func == "Standby") { pdcuplink.rawMessageContent = "STANDBY"; }
+						if (func == "Roger") { pdcuplink.rawMessageContent = "ROGER"; }
+						if (func == "Negative") { pdcuplink.rawMessageContent = "NEGATIVE"; }
+						if (func == "Affirm") { pdcuplink.rawMessageContent = "AFFIRMATIVE"; }
+						if (func == "Deferred") { pdcuplink.rawMessageContent = "REQUEST DEFERRED"; }
+						pdcuplink.messageID = count_if(mAcData[window->m_callsign].CPDLCMessages.begin(), mAcData[window->m_callsign].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1;
+						it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+					}
+				}
+				else {
+
+					CPDLCMessage pdcuplink;
+					pdcuplink.rawMessageContent = "ERR: SELECT A DOWNLINK MESSAGE FIRST";
+					it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+
+				}
+			}
+		}
+	}
+
+#pragma endregion
+
+	if (ObjectType == WINDOW_POINT_OUT) {
+		auto window = GetAppWindow(stoi(id));
+		if (func == "Cancel") {
+			menuState.radarScrWindows.erase(stoi(id));
+		}
+
+		if (func == "Submit") {
 			string poMsg = "PO " + window->m_textfields_.back().m_text;
-			SendPointOut (window->m_textfields_.front().m_text.c_str(), poMsg.c_str(), &GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
+			SendPointOut(window->m_textfields_.front().m_text.c_str(), poMsg.c_str(), &GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()));
 			mAcData[window->m_callsign].pointOutFromMe = true;
 			mAcData[window->m_callsign].POTarget = window->m_textfields_.front().m_text;
 			mAcData[window->m_callsign].POString = window->m_textfields_.back().m_text;
@@ -2223,19 +2525,90 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 			le = s.substr(pos + 1);
 		}
 		auto window = GetAppWindow(stoi(win));
-		
-		for (auto &lb : window->m_listboxes_) {
-			for (auto &lelem : lb.listBox_) {
+
+		for (auto& lb : window->m_listboxes_) {
+			for (auto& lelem : lb.listBox_) {
 				if (lelem.m_elementID == stoi(le)) {
-					lelem.m_selected_ = true;
-					le_text = lelem.m_ListBoxElementText;
-					lb.selectItem = le_text;
+
+					// open the cpdlceditor only if parent window is WINDOW_CPDLC
+					if (window->m_winType == WINDOW_CPDLC) {
+						bool exists = false;
+						for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+							if (win.second.m_callsign == window->m_callsign
+								&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+							{
+								exists = true;
+							}
+						}
+						// If not draw it
+						if (!exists) {
+							CAppWindows cpdlceditor({ Pt.x, Pt.y + 450 }, WINDOW_CPDLC_EDITOR, GetPlugIn()->FlightPlanSelect(window->m_callsign.c_str()), CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(window->m_callsign).CPDLCMessages);
+							cpdlceditor.m_callsign = window->m_callsign;
+							CSiTRadar::menuState.radarScrWindows[cpdlceditor.m_windowId_] = cpdlceditor;
+						}
+					}
+
+
+					// allow unselect
+					if (lelem.m_selected_) {
+						lelem.m_selected_ = false;
+						le_text = "";
+						lb.selectItem = "";
+
+						if (window->m_winType == WINDOW_CPDLC) {
+							for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+								if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+									&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+								{
+									if (win.second.m_textfields_.size() > 0)
+									{
+										CPDLCMessage blank;
+										win.second.m_textfields_.at(0).m_cpdlcmessage = blank;
+
+									}
+								}
+							}
+						}
+
+					}
+					else {
+
+						lelem.m_selected_ = true;
+						le_text = lelem.m_ListBoxElementText;
+						lb.selectItem = le_text;
+
+						// Push CPDLC Message to its child window 
+						if (window->m_winType == WINDOW_CPDLC) {
+
+							for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+								if (!strcmp(win.second.m_callsign.c_str(), window->m_callsign.c_str())
+									&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+								{
+									if (win.second.m_textfields_.size() > 0)
+									{
+										if (lelem.m_cpdlc_message.isdlMessage) {
+											win.second.m_textfields_.at(0).m_cpdlcmessage = lelem.m_cpdlc_message;
+										}
+										else {
+											CPDLCMessage blank;
+											win.second.m_textfields_.at(0).m_cpdlcmessage = blank;
+										}
+
+									}
+								}
+							}
+
+						}
+					}
+
 				}
 				else {
 					lelem.m_selected_ = false;
 				}
 			}
 		}
+
+
 
 		if (window->m_winType == WINDOW_DIRECT_TO) {
 			mAcData[window->m_callsign].directToLineOn = true;
@@ -2245,16 +2618,25 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 					int index = std::distance(mAcData[window->m_callsign].acFPRoute.fix_names.begin(), it);
 					mAcData[window->m_callsign].directToPendingPosition = mAcData[window->m_callsign].acFPRoute.route_fix_positions.at(index);
 					mAcData[window->m_callsign].directToPendingFixName = le_text;
+
+					auto it = findCPDLCEditorWindow(window->m_callsign);
+					if (it != menuState.radarScrWindows.end()) {
+						it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "PROCEED DIRECT @" + le_text + "@";
+					}
 				}
 				else {
 					mAcData[window->m_callsign].directToPendingPosition.m_Latitude = 0.0;
 					mAcData[window->m_callsign].directToPendingPosition.m_Longitude = 0.0;
 					mAcData[window->m_callsign].directToPendingFixName = "";
 					mAcData[window->m_callsign].directToLineOn = false;
+
+					auto it = findCPDLCEditorWindow(window->m_callsign);
+					if (it != menuState.radarScrWindows.end()) {
+						it->second.m_textfields_.at(1).m_cpdlcmessage.rawMessageContent = "ERR: PROCEED DIRECT (NO FIX SELECTED)";
+					}
 				}
 			}
 		}
-
 	}
 
 	if (ObjectType == WINDOW_TEXT_FIELD) {
@@ -2303,7 +2685,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	POINT Pt,
 	RECT Area,
 	int Button)
-{	
+{
 
 	if (menuState.mouseMMB) { return; }
 
@@ -2346,7 +2728,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "Decorrelate")) {
 			menuState.MB3menu = false;
 			GetPlugIn()->FlightPlanSelectASEL().Uncorrelate();
-		}		
+		}
 
 		if (!strcmp(sObjectId, "DirectTo")) {
 			menuState.MB3menu = false;
@@ -2395,7 +2777,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			}
 			// If not draw it
 			if (!exists) {
-				CAppWindows ctrl({ Pt.x, Pt.y}, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea(), &menuState.ctrlRemarkDefaults);
+				CAppWindows ctrl({ Pt.x, Pt.y }, WINDOW_CTRL_REMARKS, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea(), &menuState.ctrlRemarkDefaults);
 				menuState.radarScrWindows[ctrl.m_windowId_] = ctrl;
 			}
 		}
@@ -2409,6 +2791,247 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			freetxt.m_textfields_.front().m_focused = true; // bring focus to text field for keyboard, only one text field in free text dialogue
 
 			menuState.radarScrWindows[freetxt.m_windowId_] = freetxt;
+
+		}
+
+		string ObjectIdStr = sObjectId;
+
+		if (ObjectIdStr.substr(0, 5) == "CPDLC") {
+			menuState.MB3menu = false;
+			// get the callsign 
+			string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(cs.c_str());
+			// CPDLC Submenu things
+			// Make a window if it doesn't exist
+			bool exists = false;
+			for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+				if (win.second.m_callsign == cs
+					&& win.second.m_winType == WINDOW_CPDLC_EDITOR)
+				{
+					exists = true;
+				}
+			}
+			// If not draw it
+			if (!exists) {
+
+				try {
+					CAppWindows cpdlc({ Pt.x, Pt.y + 300 }, WINDOW_CPDLC_EDITOR, GetPlugIn()->FlightPlanSelectASEL(), CSiTRadar::m_pRadScr->GetRadarArea(), CSiTRadar::mAcData.at(cs).CPDLCMessages);
+					cpdlc.m_callsign = cs;
+					CSiTRadar::menuState.radarScrWindows[cpdlc.m_windowId_] = cpdlc;
+				}
+				catch (std::out_of_range& err) {}
+
+			}
+
+			CPDLCMessage pdcuplink;
+			pdcuplink.messageType = "cpdlc";
+			pdcuplink.sender = CPDLCMessage::hoppieICAO;
+			pdcuplink.receipient = cs;
+			pdcuplink.isdlMessage = false;
+			pdcuplink.responseRequired = "WU";
+			pdcuplink.messageID = count_if(mAcData[cs].CPDLCMessages.begin(), mAcData[cs].CPDLCMessages.end(), [](const CPDLCMessage& m) { return !m.isdlMessage; }) + 1; // start at 1
+
+#pragma region cpdlcsecondarymenu
+			// DIFFERENT MESSAGES GO HERE
+
+			if (ObjectIdStr == "CPDLCDirect") {
+
+				// maintain route in plugin ac-model
+				int numPts = GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointsNumber();
+				string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+				ACRoute rte;
+				rte.fix_names.clear();
+				rte.route_fix_positions.clear();
+				mAcData[cs].acFPRoute = rte;
+				for (int i = 0; i < numPts; i++) {
+					rte.fix_names.push_back(GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointName(i));
+					rte.route_fix_positions.push_back(GetPlugIn()->FlightPlanSelectASEL().GetExtractedRoute().GetPointPosition(i));
+				}
+				mAcData[cs].acFPRoute = rte;
+
+				bool exists = false;
+				for (auto& win : menuState.radarScrWindows) {
+					if (!strcmp(win.second.m_callsign.c_str(), GetPlugIn()->FlightPlanSelectASEL().GetCallsign())
+						&& win.second.m_winType == WINDOW_DIRECT_TO)
+					{
+						win.second.m_origin = { Pt.x + 310, Pt.y + 200 };
+						exists = true;
+					}
+				}
+				// If not draw it
+				if (!exists) {
+					CAppWindows dctto({ Pt.x + 310, Pt.y + 200 }, WINDOW_DIRECT_TO, GetPlugIn()->FlightPlanSelectASEL(), GetRadarArea(), &mAcData[GetPlugIn()->FlightPlanSelectASEL().GetCallsign()].acFPRoute);
+					menuState.radarScrWindows[dctto.m_windowId_] = dctto;
+				}
+
+				pdcuplink.rawMessageContent = "PROCEED DIRECT @" + mAcData[cs].directToPendingFixName + "@";
+
+			}
+
+
+			if (ObjectIdStr == "CPDLCContact" || ObjectIdStr == "CPDLCMonitor") {
+				if (ObjectIdStr == "CPDLCContact") {
+					pdcuplink.rawMessageContent = "CONTACT @";
+				}
+				else if (ObjectIdStr == "CPDLCMonitor") {
+					pdcuplink.rawMessageContent = "MONITOR @";
+				}
+
+				// If I'm not tracking, the station will be the tracking controller -> i.e. after a radar handoff event
+				if (!GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerIsMe()) {
+					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign();
+					pdcuplink.rawMessageContent += "@ @" + CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign()).GetPrimaryFrequency()) + "@";
+				}
+				else {
+
+					pdcuplink.rawMessageContent += GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController();
+					string s = fp.GetCoordinatedNextController();
+					if (s == "UNICOM" || s == "") {
+						pdcuplink.rawMessageContent += "@ @122.8@";
+					}
+					else {
+						pdcuplink.rawMessageContent += "@ @" + CPDLCMessage::FreqTruncate(GetPlugIn()->ControllerSelect(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController()).GetPrimaryFrequency()) + "@";
+					}
+				}
+			}
+
+			else if (ObjectIdStr == "CPDLCNDA") {
+
+				string nextCTR;
+				pdcuplink.rawMessageContent = "NEXT DATA AUTHORITY @";
+				// Logit for determining NDA:
+				if (!GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerIsMe()) {
+
+					string strNDA;
+					nextCTR = GetPlugIn()->FlightPlanSelect(cs.c_str()).GetTrackingControllerCallsign();
+
+					if (nextCTR.substr(0, 4) == "CZQX") { strNDA = "CDQX"; } // domestic, intentional "CDQX"
+					if (nextCTR.substr(0, 4) == "CZQM") { strNDA = "CZQM"; }
+					if (nextCTR.substr(0, 3) == "MTL") { strNDA = "CZUL"; }
+					if (nextCTR.substr(0, 3) == "TOR") { strNDA = "CZYZ"; }
+					if (nextCTR.substr(0, 3) == "WPG") { strNDA = "CZWG"; }
+					if (nextCTR.substr(0, 4) == "CZEG") { strNDA = "CZEG"; }
+					if (nextCTR.substr(0, 4) == "CZVR") { strNDA = "CZVR"; }
+
+					pdcuplink.rawMessageContent += strNDA + "@";
+				}
+				else if (strcmp(GetPlugIn()->FlightPlanSelect(cs.c_str()).GetCoordinatedNextController(), "")) {
+
+					string strNDA = fp.GetCoordinatedNextController();
+
+					if (strNDA == "UNICOM") {
+						pdcuplink.rawMessageContent += "ERR: NDA NOT RECOGNIZED";
+					}
+					else {
+
+						if (nextCTR.substr(0, 4) == "CZQX") { strNDA = "CDQX"; } // domestic, intentional "CDQX"
+						else if (nextCTR.substr(0, 4) == "CZQM") { strNDA = "CZQM@"; }
+						else if (nextCTR.substr(0, 3) == "MTL") { strNDA = "CZUL@"; }
+						else if (nextCTR.substr(0, 3) == "TOR") { strNDA = "CZYZ@"; }
+						else if (nextCTR.substr(0, 3) == "WPG") { strNDA = "CZWG@"; }
+						else if (nextCTR.substr(0, 4) == "CZEG") { strNDA = "CZEG@"; }
+						else if (nextCTR.substr(0, 4) == "CZVR") { strNDA = "CZVR@"; }
+						else { pdcuplink.rawMessageContent += "ERR: NDA NOT RECOGNIZED"; }
+
+					}
+				}
+			}
+
+			else if (ObjectIdStr == "CPDLCConfALT") {
+				pdcuplink.responseRequired = "NE";
+				pdcuplink.rawMessageContent = "CONFIRM ASSIGNED ALTITUDE";
+			}
+
+			else if (ObjectIdStr == "CPDLCClimb" || ObjectIdStr == "CPDLCDescend") {
+
+				pdcuplink.opensMnemonic = true;
+				pdcuplink.responseRequired = "WU";
+
+				if (ObjectIdStr == "CPDLCClimb") {
+					pdcuplink.rawMessageContent = "CLIMB TO AND MAINTAIN @";
+				}
+				else if (ObjectIdStr == "CPDLCDescend") {
+					pdcuplink.rawMessageContent = "DESCEND TO AND MAINTAIN @";
+				}
+				string alt;
+				if (fp.GetControllerAssignedData().GetClearedAltitude() != 0) {
+					if (fp.GetControllerAssignedData().GetClearedAltitude() < 18000) {
+						alt = to_string(fp.GetControllerAssignedData().GetClearedAltitude());
+					}
+					else {
+						alt = to_string(fp.GetClearedAltitude() / 100);
+						pdcuplink.rawMessageContent += "FL" + alt + "@";
+
+					}
+				}
+				else {
+					if (fp.GetFinalAltitude() < 18000) {
+						alt = to_string(fp.GetFinalAltitude());
+					}
+					else {
+						alt = to_string(fp.GetFinalAltitude() / 100);
+						pdcuplink.rawMessageContent += "FL" + alt + "@";
+					}
+				}
+			}
+
+			else if (ObjectIdStr.substr(0, 10) == "CPDLCSpeed") {
+				if (fp.GetControllerAssignedData().GetAssignedSpeed()) {
+					string setSpeed = to_string(fp.GetControllerAssignedData().GetAssignedSpeed());
+					pdcuplink.responseRequired = "WU";
+					pdcuplink.rawMessageContent = "MAINTAIN @";
+					pdcuplink.rawMessageContent += setSpeed + "KTS@";
+
+					if (ObjectIdStr == "CPDLCSpeed+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += " OR LESS"; }
+
+				}
+				else {
+					string setSpeed = to_string(fp.GetFlightPlanData().GetTrueAirspeed());
+					pdcuplink.rawMessageContent = "MAINTAIN @";
+					pdcuplink.rawMessageContent += setSpeed + "KTS@";
+
+					if (ObjectIdStr == "CPDLCSpeed+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCSpeed-") { pdcuplink.rawMessageContent += " OR LESS"; }
+				}
+			}
+			else if (ObjectIdStr.substr(0, 9) == "CPDLCMach") {
+				if (fp.GetControllerAssignedData().GetAssignedMach()) {
+					string setMach = to_string(fp.GetControllerAssignedData().GetAssignedMach());
+					pdcuplink.responseRequired = "WU";
+					pdcuplink.rawMessageContent = "MAINTAIN @M0.";
+					pdcuplink.rawMessageContent += setMach + "@";
+
+					if (ObjectIdStr == "CPDLCMach+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCMach-") { pdcuplink.rawMessageContent += " OR LESS"; }
+
+				}
+				else {
+					string setMach = to_string(fp.GetFlightPlanData().PerformanceGetMach(fp.GetFlightPlanData().GetFinalAltitude(), 0));
+					pdcuplink.responseRequired = "WU";
+					pdcuplink.rawMessageContent = "MAINTAIN @M0.";
+					pdcuplink.rawMessageContent += setMach + "@";
+
+					if (ObjectIdStr == "CPDLCMach+") { pdcuplink.rawMessageContent += " OR GREATER"; }
+					if (ObjectIdStr == "CPDLCMach-") { pdcuplink.rawMessageContent += " OR LESS"; }
+				}
+
+			}
+			else if (ObjectIdStr == "CPDLCServTerm") {
+				pdcuplink.responseRequired = "R";
+				pdcuplink.rawMessageContent = "SURVEILLANCE SERVICES TERMINATED";
+			}
+
+
+
+
+#pragma endregion
+			// END OF MESSAGE EDITING BY CONTEXT MENU
+
+			auto it = findCPDLCEditorWindow(cs);
+			if (it != CSiTRadar::menuState.radarScrWindows.end()) {
+				it->second.m_textfields_.at(1).m_cpdlcmessage = pdcuplink;
+			}
 
 		}
 
@@ -2505,7 +3128,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	}
 
 	if (ObjectType == AIRCRAFT_SYMBOL) {
-		
+
 		CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
 		string callsign = rt.GetCallsign();
 
@@ -2518,11 +3141,11 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 				else if (CSiTRadar::mAcData[sObjectId].tagType == 1 &&
 					!GetPlugIn()->FlightPlanSelect(sObjectId).GetTrackingControllerIsMe() &&
 					!menuState.filterBypassAll &&
-					!CSiTRadar::mAcData[sObjectId].isQuickLooked ) {
+					!CSiTRadar::mAcData[sObjectId].isQuickLooked) {
 					CSiTRadar::mAcData[sObjectId].tagType = 0;
 				} // can't make bravo tag if you are tracking or if quick look is on
 			}
-			
+
 			if (menuState.haloTool == TRUE) {
 
 				if (hashalo.find(callsign) != hashalo.end()) {
@@ -2561,6 +3184,19 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		if (!strcmp(sObjectId, "Close Setup")) {
 			menuState.setup = false;
 		}
+		if (!strcmp(sObjectId, "CPDLC Logon")) {
+			menuState.CPDLCOn = !menuState.CPDLCOn;
+
+			if (menuState.lastCPDLCPoll == 0 || (clock() - menuState.lastCPDLCPoll) / CLOCKS_PER_SEC > 60) {
+
+				CSiTRadar::asyncCPDLCFetch();
+				menuState.lastCPDLCPoll = clock();
+
+				CPDLCMessage::firstPeek = false;
+
+			}
+		}
+
 	}
 
 	if (ObjectType == BUTTON_MENU_CRDA) {
@@ -2597,6 +3233,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		menuState.destArptOn[ObjectType - BUTTON_MENU_DEST_1] = !menuState.destArptOn[ObjectType - BUTTON_MENU_DEST_1];
 	}
 
+	if (ObjectType == BUTTON_MENU_CPDLC) {
+		if (!strcmp(sObjectId, "cpdlcICAO")) {
+			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_CPDLC_ICAO, CPDLCMessage::hoppieICAO.c_str());
+		}
+	}
+
 	if (ObjectType == BUTTON_MENU_DEST_ICAO) {
 		if (!strcmp(sObjectId, "dest1")) {
 			GetPlugIn()->OpenPopupEdit(Area, FUNCTION_DEST_ICAO_1, menuState.destICAO[0].c_str());
@@ -2620,7 +3262,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			it = false;
 		}
 	}
-	
+
 	if (ObjectType == BUTTON_MENU_HALO_TOOL) {
 		menuState.haloTool = true;
 		menuLayer = 1;
@@ -2676,7 +3318,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 		menuLayer = 0;
 	}
 
-	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) { 
+	if (ObjectType == BUTTON_MENU_PTL_CLEAR_ALL) {
 		hasPTL.clear();
 		menuState.ptlAll = false;
 	}
@@ -2718,10 +3360,10 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == BUTTON_MENU_EXT_ALT) {
 		menuState.extAltToggle = !menuState.extAltToggle;
 	}
-	
+
 
 	if (ObjectType == BUTTON_MENU_ALT_FILT_OPT) {
-		if (!strcmp(sObjectId, "Alt Filt Opts")) { 
+		if (!strcmp(sObjectId, "Alt Filt Opts")) {
 			altFilterOpts = !altFilterOpts;
 			menuLayer = 1;
 		}
@@ -2765,20 +3407,20 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			menuState.destAirport = false;
 			menuLayer = 2;
 		}
-		
+
 		if (!strcmp(sObjectId, "Close")) {
 			menuState.quickLook = false;
 			menuLayer = 0;
 		}
 
 		if (!strcmp(sObjectId, "Clear All")) {
-			for (auto &cjs : menuState.nearbyCJS) {
+			for (auto& cjs : menuState.nearbyCJS) {
 				cjs.second = false;
 			}
 		}
 
 		if (!strcmp(sObjectId, "Select All")) {
-			for (auto &cjs : menuState.nearbyCJS) {
+			for (auto& cjs : menuState.nearbyCJS) {
 				cjs.second = true;
 			}
 		}
@@ -2794,12 +3436,12 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_WX_HIGH) {
 		if (menuState.wxAll) { menuState.wxAll = false; }
-		
+
 		menuState.wxHigh = !menuState.wxHigh;
 		RefreshMapContent();
-		
+
 		if (menuState.lastWxRefresh == 0 || (clock() - menuState.lastWxRefresh) / CLOCKS_PER_SEC > 600) {
-			
+
 			std::future<void> wxRend = std::async(std::launch::async, wxRadar::parseRadarPNG, this);
 			menuState.lastWxRefresh = clock();
 		}
@@ -2807,7 +3449,7 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 
 	if (ObjectType == BUTTON_MENU_WX_ALL) {
 		if (menuState.wxHigh) { menuState.wxHigh = false; }
-		
+
 		menuState.wxAll = !menuState.wxAll;
 		RefreshMapContent();
 
@@ -2816,10 +3458,16 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 			menuState.lastWxRefresh = clock();
 		}
 	}
-	
+
+	if (ObjectType == TAG_CPDLC_MNEMONIC) {
+		if (Button == BUTTON_RIGHT) {
+			CSiTRadar::mAcData[sObjectId].cpdlcMnemonic = false;
+		}
+	}
+
 	if (ObjectType == TAG_ITEM_TYPE_CALLSIGN || ObjectType == TAG_ITEM_FP_CS) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
-		
+
 		if (Button == BUTTON_LEFT) {
 			if (mAcData[sObjectId].isHandoffToMe == TRUE) {
 				GetPlugIn()->FlightPlanSelect(sObjectId).AcceptHandoff();
@@ -2839,13 +3487,13 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == TAG_ITEM_TYPE_SQUAWK) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->RadarTargetSelect(sObjectId));
 		if (Button == BUTTON_RIGHT) {
-			
+
 			StartTagFunction(GetPlugIn()->RadarTargetSelect(sObjectId).GetSystemID(), NULL, TAG_ITEM_TYPE_SQUAWK, GetPlugIn()->RadarTargetSelect(sObjectId).GetSystemID(), NULL, TAG_ITEM_FUNCTION_CORRELATE_POPUP, Pt, Area);
 		}
 	}
 
 	if (ObjectType == TAG_ITEM_TYPE_ALTITUDE) {
-		if (Button == BUTTON_RIGHT) {		
+		if (Button == BUTTON_RIGHT) {
 			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_ALTITUDE, sObjectId, NULL, TAG_ITEM_FUNCTION_TEMP_ALTITUDE_POPUP, Pt, Area);
 		}
@@ -2872,14 +3520,14 @@ void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
 	if (ObjectType == TAG_ITEM_TYPE_PLANE_TYPE) {
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 		if (Button == BUTTON_LEFT) {
-			
+
 		}
 		if (Button == BUTTON_RIGHT) {
 
 			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId)); // make sure aircraft is ASEL
-			
+
 			StartTagFunction(sObjectId, NULL, TAG_ITEM_TYPE_PLANE_TYPE, sObjectId, NULL, TAG_ITEM_FUNCTION_OPEN_FP_DIALOG, Pt, Area);
-			
+
 		}
 	}
 
@@ -2946,7 +3594,7 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 			menuState.MB3SecondaryMenuOn = false;
 			menuState.MB3SecondaryMenuType = sObjectId;
 
-			if (!strcmp(sObjectId, "ManHandoff")  ||
+			if (!strcmp(sObjectId, "ManHandoff") ||
 				!strcmp(sObjectId, "ModSFI") ||
 				!strcmp(sObjectId, "SetComm") ||
 				!strcmp(sObjectId, "PointOut")) {
@@ -2969,7 +3617,7 @@ void CSiTRadar::OnOverScreenObject(int ObjectType,
 }
 
 void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released) {
-	
+
 	// Handling moving of the tags rendered by the plugin
 	CRadarTarget rt = GetPlugIn()->RadarTargetSelect(sObjectId);
 	CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
@@ -3064,7 +3712,7 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 			RequestRefresh();
 		}
-		
+
 		if (ObjectType == LIST_TIME_ATIS) {
 			acLists[LIST_TIME_ATIS].p = { Pt.x - ((Area.right - Area.left) / 2), Pt.y - ((Area.bottom - Area.top) / 2) };
 		}
@@ -3074,8 +3722,10 @@ void CSiTRadar::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT 
 
 		if (ObjectType == WINDOW_TITLE_BAR) {
 			if (menuState.radarScrWindows.count(stoi(sObjectId)) != 0) {
-				menuState.radarScrWindows.at(stoi(sObjectId)).m_origin 
-					= { Area.left , Area.top};
+				menuState.radarScrWindows.at(stoi(sObjectId)).m_origin
+					= { Area.left , Area.top };
+
+				menuState.topWindow = stoi(sObjectId);
 			}
 		}
 	}
@@ -3099,10 +3749,16 @@ void CSiTRadar::OnFunctionCall(int FunctionId,
 		catch (...) {}
 	}
 
+	if (FunctionId == FUNCTION_CPDLC_ICAO) {
+		string ICAO = sItemString;
+		std::transform(ICAO.begin(), ICAO.end(), ICAO.begin(), ::toupper);
+		CPDLCMessage::hoppieICAO = ICAO.substr(0, 4).c_str();
+	}
+
 	if (FunctionId >= FUNCTION_DEST_ICAO_1 && FunctionId <= FUNCTION_DEST_ICAO_5) {
 		string ICAO = sItemString;
 		std::transform(ICAO.begin(), ICAO.end(), ICAO.begin(), ::toupper);
-		menuState.destICAO[FunctionId - FUNCTION_DEST_ICAO_1] = ICAO.substr(0,4).c_str();
+		menuState.destICAO[FunctionId - FUNCTION_DEST_ICAO_1] = ICAO.substr(0, 4).c_str();
 	}
 	if (FunctionId == FUNCTION_RMB_POPUP) {
 		// Draw the right click popup menu
@@ -3121,6 +3777,7 @@ void CSiTRadar::ButtonToScreen(CSiTRadar* radscr, const RECT& rect, const string
 }
 
 void CSiTRadar::updateActiveRunways(int i) {
+
 	vector<string> activerwys{};
 
 	m_pRadScr->GetPlugIn()->SelectActiveSectorfile();
@@ -3128,7 +3785,9 @@ void CSiTRadar::updateActiveRunways(int i) {
 	menuState.activeRunwaysList.clear();
 	menuState.activeRunways.clear();
 	menuState.inactiveRwyList.clear();
-	// Active runway highlighting for ground screens
+
+
+
 	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
 		string airport;
@@ -3136,20 +3795,26 @@ void CSiTRadar::updateActiveRunways(int i) {
 		if (runway.IsElementActive(true, 0) || runway.IsElementActive(true, 1) || runway.IsElementActive(false, 0) || runway.IsElementActive(false, 1)) {
 
 			airport = runway.GetAirportName();
-			CSiTRadar::menuState.activeArpt.insert(airport.substr(0, 4));
+			if (airport.length() > 3) {
+				std::unique_lock<std::shared_mutex> lock(airportMutex, std::defer_lock);
+				lock.lock();
+				CSiTRadar::menuState.activeArpt.insert(airport.substr(0, 4));
+			}
 
-			string airportrwy = airport + runway.GetRunwayName(0);
-			activerwys.push_back(airportrwy);
+			// string airportrwy = airport + runway.GetRunwayName(0);
+			// activerwys.push_back(airportrwy);
 
 		}
 	}
+
+	/*
 
 	for (CSectorElement runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); runway.IsValid();
 		runway = m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(runway, SECTOR_ELEMENT_RUNWAY)) {
 		string airportrwy;
 
 		for (auto const& arpt : menuState.activeArpt) {
-			
+
 			string r = runway.GetAirportName();
 
 			if (!strcmp(r.substr(0, 4).c_str(), arpt.c_str())) {
@@ -3168,7 +3833,7 @@ void CSiTRadar::updateActiveRunways(int i) {
 		}
 	}
 
-	
+
 
 	for (CSectorElement sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_GEO); sectorElement.IsValid();
 		sectorElement = CSiTRadar::m_pRadScr->GetPlugIn()->SectorFileElementSelectNext(sectorElement, SECTOR_ELEMENT_GEO)) {
@@ -3184,9 +3849,16 @@ void CSiTRadar::updateActiveRunways(int i) {
 			}
 		}
 	}
+
+	*/
+
 }
 
 void CSiTRadar::DisplayActiveRunways() {
+
+	// Displaying this was incorrect, removed now 
+
+	/*
 
 	for (auto rwy : menuState.activeRunwaysList) {
 		m_pRadScr->ShowSectorFileElement(rwy, rwy.GetComponentName(0), false);
@@ -3205,6 +3877,8 @@ void CSiTRadar::DisplayActiveRunways() {
 	}
 
 	m_pRadScr->RefreshMapContent();
+
+	*/
 }
 
 void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
@@ -3216,7 +3890,7 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 	}
 	if ((filt = GetDataFromAsr("altFilterLow")) != NULL) {
 		altFilterLow = atoi(filt);
-	} 
+	}
 
 	if (menuState.activeRunwaysList.empty()) {
 		std::thread rwyupdate(CSiTRadar::updateActiveRunways, 0);
@@ -3262,7 +3936,7 @@ void CSiTRadar::OnAsrContentLoaded(bool Loaded) {
 
 	}
 	//
-} 
+}
 
 void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 {
@@ -3302,11 +3976,9 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	// check against map
 
 	bool isRVSM{ false };
-	try {
-		isRVSM = CSiTRadar::acRVSM.at(callSign);      // vector::at throws an out-of-range
-	}
-	catch (const std::out_of_range& oor) {
-
+	auto it = CSiTRadar::acRVSM.find(callSign);
+	if (it != CSiTRadar::acRVSM.end()) {
+		isRVSM = it->second;
 	}
 
 	// first check for ICAO; then check FAA
@@ -3317,15 +3989,14 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	}
 
 	bool isADSB{ false };
-	try {
-		isADSB = CSiTRadar::acADSB.at(callSign);      // vector::at throws an out-of-range
-	}
-	catch (const std::out_of_range& oor) {
-		
+
+	it = CSiTRadar::acADSB.find(callSign);
+	if (it != CSiTRadar::acADSB.end()) {
+		isADSB = it->second;
 	}
 
 	string remarks = FlightPlan.GetFlightPlanData().GetRemarks();
-	
+
 	string CJS = FlightPlan.GetTrackingControllerId();
 	string origin = FlightPlan.GetFlightPlanData().GetOrigin();
 	string destin = FlightPlan.GetFlightPlanData().GetDestination();
@@ -3352,13 +4023,39 @@ void CSiTRadar::OnFlightPlanFlightPlanDataUpdate(CFlightPlan FlightPlan)
 	}
 	*/
 
-	mAcData[callSign] = acdata;
+	// store the data from before so it doesn't get erased.
+	try {
+		acdata.CPDLCMessages = mAcData.at(callSign).CPDLCMessages;
+		acdata.cpdlcState = mAcData.at(callSign).cpdlcState;
 
+	}
+	catch (std::out_of_range& oor) {
+
+	}
+
+	std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
+	lock.lock();
+	mAcData[callSign] = acdata;
 
 }
 
 void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 	int DataType) {
+
+	if (DataType == CTR_DATA_TYPE_DIRECT_TO) {
+		string callSign = FlightPlan.GetCallsign();
+		string fixName = FlightPlan.GetControllerAssignedData().GetDirectToPointName();
+		if (!fixName.empty() && mAcData.count(callSign)) {
+			auto& acFPRoute = mAcData[callSign].acFPRoute;
+			auto it = std::find(acFPRoute.fix_names.begin(), acFPRoute.fix_names.end(), fixName);
+			if (it != acFPRoute.fix_names.end()) {
+				int index = std::distance(acFPRoute.fix_names.begin(), it);
+				mAcData[callSign].directToPendingPosition = acFPRoute.route_fix_positions.at(index);
+				mAcData[callSign].directToPendingFixName = fixName;
+				mAcData[callSign].directToLineOn = true;
+			}
+		}
+	}
 
 	// update the menustate.squawkcodes only if the planes data gets changed
 
@@ -3377,48 +4074,51 @@ void CSiTRadar::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan,
 		}
 
 	}
-		/*
-		// if not tracked, or tracked by me, then do a dupe squawk check
-		if (!strcmp(FlightPlan.GetTrackingControllerId(), "") ||
-			FlightPlan.GetTrackingControllerIsMe()) {
+	/*
+	// if not tracked, or tracked by me, then do a dupe squawk check
+	if (!strcmp(FlightPlan.GetTrackingControllerId(), "") ||
+		FlightPlan.GetTrackingControllerIsMe()) {
 
-			auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
-			if (sitr != menuState.squawkCodes.end()) {
-				if (!strcmp(sitr->squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk())) {
-					if (strcmp(sitr->fpcs.c_str(), FlightPlan.GetCallsign())) {
-						GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
-					}
+		auto sitr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk()); });
+		if (sitr != menuState.squawkCodes.end()) {
+			if (!strcmp(sitr->squawk.c_str(), FlightPlan.GetControllerAssignedData().GetSquawk())) {
+				if (strcmp(sitr->fpcs.c_str(), FlightPlan.GetCallsign())) {
+					GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Squawk Assignment Warning", ("Squawk code " + sitr->squawk + " already assigned to " + sitr->fpcs).c_str(), true, true, false, false, false);
 				}
 			}
-
-			auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
-			if (itr == menuState.squawkCodes.end()) {
-				SSquawkCodeManagement sq;
-				sq.fpcs = FlightPlan.GetCallsign();
-				sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-				sq.numCorrelatedRT = 0;
-				menuState.squawkCodes.push_back(sq);
-			}
-			else {
-				// if asigned squawk is updated
-				itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
-				itr->numCorrelatedRT = 0;
-			}
-
 		}
+
+		auto itr = find_if(menuState.squawkCodes.begin(), menuState.squawkCodes.end(), [&FlightPlan](SSquawkCodeManagement& m)->bool {return !strcmp(m.fpcs.c_str(), FlightPlan.GetCallsign()); });
+		if (itr == menuState.squawkCodes.end()) {
+			SSquawkCodeManagement sq;
+			sq.fpcs = FlightPlan.GetCallsign();
+			sq.squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+			sq.numCorrelatedRT = 0;
+			menuState.squawkCodes.push_back(sq);
+		}
+		else {
+			// if asigned squawk is updated
+			itr->squawk = FlightPlan.GetControllerAssignedData().GetSquawk();
+			itr->numCorrelatedRT = 0;
+		}
+
 	}
-	*/
+}
+*/
 }
 
 void CSiTRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
-	string callSign = FlightPlan.GetCallsign();
 
-	mAcData.erase(callSign);
+	string callSign = FlightPlan.GetCallsign();
+	try {
+		mAcData.erase(callSign);
+	}
+	catch (...) {}
 
 }
 
 void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, int listType)
-{	
+{
 	int sDC = dc->SaveDC();
 
 	dc->SetTextColor(C_WHITE);
@@ -3436,7 +4136,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 	dc->SelectObject(targetPen);
 	dc->SelectObject(targetBrush);
-	
+
 	bool collapsed{ false };
 	bool showArrow = false;
 
@@ -3460,7 +4160,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 		std::shared_lock<shared_mutex> atisLock(wxRadar::atisLetterMutex, defer_lock);
 		std::shared_lock<shared_mutex> altimLock(wxRadar::altimeterMutex, defer_lock);
-	
+
 		if (atisLock.try_lock()) {
 			if (wxRadar::arptAtisLetter != menuState.arptAtisLetterOld) {
 				menuState.arptAtisLetterOld = wxRadar::arptAtisLetter;
@@ -3538,7 +4238,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 				showArrow = true;
 			}
 		}
-		
+
 
 		if (showArrow) {
 			POINT vertices[] = { {listHeading.right + 5, listHeading.top + 3}, {listHeading.right + 15, listHeading.top + 3} ,  {listHeading.right + 10, listHeading.top + 10} };
@@ -3551,7 +4251,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 			dc->Polygon(vertices, 3);
 		}
 	}
-	
+
 	if (listType == LIST_OFF_SCREEN) {
 
 		// 1st aircraft of a list
@@ -3567,7 +4267,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 		// Add the aircrafts
 
-		for (auto &aircraft : ac) {
+		for (auto& aircraft : ac) {
 			if (aircraft.second.isJurisdictional && !aircraft.second.isOnScreen) {
 				if (!acLists[LIST_OFF_SCREEN].collapsed) {
 					dc->DrawText(aircraft.first.c_str(), &listArcft, DT_LEFT | DT_CALCRECT);
@@ -3598,7 +4298,7 @@ void CSiTRadar::DrawACList(POINT p, CDC* dc, unordered_map<string, ACData>& ac, 
 
 void CSiTRadar::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	
+
 }
 
 void CSiTRadar::OnAsrContentToBeSaved() {
@@ -3673,8 +4373,89 @@ void CSiTRadar::OnFlightPlanFlightStripPushed(CFlightPlan FlightPlan,
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].pointOutFromMe = true;
 			CSiTRadar::mAcData[FlightPlan.GetCallsign()].POString = poString.substr(3);
 		}
-	} 
+	}
 
 
+
+}
+
+void CSiTRadar::asyncCPDLCFetch() {// autorefresh every minute
+	std::string s;
+	s = CPDLCMessage::PollCPDLCMessages();
+	CSiTRadar::menuState.lastCPDLCPoll = clock();
+
+	if (s.substr(0, 2) != "ok") {
+		CSiTRadar::menuState.CPDLCOn = false; // if string not okay, turn it off
+		string hoppieError = "Hoppie Error, Try Reconnecting Error:";
+		hoppieError += s;
+		CSiTRadar::m_pRadScr->GetPlugIn()->DisplayUserMessage("VATCAN Situ", "Hoppie CPDLC", hoppieError.c_str(), true, false, false, false, false);
+	}
+	// ParseCPDLC message chops messages off sequentially
+
+	if (s.substr(0, 3) == "ok ") {
+		while (s.length() > 4) {
+			CPDLCMessage m;
+			m = CPDLCMessage::parseDLMessage(s);
+			// Attach CPDLC Messages to the aircraft
+			if (CSiTRadar::mAcData.find(m.sender) != CSiTRadar::mAcData.end()) {
+
+				std::unique_lock<std::shared_mutex> lock(mutex_mAcData, std::defer_lock);
+				lock.lock();
+				CSiTRadar::mAcData.at(m.sender).CPDLCMessages.emplace_back(m);
+				if (m.opensMnemonic) {
+					CSiTRadar::mAcData.at(m.sender).cpdlcMnemonic = true;
+				}
+				if (m.rawMessageContent == "LOGOFF") { // logoff will set the state back to 0
+					CSiTRadar::mAcData.at(m.sender).cpdlcState = 0;
+				}
+				// if new messages refresh the listbox content for the CPDLC message
+				for (auto& win : CSiTRadar::menuState.radarScrWindows) {
+					if (!strcmp(win.second.m_callsign.c_str(), m.sender.c_str())
+						&& win.second.m_winType == WINDOW_CPDLC)
+					{
+						for (auto& lbtoberefreshed : win.second.m_listboxes_)
+						{
+							lbtoberefreshed.PopulateCPDLCListBox(CSiTRadar::mAcData.at(m.sender).CPDLCMessages);
+						}
+					}
+				}
+				if (m.rawMessageContent.length() > 24) {
+					if (m.rawMessageContent.find("REQUEST PREDEP CLEARANCE") != std::string::npos) {
+
+						string origin = GetPlugIn()->FlightPlanSelect(m.sender.c_str()).GetFlightPlanData().GetOrigin();
+
+						if (origin == "CYUL" || origin == "CYWG" || origin == "CYTZ") {
+
+							CPDLCMessage FSMPDCResponse;
+
+							FSMPDCResponse.MakePDCMessage(GetPlugIn()->FlightPlanSelect(m.sender.c_str()), GetPlugIn()->ControllerMyself(), "", "FSM");
+
+							std::future<void> asyncsend = std::async(std::launch::async, [&] {
+								return FSMPDCResponse.SendCPDLCMessage();
+								});
+						}
+
+					}
+				}
+			}
+		}
+	}
+}
+
+void CSiTRadar::SetTextToClipBoard(const std::string& string) {
+
+	HGLOBAL hglbCopy;
+	size_t bSize = string.size() + 1;
+	hglbCopy = GlobalAlloc(GPTR, bSize);
+	if (hglbCopy == NULL)
+	{
+		CloseClipboard();
+		return;
+	}
+	memcpy_s(hglbCopy, bSize, string.c_str(), bSize);
+	OpenClipboard(nullptr);
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hglbCopy);
+	CloseClipboard();
 
 }

@@ -24,6 +24,7 @@
 #include "ACTag.h"
 #include "PPS.h"
 #include "CACList.h"
+#include "cpdlc.h"
 
 using namespace EuroScopePlugIn;
 using namespace std;
@@ -33,7 +34,6 @@ struct SSquawkCodeManagement {
     string fpcs;
     int numCorrelatedRT{ 0 };
 };
-
 
 struct ACData {
     bool hasVFRFP;
@@ -67,6 +67,15 @@ struct ACData {
     bool multipleDiscrete{ false };
     bool manualCorr{ false };
     int follower{ 1 }; // 0 is light, 1 is med, 2 heavy, 3 super
+
+    vector<CPDLCMessage> CPDLCMessages;
+    bool cpdlcMnemonic{ false };
+    int cpdlcState{ 0 }; // 0 is not connected, 1 connected
+};
+
+struct SCPDLCMenuData {
+    string func;
+    POINT pt;
 };
 
 struct SFocusItem {
@@ -99,6 +108,7 @@ struct buttonStates {
     bool crda{ false };
     bool haloCursor{ false };
     bool bigACID{ true };
+    bool CPDLCOn{ false };
 
     int numHistoryDots{ 4 };
 
@@ -137,6 +147,7 @@ struct buttonStates {
     clock_t lastWxRefresh = 0;
     clock_t lastMetarRefresh = 0;
     clock_t lastAtisRefresh = 0;
+    clock_t lastCPDLCPoll = 0;
 
     bool bgM3Click{ false };
     bool mouseMMB{ false };
@@ -175,6 +186,9 @@ struct buttonStates {
     bool acListMaint;
     clock_t lastAcListMaint{};
 
+    SCPDLCMenuData CPDLCMenuData;
+    int topWindow{};
+    deque<int> windowOrder{};
 
 };
 
@@ -262,11 +276,16 @@ public:
     static unordered_map<string, bool> acADSB;
     static unordered_map<string, bool> acRVSM;
 
+    static std::shared_mutex airportMutex;
+    static std::shared_mutex mutex_mAcData;
+
     static buttonStates menuState;
 
     double wxRadLat;
     double wxRadLong;
     int wxRadZL;
+
+    void asyncCPDLCFetch();
 
     virtual void OnAsrContentLoaded(bool Loaded);
     void OnAsrContentToBeSaved();
@@ -277,12 +296,22 @@ public:
     inline virtual void OnControllerPositionUpdate(CController Controller);
     inline virtual void OnControllerDisconnect(CController Controller);
     static CAppWindows* GetAppWindow(int winID);
+    auto findCPDLCEditorWindow(const string& callsign) -> decltype(CSiTRadar::menuState.radarScrWindows.begin()) {
+        for (auto it = CSiTRadar::menuState.radarScrWindows.begin(); it != CSiTRadar::menuState.radarScrWindows.end(); ++it) {
+            if (it->second.m_callsign == callsign && it->second.m_winType == WINDOW_CPDLC_EDITOR) {
+                return it; // Return iterator to the found element
+            }
+        }
+        return CSiTRadar::menuState.radarScrWindows.end(); // Return end iterator if not found
+    }
 
     static void RegisterButton(RECT rect) {
 
     };
 
     void OnRefresh(HDC hdc, int phase);
+
+    void SetTextToClipBoard(const std::string& string);
 
     void CSiTRadar::OnButtonDownScreenObject(int ObjectType,
         const char* sObjectId,
