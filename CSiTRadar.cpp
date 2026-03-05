@@ -2234,6 +2234,7 @@ void CSiTRadar::OnClickScreenObject(int ObjectType,
 						if (CPDLCMessage::hoppieICAO == "CZUL") { automaticResponse.rawMessageContent += "MONTREAL CENTER"; }
 						if (CPDLCMessage::hoppieICAO == "CZYZ") { automaticResponse.rawMessageContent += "TORONTO CENTER"; }
 						if (CPDLCMessage::hoppieICAO == "CZWG") { automaticResponse.rawMessageContent += "WINNIPEG CENTER"; }
+						if (CPDLCMessage::hoppieICAO == "CZEG") { automaticResponse.rawMessageContent += "EDMONTON CENTER"; }
 						if (CPDLCMessage::hoppieICAO == "CZVR") { automaticResponse.rawMessageContent += "VANCOUVER CENTER"; }
 
 						std::future<void> asyncsend = std::async(std::launch::async, [&] {
